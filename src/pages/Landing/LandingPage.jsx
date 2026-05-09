@@ -310,14 +310,21 @@ export function LandingPage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map(testimonial => (
-              <Card key={testimonial.id} className="p-6">
+              <Card key={testimonial.id} className="p-6 flex flex-col justify-between h-full">
+                {/* 1. Rating Stars: Always at the top */}
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                   ))}
                 </div>
-                <p className="text-muted-foreground mb-6">{testimonial.content}</p>
-                <div className="flex items-center gap-3">
+
+                {/* 2. Testimonial Content: Always in the middle */}
+                <p className="text-muted-foreground mb-6 flex-grow">
+                  {testimonial.content}
+                </p>
+
+                {/* 3. Person Information: Always at the bottom */}
+                <div className="flex items-center gap-3 mt-auto">
                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
                     <img
                       src={testimonial.avatar}
