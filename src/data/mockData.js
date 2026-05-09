@@ -122,7 +122,7 @@ export const lessons = [
     title: 'Introduction to HTML',
     description: 'Learn the basic structure of HTML documents and common tags.',
     duration: '45 min',
-    videoUrl: 'https://example.com/video1',
+    videoUrl: 'https://music.youtube.com/watch?v=lVT5dnIibF4&si=_xaMHahKzh3ndlx4',
     content: `
       <h2>What is HTML?</h2>
       <p>HTML (HyperText Markup Language) is the standard markup language for creating web pages. It describes the structure of a web page and consists of a series of elements that tell the browser how to display the content.</p>

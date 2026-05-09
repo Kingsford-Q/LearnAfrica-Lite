@@ -10,8 +10,7 @@ export function QuizResultsPage() {
   const location = useLocation()
   const { answers = {}, questions: passedQuestions } = location.state || {}
 
-  const quiz = quizzes.find(q => q.courseId === courseId) || quizzes[0]
-  const course = courses.find(c => c.id === quiz.courseId)
+  const quiz = quizzes.find(q => String(q.courseId) === String(courseId)) || quizzes[0]
   const questions = passedQuestions || quiz.questions
 
   // Calculate score
@@ -100,9 +99,9 @@ export function QuizResultsPage() {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Actions - Fixed Retry Link */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to={`/quiz/${courseId}`}>
+            <Link to={`/learn/course/${courseId}/quiz/1`}>
               <Button variant="outline">
                 <RotateCcw className="h-4 w-4" />
                 Retry Quiz
@@ -117,7 +116,7 @@ export function QuizResultsPage() {
           </div>
         </Card>
 
-        {/* Question Review */}
+        {/* Question Review - Fixed Alignment and Spacing */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Review Answers</h2>
           
@@ -129,7 +128,7 @@ export function QuizResultsPage() {
                 <div className="flex items-start gap-4">
                   <div
                     className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-full shrink-0',
+                      'flex h-8 w-8 items-center justify-center rounded-full shrink-0 mt-0.5',
                       isCorrect ? 'bg-success/10' : 'bg-destructive/10'
                     )}
                   >
@@ -140,34 +139,38 @@ export function QuizResultsPage() {
                     )}
                   </div>
                   
-                  <div className="flex-1">
-                    <p className="font-medium mb-3">
+                  <div className="flex-1 w-full">
+                    <p className="font-semibold mb-4 leading-tight">
                       Question {index + 1}: {question.question}
                     </p>
                     
-                    <div className="space-y-2">
+                    <div className="grid gap-3"> {/* Use grid for more consistent spacing */}
                       {question.options.map((option, optIndex) => (
                         <div
                           key={optIndex}
                           className={cn(
-                            'rounded-lg p-3 text-sm',
+                            'rounded-lg p-3.5 text-sm transition-all flex items-center justify-between gap-4',
                             optIndex === question.correctAnswer
                               ? 'bg-success/10 border border-success'
                               : optIndex === answers[index] && !isCorrect
                               ? 'bg-destructive/10 border border-destructive'
-                              : 'bg-muted'
+                              : 'bg-muted border border-transparent'
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
+                          <div className="flex items-start gap-3">
+                            <span className="font-bold opacity-70 shrink-0">
                               {String.fromCharCode(65 + optIndex)}.
                             </span>
-                            <span>{option}</span>
+                            <span className="leading-relaxed">{option}</span>
+                          </div>
+
+                          {/* Icon Alignment Fixed */}
+                          <div className="shrink-0">
                             {optIndex === question.correctAnswer && (
-                              <CheckCircle className="h-4 w-4 text-success ml-auto" />
+                              <CheckCircle className="h-5 w-5 text-success" />
                             )}
                             {optIndex === answers[index] && optIndex !== question.correctAnswer && (
-                              <XCircle className="h-4 w-4 text-destructive ml-auto" />
+                              <XCircle className="h-5 w-5 text-destructive" />
                             )}
                           </div>
                         </div>

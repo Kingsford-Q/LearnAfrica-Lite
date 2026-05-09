@@ -18,15 +18,17 @@ import { lessons, courses } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 export function LessonPage() {
-  const { id } = useParams()
+  const { courseId, lessonId } = useParams()
   const [isCompleted, setIsCompleted] = useState(false)
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeTab, setActiveTab] = useState('content')
 
-  const lesson = lessons.find(l => l.id === id) || lessons[0]
-  const courseLessons = lessons.filter(l => l.courseId === lesson.courseId)
-  const course = courses.find(c => c.id === lesson.courseId)
-  const currentIndex = courseLessons.findIndex(l => l.id === lesson.id)
+  // ID comparison normalization
+  const lesson = lessons.find(l => String(l.id) === String(lessonId)) || lessons[0]
+  const courseLessons = lessons.filter(l => String(l.courseId) === String(courseId))
+  const course = courses.find(c => String(c.id) === String(courseId))
+  const currentIndex = courseLessons.findIndex(l => String(l.id) === String(lesson.id))
+  
   const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null
   const nextLesson = currentIndex < courseLessons.length - 1 ? courseLessons[currentIndex + 1] : null
 
@@ -36,11 +38,14 @@ export function LessonPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top Bar */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
+      {/* Top Bar - Z-index set to 30 to stay below mobile sidebar */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-4">
-            <Link to={`/courses/${lesson.courseId}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <Link 
+              to={`/courses/${courseId}`}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
               <ChevronLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to Course</span>
             </Link>
@@ -49,17 +54,17 @@ export function LessonPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-muted-foreground">
               {currentIndex + 1} / {courseLessons.length}
             </span>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowSidebar(!showSidebar)}
+              onClick={() => setShowSidebar(true)}
               className="lg:hidden"
             >
-              {showSidebar ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              <Menu className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -81,7 +86,6 @@ export function LessonPage() {
             </div>
           </div>
 
-          {/* Lesson Content */}
           <div className="container mx-auto max-w-4xl px-4 py-8">
             {/* Lesson Header */}
             <div className="mb-8">
@@ -157,15 +161,13 @@ export function LessonPage() {
             {/* Navigation */}
             <div className="flex items-center justify-between mt-12 pt-6 border-t">
               {prevLesson ? (
-                <Link to={`/lessons/${prevLesson.id}`}>
+                <Link to={`/learn/course/${courseId}/lesson/${prevLesson.id}`}>
                   <Button variant="outline">
                     <ChevronLeft className="h-4 w-4" />
                     Previous Lesson
                   </Button>
                 </Link>
-              ) : (
-                <div />
-              )}
+              ) : <div />}
 
               {!lesson.isCompleted && !isCompleted ? (
                 <Button onClick={handleMarkComplete}>
@@ -173,14 +175,14 @@ export function LessonPage() {
                   Mark as Complete
                 </Button>
               ) : nextLesson ? (
-                <Link to={`/lessons/${nextLesson.id}`}>
+                <Link to={`/learn/course/${courseId}/lesson/${nextLesson.id}`}>
                   <Button>
                     Next Lesson
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </Link>
               ) : (
-                <Link to={`/quiz/${lesson.courseId}`}>
+                <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>
                   <Button>
                     Take Quiz
                     <ChevronRight className="h-4 w-4" />
@@ -191,55 +193,63 @@ export function LessonPage() {
           </div>
         </main>
 
-        {/* Sidebar */}
+        {/* Sidebar - Higher Z-index (50) to prevent overlap from image_7495fb.png */}
         <aside
           className={cn(
-            'fixed inset-y-0 right-0 top-14 z-30 w-80 border-l border-border bg-card transition-transform lg:static lg:translate-x-0',
+            'fixed inset-y-0 right-0 z-50 w-full sm:w-80 border-l border-border bg-card transition-transform duration-300 lg:static lg:z-30 lg:translate-x-0',
             showSidebar ? 'translate-x-0' : 'translate-x-full'
           )}
         >
-          <div className="h-full overflow-y-auto p-4">
-            <h3 className="font-semibold mb-4">Course Content</h3>
-            <div className="space-y-1">
-              {courseLessons.map((l, index) => (
-                <Link
-                  key={l.id}
-                  to={`/lessons/${l.id}`}
-                  onClick={() => setShowSidebar(false)}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg p-3 text-sm transition-colors',
-                    l.id === lesson.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-accent'
-                  )}
-                >
-                  <div
+          <div className="flex flex-col h-full">
+            {/* Sidebar Header (Visible only on mobile/medium) */}
+            <div className="flex items-center justify-between p-4 border-b lg:hidden">
+              <h3 className="font-semibold">Course Content</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowSidebar(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              <h3 className="font-semibold mb-4 hidden lg:block">Course Content</h3>
+              <div className="space-y-1">
+                {courseLessons.map((l, index) => (
+                  <Link
+                    key={l.id}
+                    to={`/learn/course/${courseId}/lesson/${l.id}`}
+                    onClick={() => setShowSidebar(false)}
                     className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-full shrink-0 text-xs font-medium',
-                      l.isCompleted || (l.id === lesson.id && isCompleted)
-                        ? 'bg-success text-primary-foreground'
-                        : l.id === lesson.id
-                        ? 'bg-primary-foreground text-primary'
-                        : 'bg-muted'
+                      'flex items-center gap-3 rounded-lg p-3 text-sm transition-colors',
+                      String(l.id) === String(lesson.id)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
                     )}
                   >
-                    {l.isCompleted || (l.id === lesson.id && isCompleted) ? (
-                      <CheckCircle className="h-4 w-4" />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate">{l.title}</p>
-                    <p className={cn(
-                      'text-xs',
-                      l.id === lesson.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                    )}>
-                      {l.duration}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                    <div
+                      className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-full shrink-0 text-xs font-medium',
+                        l.isCompleted || (String(l.id) === String(lesson.id) && isCompleted)
+                          ? 'bg-success text-primary-foreground'
+                          : String(l.id) === String(lesson.id)
+                          ? 'bg-primary-foreground text-primary'
+                          : 'bg-muted'
+                      )}
+                    >
+                      {l.isCompleted || (String(l.id) === String(lesson.id) && isCompleted) ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium">{l.title}</p>
+                      <p className={cn(
+                        'text-xs',
+                        String(l.id) === String(lesson.id) ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                      )}>
+                        {l.duration}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </aside>
@@ -247,7 +257,7 @@ export function LessonPage() {
         {/* Sidebar Overlay */}
         {showSidebar && (
           <div
-            className="fixed inset-0 z-20 bg-background/80 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
             onClick={() => setShowSidebar(false)}
           />
         )}

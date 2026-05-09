@@ -117,7 +117,7 @@ export function CourseDetailPage() {
                           <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
                         </div>
                       </div>
-                      <Link to={`/lessons/${courseLessons[0]?.id || '1'}`}>
+                      <Link to={`/learn/course/${course.id}/lesson/${courseLessons[0]?.id || '1'}`}>
                         <Button className="w-full" size="lg">
                           Continue Learning
                         </Button>

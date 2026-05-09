@@ -92,6 +92,18 @@ function AppRoutes() {
         />
       </Route>
 
+      {/* Shared Authenticated Routes - Ensures /settings always works */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="profile" element={<ProfilePage />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+
       {/* Student Dashboard Routes */}
       <Route
         path="dashboard"
@@ -102,8 +114,6 @@ function AppRoutes() {
         }
       >
         <Route index element={<StudentDashboard />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
         <Route path="certificate/:courseId" element={<CertificatePage />} />
       </Route>
@@ -118,15 +128,16 @@ function AppRoutes() {
         }
       >
         <Route path="course/:courseId/lesson/:lessonId" element={<LessonPage />} />
-        <Route path="course/:courseId/quiz/:quizId" element={<QuizPage />} />
-        <Route path="course/:courseId/quiz/:quizId/results" element={<QuizResultsPage />} />
+        {/* Fixed: Removed leading slash from relative child path */}
+        <Route path="course/:courseId/quiz/:lessonId" element={<QuizPage />} />        
+        <Route path="course/:courseId/quiz/:lessonId/results" element={<QuizResultsPage />} />
       </Route>
 
       {/* Instructor Routes */}
       <Route
         path="instructor"
         element={
-          <ProtectedRoute allowedRoles={['instructor']}>
+          <ProtectedRoute allowedRoles={['instructor', 'admin', 'superadmin']}>
             <InstructorLayout />
           </ProtectedRoute>
         }
@@ -134,8 +145,6 @@ function AppRoutes() {
         <Route index element={<InstructorDashboard />} />
         <Route path="courses/create" element={<CreateCoursePage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       {/* 404 */}
