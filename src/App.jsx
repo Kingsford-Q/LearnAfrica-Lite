@@ -12,6 +12,7 @@ import { AuthLayout }  from './layouts/AuthLayout';
 import { LandingPage } from './pages/Landing/LandingPage';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { SignupPage } from './pages/Auth/SignupPage';
+import { ForgotPasswordPage } from './pages/Auth/ForgotPasswordPage';
 import { CoursesPage } from './pages/Courses/CoursesPage';
 import { CourseDetailPage } from './pages/Courses/CourseDetailPage';
 import { LessonPage } from './pages/Lessons/LessonPage';
@@ -78,6 +79,14 @@ function AppRoutes() {
           element={
             <PublicOnlyRoute>
               <SignupPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <ForgotPasswordPage />
             </PublicOnlyRoute>
           }
         />

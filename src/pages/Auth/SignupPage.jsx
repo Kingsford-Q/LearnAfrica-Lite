@@ -152,7 +152,7 @@ export function SignupPage() {
           )}
         </div>
 
-        <div className="flex items-start gap-2">
+        <div className="flex items-center gap-2 justify-start">
           <input
             type="checkbox"
             id="terms"
@@ -160,11 +160,11 @@ export function SignupPage() {
             onChange={(e) => setAcceptTerms(e.target.checked)}
             className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
           />
-          <label htmlFor="terms" className="text-sm text-muted-foreground">
+          <label htmlFor="terms" className="text-sm text-muted-foreground mt-[5px]">
             I agree to the{' '}
-            <Link to="#" className="text-primary hover:underline">Terms of Service</Link>
+            <Link to="/" className="text-primary hover:underline">Terms of Service</Link>
             {' '}and{' '}
-            <Link to="#" className="text-primary hover:underline">Privacy Policy</Link>
+            <Link to="/" className="text-primary hover:underline">Privacy Policy</Link>
           </label>
         </div>
         {errors.terms && (

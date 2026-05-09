@@ -34,6 +34,30 @@ const mockNotifications = [
     time: '2 days ago',
     read: true,
   },
+  {
+    id: 5,
+    type: 'system',
+    title: 'Welcome to LearnAfrica!',
+    message: 'Start your learning journey today',
+    time: '2 days ago',
+    read: true,
+  },
+  {
+    id: 6,
+    type: 'system',
+    title: 'Welcome to LearnAfrica!',
+    message: 'Start your learning journey today',
+    time: '2 days ago',
+    read: true,
+  },
+  {
+    id: 7,
+    type: 'system',
+    title: 'Welcome to LearnAfrica!',
+    message: 'Start your learning journey today',
+    time: '2 days ago',
+    read: true,
+  },
 ];
 
 const notificationIcons = {
@@ -111,76 +135,82 @@ export default function NotificationsDropdown() {
       </button>
 
       {isOpen && (
-  <div className={`
-    z-50 flex flex-col bg-card border border-border rounded-xl shadow-xl overflow-hidden
-    /* MOBILE: Floating (absolute) and centered under the bell icon */
-    absolute top-full left-1/2 -translate-x-1/2 w-[calc(100vw-32px)] max-w-[300px] mt-2
-    /* DESKTOP: Floating and anchored to the right */
-    md:right-0 md:left-auto md:translate-x-0 md:w-80 md:mt-2
-  `}>
-    
-    {/* Header - Compact for mobile */}
-    <div className="p-2.5 md:p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
-      <h3 className="font-semibold text-[11px] md:text-sm text-foreground uppercase tracking-wider">
-        Notifications
-      </h3>
-      {unreadCount > 0 && (
-        <button
-          onClick={markAllAsRead}
-          className="text-[10px] md:text-xs text-primary font-medium hover:underline"
-        >
-          Mark all as read
-        </button>
-      )}
-    </div>
+        <div className={`
+          z-50 flex flex-col bg-card border border-border rounded-xl shadow-xl overflow-hidden
+          /* Layout Base */
+          absolute top-full mt-2
+          /* MOBILE: Floating and centered */
+          left-1/2 -translate-x-1/2 w-[calc(100vw-32px)] max-w-[300px]
+          /* MD (Tablets) & LG: Fixed to right side */
+          md:right-0 md:left-auto md:translate-x-0 md:w-80
+          /* SAFETY: Prevents the whole dropdown from going off-screen height-wise */
+          max-h-[calc(100vh-120px)]
+        `}>
+          
+          {/* Header */}
+          <div className="p-3 md:p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
+            <h3 className="font-semibold text-xs md:text-sm text-foreground uppercase tracking-wider">
+              Notifications
+            </h3>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-[10px] md:text-xs text-primary font-medium hover:underline"
+              >
+                Mark all as read
+              </button>
+            )}
+          </div>
 
-    {/* Scrollable Area - shrink-0 on icons fixed the shrinking issue */}
-    <div className="overflow-y-auto max-h-48 md:max-h-96 flex-1 min-h-0 custom-scrollbar">
-      {notifications.length > 0 ? (
-        notifications.map((notification) => (
-          <button
-            key={notification.id}
-            onClick={() => markAsRead(notification.id)}
-            className={`w-full p-3 md:p-4 flex items-start gap-2 md:gap-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0 ${
-              !notification.read ? 'bg-primary/5' : ''
-            }`}
-          >
-            {/* shrink-0 prevents the icon from squishing */}
-            <div className={`p-1.5 rounded-lg shrink-0 flex items-center justify-center scale-75 md:scale-100 ${notificationColors[notification.type]}`}>
-              {notificationIcons[notification.type]}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-1">
-                <p className={`font-medium text-[11px] md:text-sm leading-tight truncate ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {notification.title}
-                </p>
-                {!notification.read && (
-                  <span className="w-1.5 h-1.5 bg-primary rounded-full shrink-0 mt-1" />
-                )}
+          {/* Scrollable Area - Fixed the md scroll issue by defining strict max-heights */}
+          <div className="overflow-y-auto flex-1 min-h-0 custom-scrollbar max-h-64 md:max-h-80 lg:max-h-[450px]">
+            {notifications.length > 0 ? (
+              notifications.map((notification) => (
+                <button
+                  key={notification.id}
+                  onClick={() => markAsRead(notification.id)}
+                  className={`w-full p-3 md:p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0 ${
+                    !notification.read ? 'bg-primary/5' : ''
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg shrink-0 flex items-center justify-center ${notificationColors[notification.type]}`}>
+                    {notificationIcons[notification.type]}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className={`font-medium text-xs md:text-sm leading-tight truncate ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {notification.title}
+                      </p>
+                      {!notification.read && (
+                        <span className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1" />
+                      )}
+                    </div>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <p className="text-[9px] md:text-[10px] text-muted-foreground/70 mt-1">
+                      {notification.time}
+                    </p>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                No new notifications
               </div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                {notification.message}
-              </p>
-            </div>
-          </button>
-        ))
-      ) : (
-        <div className="p-6 text-center text-[10px] md:text-xs text-muted-foreground">
-          No new notifications
+            )}
+          </div>
+
+          {/* Footer */}
+          <Link
+            to="/dashboard"
+            className="block p-3 text-center text-xs md:text-sm font-semibold text-primary hover:bg-muted/50 border-t border-border bg-muted/20 shrink-0"
+          >
+            View All
+          </Link>
         </div>
       )}
-    </div>
-
-    {/* Footer */}
-    <Link
-      to="/dashboard"
-      className="block p-2 text-center text-[10px] md:text-sm font-semibold text-primary hover:bg-muted/50 border-t border-border bg-muted/20"
-    >
-      View All
-    </Link>
-  </div>
-)}
     </div>
   );
 }
