@@ -2,62 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const mockNotifications = [
-  {
-    id: 1,
-    type: 'course',
-    title: 'New lesson available',
-    message: 'Introduction to JavaScript has a new lesson: "Async/Await"',
-    time: '2 hours ago',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'achievement',
-    title: 'Achievement unlocked!',
-    message: 'You earned the "Fast Learner" badge',
-    time: '5 hours ago',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'reminder',
-    title: 'Continue learning',
-    message: "You're 3 days away from losing your streak!",
-    time: '1 day ago',
-    read: true,
-  },
-  {
-    id: 4,
-    type: 'system',
-    title: 'Welcome to LearnAfrica!',
-    message: 'Start your learning journey today',
-    time: '2 days ago',
-    read: true,
-  },
-  {
-    id: 5,
-    type: 'system',
-    title: 'Welcome to LearnAfrica!',
-    message: 'Start your learning journey today',
-    time: '2 days ago',
-    read: true,
-  },
-  {
-    id: 6,
-    type: 'system',
-    title: 'Welcome to LearnAfrica!',
-    message: 'Start your learning journey today',
-    time: '2 days ago',
-    read: true,
-  },
-  {
-    id: 7,
-    type: 'system',
-    title: 'Welcome to LearnAfrica!',
-    message: 'Start your learning journey today',
-    time: '2 days ago',
-    read: true,
-  },
+  { id: 1, type: 'course', title: 'New lesson available', message: 'Introduction to JavaScript has a new lesson: "Async/Await"', time: '2 hours ago', read: false },
+  { id: 2, type: 'achievement', title: 'Achievement unlocked!', message: 'You earned the "Fast Learner" badge', time: '5 hours ago', read: false },
+  { id: 3, type: 'reminder', title: 'Continue learning', message: "You're 3 days away from losing your streak!", time: '1 day ago', read: true },
+  { id: 4, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+  { id: 5, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+  { id: 6, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+  { id: 7, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
 ];
 
 const notificationIcons = {
@@ -92,10 +43,30 @@ const notificationColors = {
 
 export default function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [dbNotifications, setDbNotifications] = useState([]); // Database source
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Optimization: Prioritize DB data, fallback to mock if DB is empty
+  const notifications = dbNotifications.length > 0 ? dbNotifications : mockNotifications;
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    // Placeholder for backend fetch
+    const fetchNotifications = async () => {
+      setIsLoading(true);
+      try {
+        // const response = await fetch('/api/notifications');
+        // const data = await response.json();
+        // setDbNotifications(data);
+      } catch (error) {
+        console.error("Backend fetch error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -107,14 +78,28 @@ export default function NotificationsDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    // Optimistic UI update
+    const updated = notifications.map((n) => ({ ...n, read: true }));
+    setDbNotifications(updated);
+    
+    try {
+      // await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+    } catch (error) {
+      console.error("Failed to sync mark all as read", error);
+    }
   };
 
-  const markAsRead = (id) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = async (id) => {
+    // Optimistic UI update
+    const updated = notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+    setDbNotifications(updated);
+
+    try {
+      // await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+    } catch (error) {
+      console.error("Failed to sync mark as read", error);
+    }
   };
 
   return (
@@ -162,9 +147,11 @@ export default function NotificationsDropdown() {
             )}
           </div>
 
-          {/* Scrollable Area - Fixed the md scroll issue by defining strict max-heights */}
+          {/* Scrollable Area */}
           <div className="overflow-y-auto flex-1 min-h-0 custom-scrollbar max-h-64 md:max-h-80 lg:max-h-[450px]">
-            {notifications.length > 0 ? (
+            {isLoading ? (
+              <div className="p-8 text-center"><div className="animate-spin inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>
+            ) : notifications.length > 0 ? (
               notifications.map((notification) => (
                 <button
                   key={notification.id}
@@ -189,7 +176,7 @@ export default function NotificationsDropdown() {
                     <p className="text-[10px] md:text-xs text-muted-foreground mt-1 line-clamp-2">
                       {notification.message}
                     </p>
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground/70 mt-1">
+                    <p className="text-[9px] md:text-[10px] text-muted-foreground/70 mt-1 uppercase">
                       {notification.time}
                     </p>
                   </div>
