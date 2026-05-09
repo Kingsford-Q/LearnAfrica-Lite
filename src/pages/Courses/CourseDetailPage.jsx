@@ -21,11 +21,15 @@ import { courses, lessons } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 export function CourseDetailPage() {
-  const { id } = useParams()
+  const { courseId } = useParams()
   const [expandedSection, setExpandedSection] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
 
-  const course = courses.find(c => c.id === id) || courses[0]
+  const course = courses.find(c => String(c.id) === String(courseId));
+  if (!course) {
+  return <div className="container py-20 text-center">Course not found</div>;
+  }
+
   const courseLessons = lessons.filter(l => l.courseId === course.id)
   const relatedCourses = courses.filter(c => c.id !== course.id && c.category === course.category).slice(0, 3)
 
@@ -248,35 +252,54 @@ export function CourseDetailPage() {
             </div>
 
             {/* Instructor */}
-            <Card className="p-6">
-              <h2 className="text-xl font-bold mb-4">Your Instructor</h2>
-              <div className="flex items-start gap-4">
-                <div className="h-20 w-20 rounded-full bg-muted overflow-hidden shrink-0">
-                  <img src={course.instructorAvatar} alt={course.instructor} className="h-full w-full object-cover" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{course.instructor}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">Senior Software Engineer & Educator</p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-warning text-warning" />
-                      4.9 Rating
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      12,450 Students
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
-                      8 Courses
-                    </span>
-                  </div>
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    Experienced software engineer with over 10 years in the industry. Passionate about teaching and helping others achieve their goals in tech.
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <Card className="p-5 md:p-8">
+  <h2 className="text-lg md:text-xl font-bold mb-6 text-center md:text-left">Your Instructor</h2>
+  
+  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+    {/* Avatar - Centered on mobile, left-aligned on desktop */}
+    <div className="shrink-0">
+      <div className="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-primary/10 overflow-hidden ring-4 ring-background shadow-md">
+        <img 
+          src={course.instructorAvatar} 
+          alt={course.instructor} 
+          className="h-full w-full object-cover" 
+        />
+      </div>
+    </div>
+
+    {/* Info Content - Center text on mobile for better balance */}
+    <div className="flex-1 space-y-4 text-center md:text-left">
+      <div>
+        <h3 className="text-xl md:text-2xl font-bold tracking-tight">{course.instructor}</h3>
+        <p className="text-primary font-medium text-sm md:text-base">Senior Software Engineer & Educator</p>
+      </div>
+
+      {/* Stats - Grid on mobile, Flex on desktop */}
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center md:justify-start gap-3 md:gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">
+          <Star className="h-4 w-4 fill-warning text-warning" />
+          <span className="text-xs md:text-sm font-semibold">4.9 Rating</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs md:text-sm font-semibold">12k+ Students</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent col-span-2 sm:col-span-1">
+          <BookOpen className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs md:text-sm font-semibold">8 Courses</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Bio - Better spacing for touch targets */}
+  <div className="mt-6 pt-6 border-t border-border">
+    <p className="text-sm md:text-base text-muted-foreground leading-relaxed text-center md:text-left">
+      Experienced software engineer with over 10 years in the industry. 
+      Passionate about teaching and helping others achieve their goals in tech.
+    </p>
+  </div>
+</Card>
           </div>
 
           {/* Related Courses */}
