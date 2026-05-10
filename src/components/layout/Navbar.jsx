@@ -221,14 +221,7 @@ export default function Navbar() {
           <div className="space-y-3 border-t border-border pt-8">
             
             {/* Theme Toggle - Left Aligned */}
-            <div className="group flex h-14 cursor-pointer items-center rounded-xl bg-card border border-border px-4 shadow-sm transition-all hover:bg-muted active:scale-[0.98]">
-              <div className="flex w-8 shrink-0 justify-start scale-110 transition-colors group-hover:text-primary">
-                <ThemeToggle />
-              </div>
-              <span className="ml-4 text-sm font-semibold text-foreground/80 transition-colors group-hover:text-primary">
-                Toggle Theme
-              </span>
-            </div>
+            <ThemeToggle />
 
             {isAuthenticated ? (
               <div className="space-y-3">
