@@ -33,7 +33,7 @@ export const courses = [
     rating: 4.9,
     progress: 30,
     price: 49.99,
-    isFree: false,
+    isFree: true,
     tags: ['Python', 'Pandas', 'NumPy'],
     createdAt: '2024-02-20'
   },
@@ -90,7 +90,7 @@ export const courses = [
     rating: 4.8,
     progress: 45,
     price: 59.99,
-    isFree: false,
+    isFree: true,
     tags: ['Figma', 'UI Design', 'UX Research'],
     createdAt: '2024-02-28'
   },
@@ -218,6 +218,7 @@ export const quizzes = [
     courseId: '1',
     lessonId: '1',
     title: 'HTML Basics Quiz',
+    duration: 180,
     questions: [
       {
         id: '1',

@@ -1,19 +1,51 @@
+import { useState, useEffect } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
-import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowRight } from 'lucide-react'
+import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowRight, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
-import { quizzes, courses } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 export function QuizResultsPage() {
-  const { courseId } = useParams()
+  const { courseId, lessonId } = useParams()
   const location = useLocation()
-  const { answers = {}, questions: passedQuestions } = location.state || {}
+  
+  // State for backend data
+  const [resultData, setResultData] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const quiz = quizzes.find(q => String(q.courseId) === String(courseId)) || quizzes[0]
-  const questions = passedQuestions || quiz.questions
+  useEffect(() => {
+    const loadResults = async () => {
+      // 1. Check if we already have the data from navigation (state)
+      if (location.state?.answers && location.state?.questions) {
+        setResultData(location.state)
+        setIsLoading(false)
+        return
+      }
 
-  // Calculate score
+      // 2. If no state (user refreshed), fetch from the backend
+      try {
+        setIsLoading(true)
+        // Replace with your actual API call: e.g., fetch(`/api/quiz/results/${lessonId}`)
+        // const response = await api.get(`/quiz/results/${lessonId}`)
+        // setResultData(response.data)
+        
+        // Simulating a failed fetch for now since we're in dev
+        throw new Error("No active session found") 
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadResults()
+  }, [location.state, lessonId])
+
+  // Calculation Logic using resultData
+  const answers = resultData?.answers || {}
+  const questions = resultData?.questions || []
+  
   let correctCount = 0
   questions.forEach((q, index) => {
     if (answers[index] === q.correctAnswer) {
@@ -21,8 +53,44 @@ export function QuizResultsPage() {
     }
   })
 
-  const score = Math.round((correctCount / questions.length) * 100)
+  const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
   const passed = score >= 70
+
+  // Loading State
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // Error/No Data State
+  if (error || !resultData) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center space-y-6">
+          <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+            <AlertCircle className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">No Results Found</h2>
+            <p className="text-muted-foreground text-sm">
+              We couldn't find your quiz results. This happens if you refresh the page without saving.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Button asChild>
+              <Link to="/dashboard">Go to Dashboard</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>Try Quiz Again</Link>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 py-8">
@@ -99,9 +167,9 @@ export function QuizResultsPage() {
             </div>
           </div>
 
-          {/* Actions - Fixed Retry Link */}
+          {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to={`/learn/course/${courseId}/quiz/1`}>
+            <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>
               <Button variant="outline">
                 <RotateCcw className="h-4 w-4" />
                 Retry Quiz
@@ -116,7 +184,7 @@ export function QuizResultsPage() {
           </div>
         </Card>
 
-        {/* Question Review - Fixed Alignment and Spacing */}
+        {/* Question Review */}
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Review Answers</h2>
           
@@ -144,7 +212,7 @@ export function QuizResultsPage() {
                       Question {index + 1}: {question.question}
                     </p>
                     
-                    <div className="grid gap-3"> {/* Use grid for more consistent spacing */}
+                    <div className="grid gap-3">
                       {question.options.map((option, optIndex) => (
                         <div
                           key={optIndex}
@@ -164,7 +232,6 @@ export function QuizResultsPage() {
                             <span className="leading-relaxed">{option}</span>
                           </div>
 
-                          {/* Icon Alignment Fixed */}
                           <div className="shrink-0">
                             {optIndex === question.correctAnswer && (
                               <CheckCircle className="h-5 w-5 text-success" />

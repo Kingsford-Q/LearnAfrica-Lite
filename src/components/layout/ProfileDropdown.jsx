@@ -4,7 +4,7 @@ import { LayoutDashboard, GraduationCap, Settings, LogOut, ChevronDown, User, Sh
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
-export function ProfileDropdown() {
+export default function ProfileDropdown({ hideChevron = false }) {
   const [isOpen, setIsOpen] = useState(false)
   const [imgError, setImgError] = useState(false)
   const dropdownRef = useRef(null)
@@ -50,27 +50,39 @@ export function ProfileDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
+      
       {/* Trigger Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <div className="h-8 w-8 overflow-hidden rounded-full bg-muted shrink-0 border border-border">
-          {!imgError && user?.avatar ? (
-            <img
-              src={user.avatar}
-              alt={user.name || 'Profile'}
-              className="h-full w-full object-cover"
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
-              <User className="h-4 w-4" />
-            </div>
-          )}
-        </div>
-        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')} />
-      </button>
+<button
+  onClick={() => setIsOpen(!isOpen)}
+  className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+>
+  {/* Avatar Circle - UPDATED TO SHOW IMAGE */}
+  <div className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-input bg-background overflow-hidden transition-colors hover:bg-accent">
+    {!imgError && user?.avatar ? (
+      <img 
+        src={user.avatar} 
+        alt="" 
+        className="h-full w-full object-cover"
+        onError={() => setImgError(true)} 
+      />
+    ) : (
+      <User
+        className="h-5 w-5 text-muted-foreground"
+        strokeWidth={2.25}
+      />
+    )}
+  </div>
+
+  {/* Dropdown Chevron */}
+  {!hideChevron && (
+    <ChevronDown
+      className={cn(
+        'h-4 w-4 text-muted-foreground transition-transform duration-200',
+        isOpen && 'rotate-180'
+      )}
+    />
+  )}
+</button>
 
       {/* Dropdown Menu */}
       {isOpen && (

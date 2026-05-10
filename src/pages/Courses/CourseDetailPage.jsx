@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { 
   Clock, 
   Users, 
@@ -11,33 +11,92 @@ import {
   ChevronUp,
   Award,
   Globe,
-  Calendar
+  Calendar,
+  AlertCircle,
+  XCircle,
+  Lock,
+  Loader2 // Added for a cleaner loading UI
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import { CourseCard } from '@/components/course/CourseCard'
+// Assuming you have an AuthContext to manage global user state
+// import { useAuth } from '@/contexts/AuthContext' 
 import { courses, lessons } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
 export function CourseDetailPage() {
   const { courseId } = useParams()
+  const navigate = useNavigate()
   const [expandedSection, setExpandedSection] = useState(true)
+  
+  // --- BACKEND READY INTEGRATION ---
+  // In a real app, 'user' would contain 'enrolledCourses: [1, 2, 3]'
+  // const { user, isLoading: authLoading } = useAuth() 
+  const [isLoading, setIsLoading] = useState(true)
   const [isEnrolled, setIsEnrolled] = useState(false)
 
   const course = courses.find(c => String(c.id) === String(courseId));
+
+  useEffect(() => {
+    // Simulate fetching enrollment status from backend/auth context
+    const checkEnrollment = async () => {
+      setIsLoading(true)
+      // simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 600))
+      
+      // Real Logic: setIsEnrolled(user?.enrolledCourses?.includes(course.id))
+      setIsEnrolled(false) 
+      setIsLoading(false)
+    }
+
+    if (course) checkEnrollment()
+  }, [courseId, course])
+
   if (!course) {
-  return <div className="container py-20 text-center">Course not found</div>;
+    return <div className="container py-20 text-center font-bold">Course not found</div>;
   }
 
   const courseLessons = lessons.filter(l => l.courseId === course.id)
   const relatedCourses = courses.filter(c => c.id !== course.id && c.category === course.category).slice(0, 3)
 
+  // --- LOGIC IMPROVEMENTS START ---
+
+  // Progress logic
   const completedLessons = courseLessons.filter(l => l.isCompleted).length
   const progress = Math.round((completedLessons / courseLessons.length) * 100) || 0
+  const isCourseCompleted = progress === 100;
+
+  // Find the specific lesson to "Continue" to (first one not completed)
+  const nextToCompleteLesson = courseLessons.find(l => !l.isCompleted);
+  
+  // Logic for the Main Action Button
+  const resumeLessonId = isCourseCompleted 
+    ? courseLessons[0]?.id 
+    : (nextToCompleteLesson?.id || courseLessons[0]?.id);
+
+  const buttonText = isCourseCompleted ? "Review Course" : "Continue Learning";
+
+  // helper to check if a lesson should be locked
+  const isLessonLocked = (index) => {
+    if (!isEnrolled) return true; // Visitor: Everything locked
+    if (isCourseCompleted) return false; // Graduate: Everything unlocked
+    if (index === 0) return false; // First lesson: Always unlocked for students
+
+    // Student: Unlock only if the previous lesson is completed
+    return !courseLessons[index - 1]?.isCompleted;
+  };
+
+  // --- LOGIC IMPROVEMENTS END ---
 
   const handleEnroll = () => {
-    setIsEnrolled(true)
+    if (course.isFree) {
+      // Here you would normally call your backend: await api.enroll(course.id)
+      setIsEnrolled(true)
+    } else if (course.paymentLink) {
+      window.location.href = course.paymentLink;
+    }
   }
 
   return (
@@ -84,7 +143,7 @@ export function CourseDetailPage() {
 
               {/* Instructor */}
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-muted overflow-hidden">
+                <div className="h-12 w-12 rounded-full bg-muted overflow-hidden border">
                   <img src={course.instructorAvatar} alt={course.instructor} className="h-full w-full object-cover" />
                 </div>
                 <div>
@@ -96,7 +155,7 @@ export function CourseDetailPage() {
 
             {/* Enrollment Card */}
             <div className="lg:row-start-1">
-              <Card className="sticky top-24 overflow-hidden">
+              <Card className="sticky top-24 overflow-hidden border-2">
                 <div className="aspect-video bg-muted relative">
                   <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-background/50">
@@ -106,20 +165,26 @@ export function CourseDetailPage() {
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  {isEnrolled ? (
+                  {/* Handling Backend Loading State to prevent UI flickering */}
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-4 space-y-2">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <p className="text-xs text-muted-foreground">Checking enrollment...</p>
+                    </div>
+                  ) : isEnrolled ? (
                     <>
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-sm font-semibold">
                           <span>Your Progress</span>
-                          <span className="font-medium">{progress}%</span>
+                          <span>{progress}%</span>
                         </div>
                         <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
                       </div>
-                      <Link to={`/learn/course/${course.id}/lesson/${courseLessons[0]?.id || '1'}`}>
+                      <Link to={`/learn/course/${course.id}/lesson/${resumeLessonId}`}>
                         <Button className="w-full" size="lg">
-                          Continue Learning
+                          {buttonText}
                         </Button>
                       </Link>
                     </>
@@ -127,17 +192,30 @@ export function CourseDetailPage() {
                     <>
                       <div className="flex items-baseline gap-2">
                         {course.isFree ? (
-                          <span className="text-3xl font-bold">Free</span>
+                          <span className="text-xl md:text-2xl font-bold">Free</span>
                         ) : (
                           <>
-                            <span className="text-3xl font-bold">${course.price}</span>
+                            <span className="text-xl md:text-2xl font-bold">${course.price}</span>
                             <span className="text-lg text-muted-foreground line-through">${(course.price * 1.5).toFixed(2)}</span>
                           </>
                         )}
                       </div>
-                      <Button className="w-full" size="lg" onClick={handleEnroll}>
-                        {course.isFree ? 'Enroll for Free' : 'Enroll Now'}
-                      </Button>
+
+                      {!course.isFree && !course.paymentLink ? (
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20">
+                            <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                            <p>Direct enrollment is currently unavailable for this course.</p>
+                          </div>
+                          <Button className="w-full" variant="primary" onClick={() => navigate('/courses')}>
+                            Browse Other Courses
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button className="w-full" size="lg" onClick={handleEnroll}>
+                          {course.isFree ? 'Enroll for Free' : 'Enroll Now'}
+                        </Button>
+                      )}
                     </>
                   )}
 
@@ -148,17 +226,17 @@ export function CourseDetailPage() {
                         <Play className="h-4 w-4 text-primary" />
                         {course.lessons} video lessons
                       </li>
-                      <li className="flex items-center gap-2">
+                      <li className={cn("flex items-center gap-2", !course.hasResources && "opacity-50")}>
                         <BookOpen className="h-4 w-4 text-primary" />
-                        Downloadable resources
+                        {course.hasResources ? "Downloadable resources" : "No downloadable resources"}
                       </li>
-                      <li className="flex items-center gap-2">
+                      <li className={cn("flex items-center gap-2", !course.hasCertificate && "opacity-50")}>
                         <Award className="h-4 w-4 text-primary" />
-                        Certificate of completion
+                        {course.hasCertificate ? "Certificate of completion" : "No certificate included"}
                       </li>
-                      <li className="flex items-center gap-2">
+                      <li className={cn("flex items-center gap-2", !course.hasLifetimeAccess && "opacity-50")}>
                         <Calendar className="h-4 w-4 text-primary" />
-                        Lifetime access
+                        {course.hasLifetimeAccess ? "Lifetime access" : "Limited time access"}
                       </li>
                     </ul>
                   </div>
@@ -173,32 +251,33 @@ export function CourseDetailPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
-            {/* What you'll learn */}
             <Card className="p-6">
-              <h2 className="text-xl font-bold mb-4">What you&apos;ll learn</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {['Build modern responsive websites from scratch',
-                  'Master HTML5 semantic elements and best practices',
-                  'Style with CSS including Flexbox and Grid',
-                  'Add interactivity with JavaScript fundamentals',
-                  'Understand web development workflows',
-                  'Deploy your projects to the web'
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-sm">{item}</span>
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-lg md:text-xl font-bold mb-4">What you&apos;ll learn</h2>
+              {course.whatYouLearn && course.whatYouLearn.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {course.whatYouLearn.map((item, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-muted-foreground bg-muted/30 p-4 rounded-lg">
+                  <AlertCircle className="h-5 w-5" />
+                  <p className="text-sm italic">Learning objectives have not been listed for this course yet.</p>
+                </div>
+              )}
             </Card>
 
-            {/* Course Curriculum */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Course Curriculum</h2>
-                <span className="text-sm text-muted-foreground">
-                  {courseLessons.length} lessons • {completedLessons} completed
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1 sm:gap-4">
+                <h2 className="text-lg md:text-xl font-bold tracking-tight">Course Curriculum</h2>
+                <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
+                  <span>{courseLessons.length} lessons</span>
+                  <span className="text-muted-foreground/30">•</span>
+                  <span>{completedLessons} completed</span>
+                </div>
               </div>
 
               <Card>
@@ -220,89 +299,85 @@ export function CourseDetailPage() {
 
                 {expandedSection && (
                   <div className="border-t">
-                    {courseLessons.map((lesson, index) => (
-                      <Link
-                        key={lesson.id}
-                        to={isEnrolled ? `/lessons/${lesson.id}` : '#'}
-                        className={cn(
-                          'flex items-center gap-4 p-4 border-b last:border-b-0 transition-colors',
-                          isEnrolled ? 'hover:bg-accent/50' : 'opacity-75 cursor-not-allowed'
-                        )}
-                      >
-                        <div className={cn(
-                          'flex h-8 w-8 items-center justify-center rounded-full shrink-0',
-                          lesson.isCompleted ? 'bg-success text-primary-foreground' : 'bg-muted'
-                        )}>
-                          {lesson.isCompleted ? (
-                            <CheckCircle className="h-4 w-4" />
-                          ) : (
-                            <span className="text-sm font-medium">{index + 1}</span>
+                    {courseLessons.map((lesson, index) => {
+                      const locked = isLessonLocked(index);
+                      
+                      return (
+                        <Link
+                          key={lesson.id}
+                          to={!locked ? `/learn/course/${course.id}/lesson/${lesson.id}` : '#'}
+                          className={cn(
+                            'flex items-center gap-4 p-4 border-b last:border-b-0 transition-colors',
+                            locked ? 'opacity-50 cursor-not-allowed bg-muted/20' : 'hover:bg-accent/50'
                           )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{lesson.title}</p>
-                          <p className="text-sm text-muted-foreground">{lesson.duration}</p>
-                        </div>
-                        {!isEnrolled && <Play className="h-4 w-4 text-muted-foreground" />}
-                      </Link>
-                    ))}
+                          onClick={(e) => locked && e.preventDefault()}
+                        >
+                          <div className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-full shrink-0',
+                            lesson.isCompleted ? 'bg-success text-primary-foreground' : 'bg-muted'
+                          )}>
+                            {lesson.isCompleted ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : locked ? (
+                              <Lock className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <span className="text-sm font-medium">{index + 1}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={cn("font-medium truncate", locked && "text-muted-foreground")}>
+                              {lesson.title}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{lesson.duration}</p>
+                          </div>
+                          {locked && <Lock className="h-4 w-4 text-muted-foreground/50" />}
+                          {!locked && !lesson.isCompleted && <Play className="h-4 w-4 text-primary animate-pulse" />}
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </Card>
             </div>
 
-            {/* Instructor */}
             <Card className="p-5 md:p-8">
-  <h2 className="text-lg md:text-xl font-bold mb-6 text-center md:text-left">Your Instructor</h2>
-  
-  <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-    {/* Avatar - Centered on mobile, left-aligned on desktop */}
-    <div className="shrink-0">
-      <div className="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-primary/10 overflow-hidden ring-4 ring-background shadow-md">
-        <img 
-          src={course.instructorAvatar} 
-          alt={course.instructor} 
-          className="h-full w-full object-cover" 
-        />
-      </div>
-    </div>
-
-    {/* Info Content - Center text on mobile for better balance */}
-    <div className="flex-1 space-y-4 text-center md:text-left">
-      <div>
-        <h3 className="text-xl md:text-2xl font-bold tracking-tight">{course.instructor}</h3>
-        <p className="text-primary font-medium text-sm md:text-base">Senior Software Engineer & Educator</p>
-      </div>
-
-      {/* Stats - Grid on mobile, Flex on desktop */}
-      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center md:justify-start gap-3 md:gap-6">
-        <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">
-          <Star className="h-4 w-4 fill-warning text-warning" />
-          <span className="text-xs md:text-sm font-semibold">4.9 Rating</span>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs md:text-sm font-semibold">12k+ Students</span>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent col-span-2 sm:col-span-1">
-          <BookOpen className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs md:text-sm font-semibold">8 Courses</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {/* Bio - Better spacing for touch targets */}
-  <div className="mt-6 pt-6 border-t border-border">
-    <p className="text-sm md:text-base text-muted-foreground leading-relaxed text-center md:text-left">
-      Experienced software engineer with over 10 years in the industry. 
-      Passionate about teaching and helping others achieve their goals in tech.
-    </p>
-  </div>
-</Card>
+              <h2 className="text-lg md:text-xl font-bold mb-6 text-center md:text-left">Your Instructor</h2>
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <div className="shrink-0">
+                  <div className="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-primary/10 overflow-hidden ring-4 ring-background shadow-md">
+                    <img src={course.instructorAvatar} alt={course.instructor} className="h-full w-full object-cover" />
+                  </div>
+                </div>
+                <div className="flex-1 space-y-4 text-center md:text-left">
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-bold tracking-tight">{course.instructor}</h3>
+                    <p className="text-primary font-medium text-sm md:text-base">Senior Software Engineer & Educator</p>
+                  </div>
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center md:justify-start gap-3 md:gap-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">
+                      <Star className="h-4 w-4 fill-warning text-warning" />
+                      <span className="text-xs md:text-sm font-semibold">4.9 Rating</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs md:text-sm font-semibold">12k+ Students</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent col-span-2 sm:col-span-1">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs md:text-sm font-semibold">8 Courses</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed text-center md:text-left">
+                  Experienced software engineer with over 10 years in the industry. 
+                  Passionate about teaching and helping others achieve their goals in tech.
+                </p>
+              </div>
+            </Card>
           </div>
 
-          {/* Related Courses */}
           {relatedCourses.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold">Related Courses</h2>

@@ -158,9 +158,9 @@ export function SignupPage() {
             id="terms"
             checked={acceptTerms}
             onChange={(e) => setAcceptTerms(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
+            className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary "
           />
-          <label htmlFor="terms" className="text-sm text-muted-foreground mt-[5px]">
+          <label htmlFor="terms" className="text-sm text-muted-foreground mt-[5px] text-center">
             I agree to the{' '}
             <Link to="/" className="text-primary hover:underline">Terms of Service</Link>
             {' '}and{' '}

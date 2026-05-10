@@ -174,7 +174,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-center">
             &copy; {new Date().getFullYear()} LearnAfrica Lite. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">Made with love for African learners</p>

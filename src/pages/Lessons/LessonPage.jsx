@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -10,257 +10,462 @@ import {
   BookOpen,
   Clock,
   Menu,
-  X
+  X,
+  Save,
+  Lock 
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { lessons, courses } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 
+const DiscussionForum = lazy(() => Promise.resolve({ default: () => <div className="p-12 text-center italic">Forum Loading...</div> }));
+
 export function LessonPage() {
   const { courseId, lessonId } = useParams()
+  const navigate = useNavigate()
   const [isCompleted, setIsCompleted] = useState(false)
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeTab, setActiveTab] = useState('content')
+  const [userNotes, setUserNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'success'
 
-  // ID comparison normalization
-  const lesson = lessons.find(l => String(l.id) === String(lessonId)) || lessons[0]
-  const courseLessons = lessons.filter(l => String(l.courseId) === String(courseId))
-  const course = courses.find(c => String(c.id) === String(courseId))
-  const currentIndex = courseLessons.findIndex(l => String(l.id) === String(lesson.id))
+  // 1. Find the course
+  const course = useMemo(() => courses.find(c => String(c.id) === String(courseId)), [courseId])
   
-  const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null
-  const nextLesson = currentIndex < courseLessons.length - 1 ? courseLessons[currentIndex + 1] : null
+  // 2. Filter lessons for this course
+  const courseLessons = useMemo(() => 
+    lessons.filter(l => String(l.courseId) === String(courseId)), 
+  [courseId])
+  
+  // 3. Find the specific lesson
+  const lesson = useMemo(() => 
+    courseLessons.find(l => String(l.id) === String(lessonId)), 
+  [courseLessons, lessonId])
 
-  const handleMarkComplete = () => {
-    setIsCompleted(true)
+  // 4. Calculate indexes safely
+  const currentIndex = lesson ? courseLessons.findIndex(l => String(l.id) === String(lesson.id)) : -1
+  const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null
+  const nextLesson = currentIndex < courseLessons.length - 1 && currentIndex !== -1 ? courseLessons[currentIndex + 1] : null
+
+  // 5. REVISED GUARD LOGIC
+  const firstIncompleteIndex = courseLessons.findIndex(l => !l.isCompleted)
+  const isAccessingIllegally = firstIncompleteIndex !== -1 && currentIndex > firstIncompleteIndex
+
+  useEffect(() => {
+    // Stop if the course has no lessons
+    if (courseLessons.length === 0) return;
+
+    if (!lesson) {
+      const targetIndex = firstIncompleteIndex === -1 ? 0 : firstIncompleteIndex;
+      const fallbackLesson = courseLessons[targetIndex];
+      
+      if (fallbackLesson) {
+        navigate(`/learn/course/${courseId}/lesson/${fallbackLesson.id}`, { replace: true });
+      }
+      return;
+    }
+
+    if (isAccessingIllegally) {
+      const correctLesson = courseLessons[firstIncompleteIndex];
+      navigate(`/learn/course/${courseId}/lesson/${correctLesson.id}`, { replace: true });
+    }
+
+    if (!lessonId) return;
+
+    // Load from Local Storage first (Immediate)
+    const savedNotes = localStorage.getItem(`notes_${courseId}_${lessonId}`);
+    if (savedNotes) {
+      setUserNotes(savedNotes);
+    } else {
+      // Load from Backend (Ready for API)
+      const fetchNotesFromBackend = async () => {
+        try {
+          // const response = await api.get(`/notes/${courseId}/${lessonId}`);
+          // if (response.data) setUserNotes(response.data.content);
+          setUserNotes(''); // Reset if no local or backend data
+        } catch (err) {
+          console.error("Failed to load backend notes", err);
+        }
+      };
+      fetchNotesFromBackend();
+    }
+
+    setIsCompleted(false);
+  }, [lessonId, isAccessingIllegally, navigate, courseId, courseLessons, firstIncompleteIndex, lesson]);
+
+  // UI GUARDS
+  if (!course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h2 className="text-xl font-bold">Course Not Found</h2>
+          <Button variant="ghost" onClick={() => navigate('/courses')} className="mt-4">
+            Back to Catalog
+          </Button>
+        </div>
+      </div>
+    )
   }
 
+  const handleSaveNotes = async () => {
+  setSaveStatus('saving');
+  try {
+    localStorage.setItem(`notes_${courseId}_${lessonId}`, userNotes);
+    
+    // Simulate backend delay or actual API call
+    await new Promise(resolve => setTimeout(resolve, 800)); 
+    
+    setSaveStatus('success');
+
+    // Reset status back to idle after 3 seconds
+    setTimeout(() => {
+      setSaveStatus('idle');
+    }, 3000);
+  } catch (error) {
+    console.error("Save failed", error);
+    setSaveStatus('idle');
+  }
+};
+
+  if (courseLessons.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
+        <header className="border-b border-border bg-background/95 backdrop-blur p-4">
+          <Link to="/courses" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <ChevronLeft className="h-4 w-4" />
+            Back to Courses
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md w-full p-10 text-center border-dashed bg-muted/20 backdrop-blur-sm">
+            <div className="relative mx-auto w-20 h-20 mb-6">
+              <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse" />
+              <div className="relative flex items-center justify-center h-full w-full bg-background border border-border rounded-full">
+                <BookOpen className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-black tracking-tight mb-3">Curriculum Coming Soon</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+              Lessons for <span className="text-foreground font-bold">{course.title}</span> are currently being finalized.
+            </p>
+            <div className="space-y-3">
+              <Button variant="primary" className="w-full font-bold uppercase tracking-widest text-xs h-12" onClick={() => navigate('/courses')}>
+                Browse Other Courses
+              </Button>
+            </div>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
+  if (!lesson) return null;
+
+  const isLastLesson = currentIndex === courseLessons.length - 1
+  const currentLessonFinished = lesson.isCompleted || isCompleted
+  const showQuizButton = isLastLesson && currentLessonFinished
+
+  const handleMarkComplete = async () => {
+    setIsCompleted(true)
+    if (lesson) lesson.isCompleted = true 
+  }
+
+  const navBtnClass = "h-11 px-3 sm:px-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center justify-center gap-2 shrink-0"
+  const takeQuizClass = "h-11 px-4 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md w-full sm:w-auto"
+
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top Bar - Z-index set to 30 to stay below mobile sidebar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
-        <div className="flex h-14 items-center justify-between px-4">
+    <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
             <Link 
               to={`/courses/${courseId}`}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to Course</span>
             </Link>
+            <div className="hidden md:block h-4 w-px bg-border" />
             <div className="hidden md:block">
-              <p className="text-sm font-medium truncate max-w-xs">{course?.title}</p>
+              <p className="text-sm font-semibold truncate max-w-xs">{course?.title}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold tabular-nums text-muted-foreground bg-muted px-2 py-1 rounded">
               {currentIndex + 1} / {courseLessons.length}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSidebar(true)}
-              className="lg:hidden"
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowSidebar(true)} className="lg:hidden h-9 w-9 p-0">
               <Menu className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-1">
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
-          {/* Video Player */}
-          <div className="aspect-video bg-foreground relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-background">
-                <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-full bg-background/20 backdrop-blur mb-4">
-                  <Play className="h-10 w-10 ml-1 text-background" />
+      <div className="flex flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto outline-none">
+          <div className="aspect-video w-full bg-slate-950 relative shadow-inner">
+            <div className="absolute inset-0 flex items-center justify-center text-center p-6">
+              <div className="group cursor-pointer">
+                <div className="flex h-16 w-16 sm:h-20 sm:w-20 mx-auto items-center justify-center rounded-full bg-primary/20 backdrop-blur-md group-hover:scale-110 transition-transform mb-4 border border-white/10">
+                  <Play className="h-8 w-8 sm:h-10 sm:w-10 ml-1 fill-white text-white" />
                 </div>
-                <p className="text-lg font-medium">Video Lesson</p>
-                <p className="text-sm opacity-80">{lesson.duration}</p>
+                <p className="text-base sm:text-lg font-bold text-white tracking-tight">Lesson Video</p>
+                <p className="text-xs font-medium text-white/60 mt-1 uppercase tracking-widest">{lesson.duration}</p>
               </div>
             </div>
           </div>
 
-          <div className="container mx-auto max-w-4xl px-4 py-8">
-            {/* Lesson Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                <Clock className="h-4 w-4" />
-                <span>{lesson.duration}</span>
-                {(lesson.isCompleted || isCompleted) && (
-                  <span className="flex items-center gap-1 text-success ml-4">
-                    <CheckCircle className="h-4 w-4" />
+          <div className="container mx-auto max-w-4xl px-4 py-8 sm:py-12">
+            <div className="mb-10">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{lesson.duration}</span>
+                </div>
+                {currentLessonFinished && (
+                  <span className="flex items-center gap-1.5 text-success">
+                    <CheckCircle className="h-3.5 w-3.5" />
                     Completed
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl font-bold">{lesson.title}</h1>
-              <p className="text-muted-foreground mt-2">{lesson.description}</p>
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-4">{lesson.title}</h1>
+              <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-3xl">{lesson.description}</p>
             </div>
 
-            {/* Tabs */}
-            <div className="border-b border-border mb-6">
-              <div className="flex gap-6">
-                {[
-                  { id: 'content', label: 'Content', icon: FileText },
-                  { id: 'notes', label: 'Notes', icon: BookOpen },
-                  { id: 'discussion', label: 'Discussion', icon: MessageSquare }
-                ].map(tab => (
+            <div className="border-b border-border mb-8 w-full max-w-full overflow-hidden">
+              <div className="flex items-center gap-4 sm:gap-10 overflow-x-auto no-scrollbar pb-px touch-pan-x">
+                {['content', 'notes', 'discussion'].map(id => (
                   <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    key={id}
+                    onClick={() => setActiveTab(id)}
                     className={cn(
-                      'flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors',
-                      activeTab === tab.id
-                        ? 'border-primary text-primary'
+                      'flex items-center gap-2 pb-4 text-sm font-bold transition-all whitespace-nowrap capitalize border-b-2 tracking-wide shrink-0',
+                      activeTab === id 
+                        ? 'border-primary text-primary translate-y-[1px]' 
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    <tab.icon className="h-4 w-4" />
-                    {tab.label}
+                    {id === 'content' && <FileText className="h-4 w-4 shrink-0" />}
+                    {id === 'notes' && <BookOpen className="h-4 w-4 shrink-0" />}
+                    {id === 'discussion' && <MessageSquare className="h-4 w-4 shrink-0" />}
+                    <span>{id}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Tab Content */}
-            {activeTab === 'content' && (
-              <div 
-                className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: lesson.content }}
-              />
-            )}
-
-            {activeTab === 'notes' && (
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4">Your Notes</h3>
-                <textarea
-                  placeholder="Take notes for this lesson..."
-                  className="w-full min-h-[200px] rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+            <div className="min-h-[300px] leading-relaxed">
+              {activeTab === 'content' && (
+                <div 
+                  className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-p:leading-7" 
+                  dangerouslySetInnerHTML={{ __html: lesson.content }} 
                 />
-                <Button className="mt-4" size="sm">Save Notes</Button>
-              </Card>
-            )}
-
-            {activeTab === 'discussion' && (
-              <Card className="p-6 text-center">
-                <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-semibold mb-2">Join the Discussion</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Ask questions and engage with other learners
-                </p>
-                <Button variant="outline">Start a Discussion</Button>
-              </Card>
-            )}
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-12 pt-6 border-t">
-              {prevLesson ? (
-                <Link to={`/learn/course/${courseId}/lesson/${prevLesson.id}`}>
-                  <Button variant="outline">
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous Lesson
-                  </Button>
-                </Link>
-              ) : <div />}
-
-              {!lesson.isCompleted && !isCompleted ? (
-                <Button onClick={handleMarkComplete}>
-                  <CheckCircle className="h-4 w-4" />
-                  Mark as Complete
-                </Button>
-              ) : nextLesson ? (
-                <Link to={`/learn/course/${courseId}/lesson/${nextLesson.id}`}>
-                  <Button>
-                    Next Lesson
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              ) : (
-                <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>
-                  <Button>
-                    Take Quiz
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </Link>
               )}
+              {activeTab === 'notes' && (
+                <Card className="p-6 sm:p-8 border-dashed bg-muted/30 relative overflow-hidden">
+                  
+                  {/* Header Row: Title and Success Message Aligned */}
+                  <div className="flex items-center justify-between mb-4 gap-4">
+                    <h3 className="font-bold text-lg tracking-tight text-foreground flex items-center gap-2 shrink-0">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Quick Notes
+                    </h3>
+
+                    {/* Success Message: Icon-only on mobile, Text + Icon on desktop */}
+                    <div className={cn(
+                      "flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-success/10 border border-success/20 transition-all duration-500",
+                      saveStatus === 'success' ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                    )}>
+                      <CheckCircle className="h-3.5 w-3.5 text-success" />
+                      {/* 'hidden sm:inline' ensures the text disappears on small screens */}
+                      <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-tight text-success whitespace-nowrap">
+                        Saved to Cloud
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="relative group">
+                    <textarea 
+                      value={userNotes}
+                      onChange={(e) => {
+                        setUserNotes(e.target.value);
+                        if (saveStatus === 'success') setSaveStatus('idle');
+                      }}
+                      placeholder="Type your study notes here..." 
+                      className="w-full min-h-[220px] rounded-xl border border-input bg-background/50 px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-all mb-4 placeholder:text-muted-foreground/50" 
+                    />
+                    
+                    {/* Logic for when the user hasn't typed anything */}
+                    {!userNotes.trim() && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-20 transition-opacity group-focus-within:opacity-0">
+                        <BookOpen className="h-8 w-8 mb-2" />
+                        <p className="text-[10px] font-bold uppercase tracking-widest">Empty Workspace</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-center items-center">
+                    <Button 
+                      onClick={handleSaveNotes}
+                      // Disabled if saving or if notes are empty
+                      disabled={saveStatus === 'saving' || !userNotes.trim()}
+                      variant={saveStatus === 'success' ? "outline" : "primary"}
+                      className={cn(
+                        "font-bold uppercase tracking-wider text-[10px] sm:text-xs h-10 px-8 flex items-center gap-2 transition-all duration-300",
+                        saveStatus === 'success' && "border-success text-success hover:bg-success/5",
+                        !userNotes.trim() && "opacity-50 cursor-not-allowed grayscale"
+                      )}
+                    >
+                      {saveStatus === 'saving' ? (
+                        <>
+                          <div className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          <span>Syncing...</span>
+                        </>
+                      ) : saveStatus === 'success' ? (
+                        <>
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          <span>Changes Saved</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-3.5 w-3.5" />
+                          <span>Save Session Notes</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Card>
+              )}
+              {activeTab === 'discussion' && (
+                <Suspense fallback={<div className="p-12 text-center">Loading Forum...</div>}>
+                   <Card className="p-12 text-center border-dashed bg-muted/30">
+                    <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">Community Discussion</h3>
+                    <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">Have a question about this lesson?</p>
+                    <Link to = "#">
+                      <Button variant="primary" size="sm" className="font-bold uppercase tracking-tighter">Enter Forum</Button>
+                    </Link>
+                  </Card>
+                </Suspense>
+              )}
+            </div>
+
+            <div className="mt-16 pt-8 border-t border-border">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 flex justify-start">
+                  {prevLesson && (
+                    <Link to={`/learn/course/${courseId}/lesson/${prevLesson.id}`}>
+                      <Button variant="outline" className={navBtnClass}>
+                        <ChevronLeft className="h-5 w-5" />
+                        <span className="hidden sm:inline">Previous</span>
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+
+                <div className="flex-1 flex justify-center">
+                  {!currentLessonFinished ? (
+                    <Button 
+                      variant="primary" 
+                      onClick={handleMarkComplete} 
+                      className="w-full max-w-[170px] h-11 font-bold uppercase tracking-widest text-[10px] sm:text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle className="h-4 w-4 shrink-0" />
+                      <span>Mark Complete</span>
+                    </Button>
+                  ) : (
+                    <div className={cn(
+                        "px-4 py-2 rounded-full bg-success/10 border border-success/20 flex items-center gap-2",
+                        isLastLesson && "hidden sm:flex"
+                    )}>
+                      <CheckCircle className="h-3.5 w-3.5 text-success" />
+                      <span className="text-[10px] font-black uppercase tracking-tighter text-success">Finished</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 flex justify-end">
+                  {showQuizButton ? (
+                    <Link to={`/learn/course/${courseId}/quiz/${lessonId}`} className="w-full sm:w-auto">
+                      <Button className={takeQuizClass}>
+                        <span className="text-xs sm:text-sm">Take Quiz</span>
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link 
+                      to={currentLessonFinished && nextLesson ? `/learn/course/${courseId}/lesson/${nextLesson.id}` : '#'} 
+                      onClick={(e) => {
+                        if (!currentLessonFinished || !nextLesson) e.preventDefault();
+                      }}
+                      className={cn(!currentLessonFinished && "cursor-not-allowed")}
+                    >
+                      <Button 
+                        variant="outline" 
+                        className={navBtnClass} 
+                        disabled={!currentLessonFinished}
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </main>
 
-        {/* Sidebar - Higher Z-index (50) to prevent overlap from image_7495fb.png */}
-        <aside
-          className={cn(
-            'fixed inset-y-0 right-0 z-50 w-full sm:w-80 border-l border-border bg-card transition-transform duration-300 lg:static lg:z-30 lg:translate-x-0',
-            showSidebar ? 'translate-x-0' : 'translate-x-full'
-          )}
-        >
-          <div className="flex flex-col h-full">
-            {/* Sidebar Header (Visible only on mobile/medium) */}
-            <div className="flex items-center justify-between p-4 border-b lg:hidden">
-              <h3 className="font-semibold">Course Content</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowSidebar(false)}>
-                <X className="h-5 w-5" />
-              </Button>
+        <aside className={cn('fixed inset-y-0 right-0 z-40 lg:z-30 w-full sm:w-80 border-l border-border bg-card transition-transform duration-300 lg:static lg:translate-x-0', showSidebar ? 'translate-x-0' : 'translate-x-full')}>
+          <div className="flex flex-col h-full shadow-2xl lg:shadow-none">
+            <div className="flex items-center justify-between p-5 border-b lg:hidden">
+              <h3 className="font-bold tracking-tight">Course Content</h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowSidebar(false)} className="h-8 w-8 p-0"><X className="h-5 w-5" /></Button>
             </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <h3 className="font-black text-[10px] uppercase tracking-[0.2em] px-2 hidden lg:block text-muted-foreground">Lessons Plan</h3>
+              <div className="space-y-1.5">
+                {courseLessons.map((l, index) => {
+                  const isLocked = courseLessons.slice(0, index).some(prev => !prev.isCompleted);
+                  const isCurrent = String(l.id) === String(lesson.id);
 
-            <div className="flex-1 overflow-y-auto p-4">
-              <h3 className="font-semibold mb-4 hidden lg:block">Course Content</h3>
-              <div className="space-y-1">
-                {courseLessons.map((l, index) => (
-                  <Link
-                    key={l.id}
-                    to={`/learn/course/${courseId}/lesson/${l.id}`}
-                    onClick={() => setShowSidebar(false)}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg p-3 text-sm transition-colors',
-                      String(l.id) === String(lesson.id)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent'
-                    )}
-                  >
-                    <div
+                  return (
+                    <Link
+                      key={l.id}
+                      to={isLocked ? '#' : `/learn/course/${courseId}/lesson/${l.id}`}
+                      onClick={(e) => { 
+                        if(isLocked) e.preventDefault();
+                        else { setShowSidebar(false); }
+                      }}
                       className={cn(
-                        'flex h-7 w-7 items-center justify-center rounded-full shrink-0 text-xs font-medium',
-                        l.isCompleted || (String(l.id) === String(lesson.id) && isCompleted)
-                          ? 'bg-success text-primary-foreground'
-                          : String(l.id) === String(lesson.id)
-                          ? 'bg-primary-foreground text-primary'
-                          : 'bg-muted'
+                        'flex items-center gap-3 rounded-xl p-3 text-sm transition-all group', 
+                        isCurrent ? 'bg-primary text-primary-foreground shadow-lg' : isLocked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent'
                       )}
                     >
-                      {l.isCompleted || (String(l.id) === String(lesson.id) && isCompleted) ? (
-                        <CheckCircle className="h-4 w-4" />
-                      ) : index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium">{l.title}</p>
-                      <p className={cn(
-                        'text-xs',
-                        String(l.id) === String(lesson.id) ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                      <div className={cn(
+                        'flex h-7 w-7 items-center justify-center rounded-full shrink-0 text-xs font-black transition-colors', 
+                        l.isCompleted ? 'bg-success text-white' : isCurrent ? 'bg-white text-primary' : 'bg-muted group-hover:bg-background'
                       )}>
-                        {l.duration}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+                        {l.isCompleted ? <CheckCircle className="h-4 w-4 stroke-[3px]" /> : isLocked ? <Lock className="h-3.5 w-3.5" /> : index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-bold tracking-tight leading-tight">{l.title}</p>
+                        <p className={cn('text-[10px] mt-0.5 font-medium opacity-70', isCurrent ? 'text-primary-foreground' : 'text-muted-foreground')}>{l.duration}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
         </aside>
-
-        {/* Sidebar Overlay */}
-        {showSidebar && (
-          <div
-            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-            onClick={() => setShowSidebar(false)}
-          />
-        )}
+        {showSidebar && <div className="fixed inset-0 z-10 bg-background/60 backdrop-blur-sm lg:hidden" onClick={() => setShowSidebar(false)} />}
       </div>
     </div>
   )

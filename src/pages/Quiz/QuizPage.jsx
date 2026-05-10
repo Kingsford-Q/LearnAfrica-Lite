@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
@@ -13,14 +13,64 @@ export function QuizPage() {
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState({})
   const [isSubmitted, setIsSubmitted] = useState(false)
+  
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState(null)
 
   // Data fetching logic
-  const quiz = quizzes.find(q => String(q.courseId) === String(courseId)) || quizzes[0]
-  const course = courses.find(c => String(c.id) === String(quiz.courseId))
-  const questions = quiz.questions
+  const quiz = useMemo(() => 
+    quizzes.find(q => String(q.courseId) === String(courseId)) || quizzes[0],
+  [courseId])
 
-  // Fix: Exit path now leads back to the specific lesson
+  const course = useMemo(() => 
+    courses.find(c => String(c.id) === String(quiz?.courseId)),
+  [quiz?.courseId])
+
+  const questions = quiz?.questions || []
   const exitPath = `/learn/course/${courseId}/lesson/${lessonId}`
+
+  // Initialize Timer based on quiz.duration
+  useEffect(() => {
+    if (quiz?.duration && quiz.duration !== "No limit") {
+      const minutes = parseInt(quiz.duration);
+      if (!isNaN(minutes)) {
+        setTimeLeft(minutes * 60);
+      }
+    }
+  }, [quiz]);
+
+  // Timer countdown logic
+  useEffect(() => {
+    if (timeLeft === null || isSubmitted) return;
+
+    if (timeLeft <= 0) {
+      handleSubmit();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, isSubmitted]);
+
+  // Format time display (MM:SS)
+  const formatTime = (seconds) => {
+  if (seconds === null || seconds < 0) return "00:00";
+
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  // If the quiz is an hour or longer, show H:MM:SS
+  if (hrs > 0) {
+    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Otherwise, stick to MM:SS
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleSelectAnswer = (answerIndex) => {
     setAnswers(prev => ({
@@ -42,33 +92,58 @@ export function QuizPage() {
   }
 
   const handleSubmit = () => {
+    if (isSubmitted) return;
     setIsSubmitted(true)
-    // Fix: Results path follows consistent lessonId routing
+    
+    // Attempt navigation to results page
     navigate(`/learn/course/${courseId}/quiz/${lessonId}/results`, {
       state: {
         answers,
         questions,
         quizTitle: quiz.title,
-        exitPath // Passing this so results page can also return to lesson
+        exitPath 
       }
     })
   }
 
   const answeredCount = Object.keys(answers).length
-  const progress = (answeredCount / questions.length) * 100
+  const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0
   const canSubmit = answeredCount === questions.length
+
+  if (!quiz) return null;
+
+  // Fallback UI if results page route is missing or navigation is pending
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-8 text-center space-y-6 shadow-xl">
+          <div className="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center">
+            <CheckCircle2 className="w-10 h-10 text-success" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold">Quiz Submitted!</h2>
+            <p className="text-muted-foreground text-sm">
+              Your answers for <strong>{quiz.title}</strong> have been recorded.
+            </p>
+          </div>
+          <Button asChild className="w-full">
+            <Link to={exitPath}>Return to Lesson</Link>
+          </Button>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col">
-      {/* Header - Optimized for mobile stacking */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
+      <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="flex h-auto min-h-[56px] items-center justify-between px-4 py-2">
           <Link
             to={exitPath}
             className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span>Exit</span>
+            <span className = "hidden md:block">Exit</span>
           </Link>
 
           <div className="text-center px-2">
@@ -80,13 +155,17 @@ export function QuizPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] sm:text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground">
+          <div className={cn(
+            "flex items-center gap-2 text-[10px] sm:text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground",
+            timeLeft !== null && timeLeft < 60 && "text-destructive bg-destructive/10 animate-pulse"
+          )}>
             <Clock className="h-3.5 w-3.5" />
-            <span className="whitespace-nowrap">No limit</span>
+            <span className="whitespace-nowrap font-mono">
+              {timeLeft !== null ? formatTime(timeLeft) : "No limit"}
+            </span>
           </div>
         </div>
         
-        {/* Progress Bar */}
         <div className="h-1 w-full bg-muted">
           <div 
             className="h-full bg-primary transition-all duration-500 ease-out" 
@@ -96,7 +175,6 @@ export function QuizPage() {
       </header>
 
       <div className="container mx-auto max-w-3xl px-4 py-6 flex-1">
-        {/* Question Navigator - Grid for better mobile layout */}
         <div className="mb-8 grid grid-cols-5 xs:grid-cols-6 sm:flex sm:flex-wrap justify-center gap-2">
           {questions.map((_, index) => {
             const isCurrent = currentQuestion === index
@@ -124,18 +202,18 @@ export function QuizPage() {
           })}
         </div>
 
-        {/* Question Card */}
         <Card className="relative overflow-hidden border-none shadow-xl shadow-foreground/5">
           <div className="p-5 sm:p-10">
-            <QuizQuestion
-              question={questions[currentQuestion]}
-              questionNumber={currentQuestion + 1}
-              totalQuestions={questions.length}
-              selectedAnswer={answers[currentQuestion]}
-              onSelectAnswer={handleSelectAnswer}
-            />
+            {questions.length > 0 && (
+              <QuizQuestion
+                question={questions[currentQuestion]}
+                questionNumber={currentQuestion + 1}
+                totalQuestions={questions.length}
+                selectedAnswer={answers[currentQuestion]}
+                onSelectAnswer={handleSelectAnswer}
+              />
+            )}
 
-            {/* Navigation */}
             <div className="flex items-center justify-between mt-10 pt-6 border-t border-border/60">
               <Button
                 variant="ghost"
@@ -171,8 +249,7 @@ export function QuizPage() {
           </div>
         </Card>
 
-        {/* Warning Footer */}
-        {!canSubmit && currentQuestion === questions.length - 1 && (
+        {!canSubmit && questions.length > 0 && currentQuestion === questions.length - 1 && (
           <div className="mt-6 flex items-start gap-3 rounded-xl bg-warning/10 border border-warning/20 p-4 text-sm text-warning-foreground animate-in fade-in slide-in-from-bottom-2">
             <AlertCircle className="h-5 w-5 shrink-0 text-warning" />
             <p className="font-medium leading-tight">
