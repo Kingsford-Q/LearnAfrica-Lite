@@ -16,7 +16,8 @@ export function ProfileDropdown() {
   const handleToggle = useCallback(async () => {
     try {
       await toggleInstructorMode()
-      navigate(isInstructorMode ? '/dashboard' : '/instructor')
+      // If we were in student mode, we are switching TO instructor mode
+      navigate(!isInstructorMode ? '/instructor' : '/dashboard')
       setIsOpen(false)
     } catch (error) {
       console.error("Failed to sync mode preference:", error)
@@ -75,10 +76,14 @@ export function ProfileDropdown() {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-card p-1.5 shadow-lg animate-in fade-in-0 zoom-in-95 z-50">
           
-          {/* Header Section */}
-          <div className="flex items-center gap-3 border-b border-border px-3 py-3 mb-1">
+          {/* Header Section - Linked to Profile */}
+          <Link 
+            to="/profile"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 border-b border-border px-3 py-3 mb-1 hover:bg-accent/50 transition-colors rounded-t-lg"
+          >
             <div className="h-10 w-10 overflow-hidden rounded-full bg-muted shrink-0 border border-border">
-               {!imgError && user?.avatar ? (
+              {!imgError && user?.avatar ? (
                 <img src={user.avatar} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-secondary font-bold text-muted-foreground text-xs uppercase">
@@ -86,7 +91,7 @@ export function ProfileDropdown() {
                 </div>
               )}
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 text-left">
               {isLoading ? (
                 <div className="space-y-1">
                   <div className="h-3 w-20 animate-pulse rounded bg-muted" />
@@ -103,7 +108,7 @@ export function ProfileDropdown() {
                 </>
               )}
             </div>
-          </div>
+          </Link>
 
           {/* Menu Actions */}
           <div className="space-y-0.5">
@@ -116,7 +121,7 @@ export function ProfileDropdown() {
               My Dashboard
             </Link>
 
-            {/* Instructor Mode: Shown to Instructor, Admin, and Superadmin */}
+            {/* Instructor Mode Toggle */}
             {canAccessInstructorMode && (
               <button
                 onClick={handleToggle}

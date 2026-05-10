@@ -4,7 +4,7 @@ import {
   Clock, 
   Users, 
   Star, 
-  BookOpen, 
+  BookOpen,
   Play, 
   CheckCircle,
   ChevronDown,

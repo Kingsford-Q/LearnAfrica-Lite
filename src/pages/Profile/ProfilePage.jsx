@@ -1,157 +1,278 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Camera, Book, Clock, Trophy, Flame, Globe, MapPin, CheckCircle2, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/common/Card';
+import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    bio: user?.bio || '',
-    location: user?.location || '',
-    website: user?.website || '',
-  });
-  const [isSaving, setIsSaving] = useState(false);
+  const { user, updateUser } = useAuth();
+  const fileInputRef = useRef(null);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    bio: '',
+    location: '',
+    website: '',
+  });
+
+  // Sync form data whenever the global user object changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        bio: user.bio || '',
+        location: user.location || '',
+        website: user.website || '',
+      });
+    }
+  }, [user]);
+
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewImage(reader.result);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
+    
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    updateProfile(formData);
-    setIsSaving(false);
-    setIsEditing(false);
+    try {
+      // Create the payload for the backend
+      const payload = {
+        ...formData,
+        avatar: previewImage || user?.avatar,
+        updatedAt: new Date().toISOString()
+      };
+
+      /** * BACKEND READY: 
+       * If you have an API endpoint, you would add the call here:
+       * await axios.patch('/api/user/profile', payload);
+       */
+
+      // Update global context state (Updates dropdown and persistence)
+      await updateUser(payload); 
+      
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Submission error:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
-        <p className="text-muted-foreground mt-2">Manage your account information and preferences</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Avatar Section */}
-        <Card className="md:col-span-1">
-          <CardContent className="pt-6 text-center">
-            <div className="relative inline-block">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-4xl font-bold text-primary-foreground mx-auto">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <button className="absolute bottom-0 right-0 p-2 bg-background border border-border rounded-full shadow-lg hover:bg-muted transition-colors">
-                <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
+    <div className="max-w-6xl mx-auto p-4 md:p-10 space-y-6 md:space-y-8 animate-in fade-in duration-500">
+      
+      {/* STATS BAR */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+        {[
+          { label: 'Courses Completed', value: '12', icon: Book, theme: 'text-primary bg-primary/10' },
+          { label: 'Hours Learned', value: '156h', icon: Clock, theme: 'text-foreground bg-muted' },
+          { label: 'Certificates', value: '08', icon: Trophy, theme: 'text-accent-foreground bg-accent' },
+          { label: 'Current Streak', value: '14d', icon: Flame, theme: 'text-orange-500 bg-orange-500/10' },
+        ].map((stat, i) => (
+          <div key={i} className="flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-2xl bg-card border border-border shadow-sm">
+            <div className={cn("p-2.5 md:p-3 rounded-xl", stat.theme)}>
+              <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
             </div>
-            <h2 className="mt-4 text-xl font-semibold text-foreground">{user?.name}</h2>
-            <p className="text-muted-foreground">{user?.role === 'instructor' ? 'Instructor' : 'Student'}</p>
-            <div className="mt-4 flex justify-center gap-2">
-              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                {user?.role === 'instructor' ? '12 Courses' : '8 Enrolled'}
-              </span>
+            <div className="min-w-0">
+              <p className="text-lg md:text-xl font-bold tracking-tight text-foreground truncate">{stat.value}</p>
+              <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-tight truncate">{stat.label}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        ))}
+      </section>
 
-        {/* Profile Form */}
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Personal Information</CardTitle>
-            {!isEditing && (
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                Edit Profile
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                label="Full Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={!isEditing}
-              />
-              <Input
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={!isEditing}
-              />
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Bio</label>
-                <textarea
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:bg-muted disabled:text-muted-foreground transition-all"
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-              <Input
-                label="Location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                disabled={!isEditing}
-                placeholder="e.g., Lagos, Nigeria"
-              />
-              <Input
-                label="Website"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                disabled={!isEditing}
-                placeholder="https://yourwebsite.com"
-              />
-              {isEditing && (
-                <div className="flex gap-3 pt-4">
-                  <Button type="submit" isLoading={isSaving}>
-                    Save Changes
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
-                    Cancel
-                  </Button>
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+        
+        {/* ASIDE: IDENTITY CARD */}
+        <aside className="w-full lg:w-1/3 flex">
+          <Card className="w-full bg-card border-border flex flex-col shadow-sm overflow-hidden">
+            <div className="h-2 bg-primary" />
+            <CardContent className="p-8 flex flex-col items-center justify-center flex-grow text-center">
+              
+              <div className="relative mb-6">
+                <div 
+                  onClick={() => isEditing && fileInputRef.current?.click()}
+                  className={cn(
+                    "w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-br from-primary to-accent transition-all duration-300",
+                    isEditing && "cursor-pointer ring-4 ring-primary/20 scale-105"
+                  )}
+                >
+                  <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
+                    {previewImage || user?.avatar ? (
+                      <img src={previewImage || user.avatar} alt="User" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-5xl font-bold text-primary">{user?.name?.charAt(0) || 'U'}</span>
+                    )}
+                  </div>
                 </div>
+                {isEditing && (
+                  <button 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-1 right-1 p-2.5 bg-primary text-primary-foreground rounded-full shadow-lg border-2 border-background hover:scale-110 transition-transform"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                )}
+                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-2xl font-bold text-foreground break-words">
+                  {user?.name || 'User'}
+                </h2>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest px-5 py-2 bg-primary/10 rounded-full inline-block border border-primary/20">
+                  {user?.role || 'Student'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+
+        {/* MAIN: FORM SECTION */}
+        <main className="flex-1 flex">
+          <Card className="w-full bg-card border-border flex flex-col shadow-sm">
+            <CardHeader className="py-5 px-6 md:px-8 border-b border-border flex flex-row items-center justify-between bg-primary/[0.01]">
+              <CardTitle className="text-xs md:text-sm font-bold uppercase tracking-widest text-primary">Personal Details</CardTitle>
+              {!isEditing && (
+                <Button 
+                  type="button"
+                  onClick={() => setIsEditing(true)} 
+                  className="bg-primary text-primary-foreground text-[10px] md:text-[11px] font-bold uppercase tracking-widest px-4 md:px-6 h-9 md:h-10 rounded-lg shadow-md shadow-primary/20"
+                >
+                  Edit Profile
+                </Button>
               )}
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Stats Card */}
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>Learning Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Courses Completed', value: '12', icon: '📚' },
-                { label: 'Hours Learned', value: '156', icon: '⏱️' },
-                { label: 'Certificates Earned', value: '8', icon: '🏆' },
-                { label: 'Current Streak', value: '14 days', icon: '🔥' },
-              ].map((stat, index) => (
-                <div key={index} className="text-center p-4 bg-muted/50 rounded-xl">
-                  <div className="text-3xl mb-2">{stat.icon}</div>
-                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+            </CardHeader>
+            <CardContent className="p-6 md:p-8 flex-grow">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-5 md:gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Full Name</label>
+                    <Input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={cn(
+                        "h-11 transition-all duration-300 rounded-xl",
+                        !isEditing ? "bg-muted/40 border-transparent text-muted-foreground" : "bg-background border-primary/40 focus:ring-primary/20"
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Email Address</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+                      <Input
+                        value={formData.email}
+                        readOnly
+                        disabled
+                        className="h-11 pl-10 bg-muted/60 border-transparent text-muted-foreground/70 cursor-not-allowed rounded-xl"
+                      />
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Professional Bio</label>
+                  <textarea
+                    name="bio"
+                    value={formData.bio}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    rows={4}
+                    className={cn(
+                      "w-full px-4 py-3 rounded-xl border transition-all outline-none text-sm leading-relaxed",
+                      isEditing 
+                        ? "bg-background border-primary/40 focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-inner" 
+                        : "bg-muted/40 border-transparent text-muted-foreground resize-none"
+                    )}
+                    placeholder="Briefly describe your background..."
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-5 md:gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Location</label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors" />
+                      <input
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={cn(
+                          "w-full h-11 pl-10 pr-4 rounded-xl border border-input text-sm transition-all outline-none",
+                          isEditing ? "bg-background border-primary/40 focus:ring-2 focus:ring-primary/20" : "bg-muted/40 border-transparent text-muted-foreground"
+                        )}
+                        placeholder="e.g., Tarkwa, Ghana"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Portfolio/Website</label>
+                    <div className="relative group">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors" />
+                      <input
+                        name="website"
+                        value={formData.website}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={cn(
+                          "w-full h-11 pl-10 pr-4 rounded-xl border border-input text-sm transition-all outline-none",
+                          isEditing ? "bg-background border-primary/40 focus:ring-2 focus:ring-primary/20" : "bg-muted/40 border-transparent text-muted-foreground"
+                        )}
+                        placeholder="https://github.com/username"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 pt-6 border-t border-border animate-in slide-in-from-bottom-2">
+                    <Button 
+                      type="submit" 
+                      isLoading={isSaving} 
+                      className="w-full sm:flex-1 bg-primary text-primary-foreground h-11 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsEditing(false)} 
+                      className="w-full sm:flex-1 h-11 rounded-xl text-xs font-bold uppercase tracking-widest"
+                    >
+                      Discard
+                    </Button>
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+        </main>
       </div>
     </div>
   );

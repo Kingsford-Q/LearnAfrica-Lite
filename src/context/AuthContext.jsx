@@ -16,10 +16,10 @@ export function AuthProvider({ children }) {
   const login = (userData) => {
     const userWithDefaults = {
       id: '1',
-      name: userData.name || 'John Doe',
+      name: userData.name || 'Kingsford Quainoo',
       email: userData.email,
       avatar: '/placeholder-user.jpg',
-      role: 'student',
+      role: userData.role || 'instructor', // Allows passing 'instructor' during login
       joinedDate: new Date().toISOString(),
       ...userData
     }
@@ -33,8 +33,22 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user')
   }
 
+  const updateUser = (updates) => {
+    setUser(prev => {
+      const updatedUser = { ...prev, ...updates };
+      // Sync to localStorage so it persists on refresh
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   const toggleInstructorMode = () => {
-    setIsInstructorMode(prev => !prev)
+    // Only allow toggle if user has the correct role
+    if (user?.role === 'instructor' || user?.role === 'admin') {
+      setIsInstructorMode(prev => !prev);
+    } else {
+      console.warn("Access Denied: User role is not authorized for Instructor Mode.");
+    }
   }
 
   return (
@@ -42,6 +56,7 @@ export function AuthProvider({ children }) {
       user, 
       login, 
       logout, 
+      updateUser,
       isAuthenticated: !!user,
       isInstructorMode,
       toggleInstructorMode
