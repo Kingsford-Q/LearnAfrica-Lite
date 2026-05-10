@@ -124,7 +124,7 @@ export default function Navbar() {
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle Menu"
-          className="md:hidden relative z-[110] flex h-11 w-11 items-center justify-center rounded-2xl border border-input bg-background/50 backdrop-blur-sm text-foreground active:scale-90 transition-transform"
+          className="md:hidden relative z-[110] flex h-11 w-11 items-center justify-center rounded-md border border-input bg-background/50 backdrop-blur-sm text-foreground active:scale-90 transition-transform"
         >
           {isMobileMenuOpen ? (
             <svg className="h-6 w-6 animate-in zoom-in-50 duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,132 +141,131 @@ export default function Navbar() {
       
 {/* --- UNIFIED COMPACT MOBILE MENU --- */}
 
-{/* --- REFINED UNIFIED MOBILE MENU --- */}
-{isMobileMenuOpen && (
-  <div className="fixed inset-0 z-[150] md:hidden bg-background animate-in fade-in duration-200">
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
-      
-      {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-border bg-background px-5 shrink-0">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-          Menu
-        </span>
-        <button 
-          onClick={closeMenu}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted/20 text-muted-foreground transition-all active:scale-90"
-        >
-          <X className="h-5 w-5" strokeWidth={2.5} />
-        </button>
-      </div>
-
-      {/* Unified Scrollable Content */}
-      <div className="flex-1 overflow-y-auto bg-background">
-        <div className="mx-auto max-w-md px-5 py-8 space-y-8">
-          
-          {/* Search Container */}
-          <div className="relative rounded-xl bg-card border border-border shadow-sm">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50">
-              <Search className="h-5 w-5" strokeWidth={2.5} />
-            </div>
-            <Input
-              type="search"
-              placeholder="Search courses..."
-              className="h-12 w-full border-0 bg-transparent pl-12 pr-4 text-sm focus-visible:ring-0"
-            />
-          </div>
-
-          {/* Navigation Section */}
-          <nav className="space-y-3">
-            {navLinks.map((link) => {
-              const isActive = location.pathname === link.href;
-              const isDashboard = link.label.toLowerCase().includes('dashboard');
-              const Icon = isDashboard ? LayoutDashboard : BookOpen;
-
-              return (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  onClick={closeMenu}
-                  className={cn(
-                    "group flex h-14 items-center justify-between rounded-xl px-4 transition-all active:scale-[0.98]",
-                    isActive
-                      ? "bg-primary/10 text-primary border border-primary/30"
-                      : "bg-card border border-border text-foreground/90 hover:bg-muted hover:text-primary"
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Standardized Width with no shrinkage */}
-                    <div className="flex w-8 shrink-0 justify-start">
-                      <Icon 
-                        className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/70")} 
-                        strokeWidth={2.5} 
-                      />
-                    </div>
-                    <span className="text-sm font-medium">{link.label}</span>
-                  </div>
-                  
-                  <ChevronRight 
-                    className={cn(
-                      "h-4 w-4 transition-transform duration-200 group-hover:translate-x-1",
-                      isActive ? "text-primary opacity-100" : "text-muted-foreground/60"
-                    )} 
-                    strokeWidth={3}
-                  />
-                </Link>
-              )
-            })}
-          </nav>
-
-          {/* Action Section */}
-          <div className="space-y-3 border-t border-border pt-8">
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[150] md:hidden bg-background animate-in fade-in duration-200">
+          <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
             
-            {/* Theme Toggle - Left Aligned */}
-            <ThemeToggle />
+            {/* Header */}
+            <div className="flex h-16 items-center justify-between border-b border-border bg-background px-5 shrink-0">
+              <span className="text-[12px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                Menu
+              </span>
+              <button 
+                onClick={closeMenu}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted/20 text-muted-foreground transition-all active:scale-90"
+              >
+                <X className="h-5 w-5" strokeWidth={2.5} />
+              </button>
+            </div>
 
-            {isAuthenticated ? (
-              <div className="space-y-3">
-                {/* Notifications */}
-                <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted ">
-                  <div className="flex w-8 shrink-0 justify-start scale-110 group-hover:text-primary">
-                    <NotificationsDropdown />
+            {/* Unified Scrollable Content */}
+            <div className="flex-1 overflow-y-auto bg-background">
+              <div className="mx-auto max-w-md px-5 py-8 space-y-8">
+                
+                {/* Search Container */}
+                <div className="relative rounded-xl bg-card border border-border shadow-sm">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                    <Search className="h-5 w-5" strokeWidth={2.5} />
                   </div>
-                  <span className="ml-4 text-foreground/80 text-sm font-semibold transition-colors group-hover:text-primary">
-                    Notifications
-                  </span>
+                  <Input
+                    type="search"
+                    placeholder="Search courses..."
+                    className="h-12 w-full border-0 bg-transparent pl-12 pr-4 text-sm focus-visible:ring-0"
+                  />
                 </div>
 
-                {/* Profile - Chevron/Dropdown Icon Hidden */}
-                <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted">
-                  {/* Hide only the chevron (second SVG), keep the profile icon visible */}
-                  <div className="flex w-8 shrink-0 justify-start scale-110 group-hover:text-primary [&_svg:nth-of-type(2)]:hidden">
-                    <ProfileDropdown hideChevron/>
-                  </div>
+                {/* Navigation Section */}
+                <nav className="space-y-3">
+                  {navLinks.map((link) => {
+                    const isActive = location.pathname === link.href;
+                    const isDashboard = link.label.toLowerCase().includes('dashboard');
+                    const Icon = isDashboard ? LayoutDashboard : BookOpen;
 
-                  <span className="ml-4 text-foreground/80 text-sm font-semibold transition-colors group-hover:text-primary">
-                    Profile Settings
-                  </span>
+                    return (
+                      <Link
+                        key={link.href}
+                        to={link.href}
+                        onClick={closeMenu}
+                        className={cn(
+                          "group flex h-14 items-center justify-between rounded-xl px-4 transition-all active:scale-[0.98]",
+                          isActive
+                            ? "bg-primary/10 text-primary border border-primary/30"
+                            : "bg-card border border-border text-foreground/90 hover:bg-muted hover:text-primary"
+                        )}
+                      >
+                        <div className="flex items-center gap-4">
+                          {/* Standardized Width with no shrinkage */}
+                          <div className="flex w-8 shrink-0 justify-start">
+                            <Icon 
+                              className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/70")} 
+                              strokeWidth={2.5} 
+                            />
+                          </div>
+                          <span className="text-sm font-medium">{link.label}</span>
+                        </div>
+                        
+                        <ChevronRight 
+                          className={cn(
+                            "h-4 w-4 transition-transform duration-200 group-hover:translate-x-1",
+                            isActive ? "text-primary opacity-100" : "text-muted-foreground/60"
+                          )} 
+                          strokeWidth={3}
+                        />
+                      </Link>
+                    )
+                  })}
+                </nav>
+
+                {/* Action Section */}
+                <div className="space-y-3 border-t border-border pt-8">
+                  
+                  {/* Theme Toggle - Left Aligned */}
+                  <ThemeToggle />
+
+                  {isAuthenticated ? (
+                    <div className="space-y-3">
+                      {/* Notifications */}
+                      <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted ">
+                        <div className="flex w-8 shrink-0 justify-start scale-110 group-hover:text-primary">
+                          <NotificationsDropdown />
+                        </div>
+                        <span className="ml-4 text-foreground/80 text-sm font-semibold transition-colors group-hover:text-primary">
+                          Notifications
+                        </span>
+                      </div>
+
+                      {/* Profile - Chevron/Dropdown Icon Hidden */}
+                      <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted">
+                        {/* Hide only the chevron (second SVG), keep the profile icon visible */}
+                        <div className="flex w-8 shrink-0 justify-start scale-110 group-hover:text-primary [&_svg:nth-of-type(2)]:hidden">
+                          <ProfileDropdown hideChevron/>
+                        </div>
+
+                        <span className="ml-4 text-foreground/80 text-sm font-semibold transition-colors group-hover:text-primary">
+                          Profile Settings
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <Link to="/login" onClick={closeMenu}>
+                        <Button variant="outline" className="h-12 w-full rounded-xl bg-card text-sm font-semibold border-border">
+                          Log In
+                        </Button>
+                      </Link>
+                      <Link to="/signup" onClick={closeMenu}>
+                        <Button className="h-12 w-full rounded-xl text-sm font-semibold shadow-md">
+                          Sign Up
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <Link to="/login" onClick={closeMenu}>
-                  <Button variant="outline" className="h-12 w-full rounded-xl bg-card text-sm font-semibold border-border">
-                    Log In
-                  </Button>
-                </Link>
-                <Link to="/signup" onClick={closeMenu}>
-                  <Button className="h-12 w-full rounded-xl text-sm font-semibold shadow-md">
-                    Sign Up
-                  </Button>
-                </Link>
-              </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </header>
   );
 }
