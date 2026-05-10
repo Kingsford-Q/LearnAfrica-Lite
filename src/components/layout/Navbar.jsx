@@ -152,7 +152,7 @@ export default function Navbar() {
               </span>
               <button 
                 onClick={closeMenu}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted/20 text-muted-foreground transition-all active:scale-90"
+                className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted/20 text-muted-foreground transition-all active:scale-90"
               >
                 <X className="h-5 w-5" strokeWidth={2.5} />
               </button>
