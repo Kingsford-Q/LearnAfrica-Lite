@@ -226,13 +226,10 @@ export default function Navbar() {
                       <NotificationsDropdown />
 
                       {/* Profile - Chevron/Dropdown Icon Hidden */}
-                      <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted">
-                        {/* Hide only the chevron (second SVG), keep the profile icon visible */}
-                        
-                        <ProfileDropdown hideChevron/>
+
+                        <ProfileDropdown/>
 
                         
-                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-3 pt-2">

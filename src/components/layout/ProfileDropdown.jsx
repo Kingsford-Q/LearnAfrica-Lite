@@ -55,22 +55,13 @@ export default function ProfileDropdown({ hideChevron = false }) {
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="
-          group flex md:h-9 h-14 cursor-pointer items-center
-          md:justify-center rounded-lg
-          bg-none md:bg-transparent
-          border md:border-0 border-none
-          px-3 md:px-0
-          hover:bg-muted active:scale-[0.98]
-          shadow-sm md:shadow-none
-          transition-colors
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+          group flex px-3 md:px-0 md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card md:bg-none border md:border-none border-input hover:bg-muted active:scale-[0.98] shadow-sm  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
         "
       >
 
         {/* Avatar */}
-        <div className="flex md:w-full shrink-0 justify-start md:justify-center">
-          <div className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border border-input bg-background overflow-hidden">
-            
+        <div className="ml-4 md:ml-0 flex md:w-full shrink-0 justify-start md:justify-center bg-transparent">
+          <div className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border-none bg-transparent overflow-hidden">
             {!imgError && user?.avatar && user.avatar !== '/placeholder-user.jpg' ? (
               <img
                 src={user.avatar}
@@ -85,11 +76,12 @@ export default function ProfileDropdown({ hideChevron = false }) {
               />
             )}
           </div>
+          
         </div>
 
         {/* Mobile label */}
         <span className="ml-4 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
-          Profile
+          Profile Settings
         </span>
 
         {/* Chevron (desktop only optionally hidden) */}
@@ -97,7 +89,7 @@ export default function ProfileDropdown({ hideChevron = false }) {
           <ChevronDown
             className={cn(
               "ml-auto md:ml-0 h-4 w-4 text-muted-foreground transition-transform duration-200",
-              isOpen && "rotate-180"
+              isOpen && "rotate-180", isOpen ? "text-primary opacity-100" : "text-muted-foreground/60"
             )}
           />
         )}

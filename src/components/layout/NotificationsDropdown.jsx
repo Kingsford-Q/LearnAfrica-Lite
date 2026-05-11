@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell } from "lucide-react"
+import { Bell, ChevronDown } from "lucide-react"
+import { cn } from '@/lib/utils'
+
 
 const mockNotifications = [
   { id: 1, type: 'course', title: 'New lesson available', message: 'Introduction to JavaScript has a new lesson: "Async/Await"', time: '2 hours ago', read: false },
@@ -42,7 +44,7 @@ const notificationColors = {
   system: 'bg-info/10 text-info',
 };
 
-export default function NotificationsDropdown() {
+export default function NotificationsDropdown( {hideChevron = false}) {
   const [isOpen, setIsOpen] = useState(false);
   const [dbNotifications, setDbNotifications] = useState([]); // Database source
   const [isLoading, setIsLoading] = useState(false);
@@ -126,6 +128,15 @@ export default function NotificationsDropdown() {
         <span className="ml-4 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
           Notifications
         </span>
+        {/* Chevron (desktop only optionally hidden) */}
+        {!hideChevron && (
+          <ChevronDown
+            className={cn(
+              "ml-auto md:ml-0 h-4 w-4 text-muted-foreground transition-transform duration-200",
+              isOpen && "rotate-180", isOpen ? "text-primary opacity-100" : "text-muted-foreground/60"
+            )}
+          />
+        )}
       </div>
 
       {isOpen && (
@@ -154,6 +165,8 @@ export default function NotificationsDropdown() {
                 Mark all as read
               </button>
             )}
+
+
           </div>
 
           {/* Scrollable Area */}
