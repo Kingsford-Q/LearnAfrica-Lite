@@ -1,31 +1,45 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  // Load user safely from localStorage
-  const [user, setUser] = useState(() => {
-    if (typeof window === 'undefined') return null
-
-    try {
-      const stored = localStorage.getItem('user')
-      return stored ? JSON.parse(stored) : null
-    } catch (err) {
-      console.warn('Failed to parse stored user:', err)
-      return null
-    }
-  })
-
+  const [user, setUser] = useState(null)
   const [isInstructorMode, setIsInstructorMode] = useState(false)
+  const [isLoading, setIsLoading] = useState(true) // Added to prevent UI flickering
+
+  // ✅ INITIALIZE: Load user from localStorage once on mount
+  useEffect(() => {
+    const initializeAuth = () => {
+      try {
+        const stored = localStorage.getItem('user')
+        if (stored) {
+          const parsedUser = JSON.parse(stored)
+          setUser(parsedUser)
+        }
+      } catch (err) {
+        console.warn('Failed to parse stored user:', err)
+        localStorage.removeItem('user') // Clear corrupted data
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    initializeAuth()
+  }, [])
 
   // ✅ LOGIN
   const login = (userData) => {
+    // Fallback for randomUUID if in a non-secure environment
+    const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+      ? crypto.randomUUID() 
+      : `user_${Math.random().toString(36).substr(2, 9)}`
+
     const userWithDefaults = {
-      id: userData.id || crypto.randomUUID(),
+      id: userData.id || generatedId,
       name: userData.name || 'Kingsford Quainoo',
       email: userData.email,
       role: userData.role || 'student',
-      avatar: userData.avatar || '/placeholder-user.jpg', // IMPORTANT FIX
+      avatar: userData.avatar || null,
       joinedDate: userData.joinedDate || new Date().toISOString(),
     }
 
@@ -34,7 +48,7 @@ export function AuthProvider({ children }) {
     try {
       localStorage.setItem('user', JSON.stringify(userWithDefaults))
     } catch (err) {
-      console.warn('localStorage quota exceeded on login:', err)
+      console.error('LocalStorage error during login:', err)
     }
   }
 
@@ -45,30 +59,38 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user')
   }
 
-  // ✅ SAFE USER UPDATE (FIXED)
+  // ✅ SAFE USER UPDATE
   const updateUser = (updates) => {
     setUser((prev) => {
-      const updatedUser = { ...prev, ...updates }
+      if (!prev) return null;
+
+      const updatedUser = { 
+        ...prev, 
+        ...updates,
+        // If updates.avatar is missing and prev.avatar is missing, 
+        // explicitly set to null so the Lucide icon shows.
+        avatar: updates.avatar || prev.avatar || null 
+      };
 
       try {
-        localStorage.setItem(
-          'user',
-          JSON.stringify({
-            id: updatedUser.id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            role: updatedUser.role,
-            avatar: updatedUser.avatar, // MUST BE URL, NOT BASE64
-            joinedDate: updatedUser.joinedDate,
-          })
-        )
+        const storageData = {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          avatar: updatedUser.avatar, 
+          joinedDate: updatedUser.joinedDate,
+        };
+        
+        localStorage.setItem('user', JSON.stringify(storageData));
       } catch (err) {
-        console.warn('localStorage update failed (quota issue):', err)
+        // If the avatar was a huge base64 string, this catch will trigger.
+        console.error('Update failed. Likely quota limit exceeded:', err);
       }
 
-      return updatedUser
-    })
-  }
+      return updatedUser;
+    });
+  };
 
   // ✅ TOGGLE INSTRUCTOR MODE
   const toggleInstructorMode = () => {
@@ -77,6 +99,12 @@ export function AuthProvider({ children }) {
     } else {
       console.warn('Access Denied: Not authorized for instructor mode.')
     }
+  }
+
+  // Don't render the app until we know if the user is logged in or not
+  // This prevents the "Login" button flashing for a split second
+  if (isLoading) {
+    return null // Or a loading spinner
   }
 
   return (

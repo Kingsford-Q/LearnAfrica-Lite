@@ -52,37 +52,56 @@ export default function ProfileDropdown({ hideChevron = false }) {
     <div className="relative" ref={dropdownRef}>
       
       {/* Trigger Button */}
-<button
-  onClick={() => setIsOpen(!isOpen)}
-  className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
->
-  {/* Avatar Circle - UPDATED TO SHOW IMAGE */}
-  <div className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-input bg-background overflow-hidden transition-colors hover:bg-accent">
-    {!imgError && user?.avatar ? (
-      <img 
-        src={user.avatar} 
-        alt="" 
-        className="h-full w-full object-cover"
-        onError={() => setImgError(true)} 
-      />
-    ) : (
-      <User
-        className="h-5 w-5 text-muted-foreground"
-        strokeWidth={2.25}
-      />
-    )}
-  </div>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="
+          group flex md:h-9 h-14 cursor-pointer items-center
+          md:justify-center rounded-lg
+          bg-none md:bg-transparent
+          border md:border-0 border-none
+          px-3 md:px-0
+          hover:bg-muted active:scale-[0.98]
+          shadow-sm md:shadow-none
+          transition-colors
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+        "
+      >
 
-  {/* Dropdown Chevron */}
-  {!hideChevron && (
-    <ChevronDown
-      className={cn(
-        'h-4 w-4 text-muted-foreground transition-transform duration-200',
-        isOpen && 'rotate-180'
-      )}
-    />
-  )}
-</button>
+        {/* Avatar */}
+        <div className="flex md:w-full shrink-0 justify-start md:justify-center">
+          <div className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border border-input bg-background overflow-hidden">
+            
+            {!imgError && user?.avatar && user.avatar !== '/placeholder-user.jpg' ? (
+              <img
+                src={user.avatar}
+                alt=""
+                className="h-full w-full object-cover"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <User
+                className="h-5 w-5 text-muted-foreground"
+                strokeWidth={2.25}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Mobile label */}
+        <span className="ml-4 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
+          Profile
+        </span>
+
+        {/* Chevron (desktop only optionally hidden) */}
+        {!hideChevron && (
+          <ChevronDown
+            className={cn(
+              "ml-auto md:ml-0 h-4 w-4 text-muted-foreground transition-transform duration-200",
+              isOpen && "rotate-180"
+            )}
+          />
+        )}
+      </div>
 
       {/* Dropdown Menu */}
       {isOpen && (

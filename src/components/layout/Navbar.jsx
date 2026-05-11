@@ -97,11 +97,9 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
               >
-                <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <Search className="w-[18px] h-[18px]" />
               </button>
             )}
           </div>
@@ -230,13 +228,10 @@ export default function Navbar() {
                       {/* Profile - Chevron/Dropdown Icon Hidden */}
                       <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted">
                         {/* Hide only the chevron (second SVG), keep the profile icon visible */}
-                        <div className="flex w-8 shrink-0 justify-start scale-110 group-hover:text-primary [&_svg:nth-of-type(2)]:hidden">
-                          <ProfileDropdown hideChevron/>
-                        </div>
+                        
+                        <ProfileDropdown hideChevron/>
 
-                        <span className="ml-4 text-foreground/80 text-sm font-semibold transition-colors group-hover:text-primary">
-                          Profile Settings
-                        </span>
+                        
                       </div>
                     </div>
                   ) : (
