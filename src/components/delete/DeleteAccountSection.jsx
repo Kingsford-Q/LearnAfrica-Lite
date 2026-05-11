@@ -51,7 +51,7 @@ export default function DeleteAccountSection({ userEmail, onCancel }) {
 
           {/* Bottom Row: Confirmation Input & Actions */}
           <div className="flex flex-col sm:flex-row items-end gap-4 bg-background/50 p-4 rounded-xl border border-destructive/10">
-            <div className="flex-1 w-full space-y-2">
+            <div className="flex-1 w-full">
               <label className="text-[10px] font-bold uppercase tracking-widest text-destructive/80">
                 Confirm Identity
               </label>
@@ -63,7 +63,7 @@ export default function DeleteAccountSection({ userEmail, onCancel }) {
                   setConfirmEmail(e.target.value);
                   if(error) setError('');
                 }}
-                className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm outline-none transition-all focus:ring-2 ${
+                className={`w-full mt-1.5 px-4 py-2.5 rounded-lg border bg-background text-sm outline-none transition-all focus:ring-2 ${
                   error ? 'border-destructive focus:ring-destructive/20' : 'border-border focus:ring-primary/20'
                 }`}
               />
@@ -71,14 +71,6 @@ export default function DeleteAccountSection({ userEmail, onCancel }) {
             </div>
             
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button 
-                variant="ghost" 
-                onClick={onCancel}
-                disabled={isDeleting}
-                className="flex-1 sm:flex-none"
-              >
-                Cancel
-              </Button>
               <Button 
                 variant="destructive"
                 disabled={confirmEmail !== userEmail || isDeleting}

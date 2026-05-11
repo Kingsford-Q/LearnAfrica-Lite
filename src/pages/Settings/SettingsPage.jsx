@@ -3,7 +3,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/common/Card';
-import { Loader2, Save, AlertTriangle, CheckCircle2, XCircle, Bell, Shield, Palette, GraduationCap, Trash2 } from 'lucide-react';
+import { Loader2, Save, AlertTriangle, CheckCircle2, XCircle, Bell, Shield, Palette, GraduationCap, Trash2, X } from 'lucide-react';
 
 // Import your sub-components
 import DeleteAccountSection from '../../components/delete/DeleteAccountSection';
@@ -81,16 +81,16 @@ export default function SettingsPage() {
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6">
       {/* Header */}
-      <header className="flex flex-col sm:flex-row justify-between items-end sm:items-center gap-4 mb-10">
+      <header className="flex flex-col sm:flex-row justify-between items-start md:items-center gap-4 mb-10">
         <div className="space-y-1">
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Settings</h1>
-          <p className="text-muted-foreground text-lg">
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Settings</h1>
+          <p className="text-muted-foreground text-sm">
             Personalize your experience as a {isInstructorMode ? 'Instructor' : 'Student'}.
           </p>
         </div>
         
         {hasChanges && (
-          <Button onClick={saveSettings} disabled={isSaving} className="w-full sm:w-auto shadow-md">
+          <Button onClick={saveSettings} disabled={isSaving} className="w-full sm:w-auto shadow-sm">
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Save Changes
           </Button>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
           <CardHeader className="bg-muted/30">
             <div className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-primary" />
-              <CardTitle>Appearance</CardTitle>
+              <CardTitle className = "text-lg">Appearance</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
@@ -134,7 +134,7 @@ export default function SettingsPage() {
             <CardHeader className="bg-primary/5">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
-                <CardTitle>Instructor Preferences</CardTitle>
+                <CardTitle className = "text-lg">Instructor Preferences</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="divide-y divide-border/40">
@@ -153,7 +153,7 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary" />
-              <CardTitle>Notifications</CardTitle>
+              <CardTitle className = "text-lg">Notifications</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-border/40">
@@ -167,16 +167,16 @@ export default function SettingsPage() {
         </Card>
 
         {/* Security Section */}
-        <Card className="border-border/60">
+        <Card className="border-border/60 pb-3">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <CardTitle>Privacy & Security</CardTitle>
+              <CardTitle className = "text-lg">Privacy & Security</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             {!showPasswordForm ? (
-              <div className="flex items-center justify-between animate-in fade-in duration-300">
+              <div className="flex md:flex-row flex-col md:items-start md:justify-between gap-5 md:gap-0 animate-in fade-in duration-300">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Account Password</p>
                   <p className="text-sm text-muted-foreground">Change your password to keep your account secure</p>
@@ -201,7 +201,7 @@ export default function SettingsPage() {
           <div className="pt-6 mt-6 border-t border-destructive/20">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-2xl bg-destructive/5 border border-destructive/10 gap-6">
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-destructive flex items-center gap-2">
+                <h3 className="text-md md:text-lg font-bold text-destructive flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5" />
                   Danger Zone
                 </h3>
@@ -221,10 +221,13 @@ export default function SettingsPage() {
             </div>
           </div>
         ) : (
-          <DeleteAccountSection 
-            userEmail={user?.email || "user@example.com"} 
-            onCancel={() => setShowDeleteVerification(false)}
-          />
+          /* The fix is applying break-all and overflow control to this wrapper */
+          <div className="pt-6 mt-6 border-t border-destructive/20 w-full max-w-full overflow-hidden break-all">
+            <DeleteAccountSection 
+              userEmail={user?.email || "user@example.com"} 
+              onCancel={() => setShowDeleteVerification(false)}
+            />
+          </div>
         )}
       </div>
     </div>

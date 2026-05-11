@@ -44,7 +44,7 @@ const notificationColors = {
   system: 'bg-info/10 text-info',
 };
 
-export default function NotificationsDropdown({ hideChevron = false }) {
+export default function NotificationsDropdown({ hideChevron = false, closeMainMenu }) {
   const [isOpen, setIsOpen] = useState(false);
   // Initializing with mockNotifications so UI is populated before DB fetch
   const [dbNotifications, setDbNotifications] = useState(mockNotifications); 
@@ -116,6 +116,13 @@ export default function NotificationsDropdown({ hideChevron = false }) {
     }
   };
 
+  const handleCloseEverything = () => {
+    setIsOpen(false);        // Closes the Notifications Drawer
+    if (closeMainMenu) {
+      closeMainMenu();       // Closes the LearnAfrica Mobile Menu
+    }
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bell Icon Trigger */}
@@ -154,7 +161,7 @@ export default function NotificationsDropdown({ hideChevron = false }) {
       {/* 1. DESKTOP POPOVER (Uses the Drawer UI) */}
       <MobileNotificationsDrawer 
         isOpen={isOpen} 
-        onClose={() => setIsOpen(false)}
+        onClose={handleCloseEverything}
         notifications={notifications}
         unreadCount={unreadCount}
         markAllAsRead={markAllAsRead}
@@ -169,7 +176,7 @@ export default function NotificationsDropdown({ hideChevron = false }) {
       {/* 2. MOBILE SLIDE-IN (Uses the Drawer UI) */}
       <MobileNotificationsDrawer 
         isOpen={isOpen} 
-        onClose={() => setIsOpen(false)}
+        onClose={handleCloseEverything}
         notifications={notifications}
         unreadCount={unreadCount}
         markAllAsRead={markAllAsRead}

@@ -223,11 +223,16 @@ export default function Navbar() {
                   {isAuthenticated ? (
                     <div className="space-y-3">
                       {/* Notifications */}
-                      <NotificationsDropdown />
+                      <NotificationsDropdown
+                          closeMainMenu={() => setIsMobileMenuOpen(false)} />
 
                       {/* Profile - Chevron/Dropdown Icon Hidden */}
 
-                        <ProfileDropdown/>
+                        <ProfileDropdown 
+                          user={user} 
+                          hideChevron={true} 
+                          closeMainMenu={closeMenu} 
+                        />
 
                         
                     </div>
