@@ -46,12 +46,13 @@ export default function StudentDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
-  const enrolledCourses = useMemo(() => courses.filter((c) => c.progress > 0), []);
-  const completedCourses = useMemo(() => courses.filter((c) => c.progress === 100), []);
-  const earnedBadges = useMemo(() => badges.filter((b) => b.earned), []);
-  const recommendedCourses = useMemo(() => courses.filter((c) => c.progress === 0).slice(0, 3), []);
+  // Optimized Logic for Backend Readiness
+  const enrolledCourses = useMemo(() => (courses || []).filter((c) => c.progress > 0), []);
+  const completedCourses = useMemo(() => (courses || []).filter((c) => c.progress === 100), []);
+  const earnedBadges = useMemo(() => (badges || []).filter((b) => b.earned), []);
+  const recommendedCourses = useMemo(() => (courses || []).filter((c) => c.progress === 0).slice(0, 3), []);
   
-  const totalHours = 42;
+  const totalHours = user?.totalHoursLearned || 42;
 
   // Reusable fragment for stats loading
   const statsSkeletons = (
@@ -64,7 +65,7 @@ export default function StudentDashboard() {
   );
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="w-full max-w-full overflow-hidden space-y-8 p-6">
       {/* Welcome Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -75,8 +76,7 @@ export default function StudentDashboard() {
             {"You're making great progress. Keep learning!"}
           </p>
         </div>
-        <div className="flex gap-3">
-          
+        <div className="flex gap-3 shrink-0">
           <Link to="/courses">
             <Button>
               Browse Courses

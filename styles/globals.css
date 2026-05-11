@@ -115,6 +115,28 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+@media print {
+  /* Force landscape and zero margins */
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure the container takes exactly the height of one page */
+  .print-page-break {
+    page-break-after: always;
+    break-after: page;
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
-import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowRight, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowRight, AlertCircle, Loader2, FileCheck } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { cn } from '@/lib/utils'
@@ -19,6 +19,11 @@ export function QuizResultsPage() {
       // 1. Check if we already have the data from navigation (state)
       if (location.state?.answers && location.state?.questions) {
         setResultData(location.state)
+        
+        // FLOW INTEGRATION: Here is where you would sync with the backend
+        // to record the pass and "unlock" the certificate.
+        // Example: if (passed) { await api.saveCompletion(courseId) }
+        
         setIsLoading(false)
         return
       }
@@ -26,11 +31,7 @@ export function QuizResultsPage() {
       // 2. If no state (user refreshed), fetch from the backend
       try {
         setIsLoading(true)
-        // Replace with your actual API call: e.g., fetch(`/api/quiz/results/${lessonId}`)
-        // const response = await api.get(`/quiz/results/${lessonId}`)
-        // setResultData(response.data)
-        
-        // Simulating a failed fetch for now since we're in dev
+        // In a real setup, you'd fetch the saved score for this user/lesson
         throw new Error("No active session found") 
       } catch (err) {
         setError(err.message)
@@ -40,7 +41,7 @@ export function QuizResultsPage() {
     }
 
     loadResults()
-  }, [location.state, lessonId])
+  }, [location.state, lessonId, courseId])
 
   // Calculation Logic using resultData
   const answers = resultData?.answers || {}
@@ -115,7 +116,7 @@ export function QuizResultsPage() {
           </h1>
           <p className="text-muted-foreground mb-6">
             {passed
-              ? 'You have successfully passed the quiz.'
+              ? 'You have successfully passed the quiz and earned your certificate!'
               : 'You need 70% to pass. Review the lessons and try again.'}
           </p>
 
@@ -169,16 +170,27 @@ export function QuizResultsPage() {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>
-              <Button variant="outline">
-                <RotateCcw className="h-4 w-4" />
-                Retry Quiz
-              </Button>
-            </Link>
+            {/* INCLUSION: The Certificate Button only appears if the user passed */}
+            {passed ? (
+              <Link to={`/certificate/${courseId}`}>
+                <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                  <FileCheck className="h-4 w-4 mr-2" />
+                  View Certificate
+                </Button>
+              </Link>
+            ) : (
+              <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>
+                <Button variant="outline">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Retry Quiz
+                </Button>
+              </Link>
+            )}
+            
             <Link to="/dashboard">
-              <Button>
+              <Button variant={passed ? "outline" : "default"}>
                 Back to Dashboard
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           </div>

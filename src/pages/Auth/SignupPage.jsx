@@ -1,16 +1,18 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, GraduationCap } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Input, Label } from '@/components/common/Input'
 import { useAuth } from '@/context/AuthContext'
+import { cn } from '@/lib/utils'
 
 export function SignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    isInstructor: false
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -47,9 +49,15 @@ export function SignupPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    login({ email: formData.email, name: formData.name })
+    if (formData.isInstructor) {
+      // Backend Optimized: Pass basic credentials to onboarding state
+      // to be finalized in the second step.
+      navigate('/signup/instructor-onboarding', { state: { ...formData } })
+    } else {
+      login({ email: formData.email, name: formData.name, role: 'student' })
+      navigate('/courses')
+    }
     setIsLoading(false)
-    navigate('/courses')
   }
 
   return (
@@ -152,6 +160,32 @@ export function SignupPage() {
           )}
         </div>
 
+        {/* New Instructor Toggle */}
+        <div 
+          onClick={() => setFormData(p => ({ ...p, isInstructor: !p.isInstructor }))}
+          className={cn(
+            "flex items-center gap-3 p-3 rounded-lg border border-border cursor-pointer transition-all",
+            formData.isInstructor ? "bg-primary/5 border-primary/50" : "hover:bg-muted/50"
+          )}
+        >
+          <div className={cn(
+            "p-2 rounded-md",
+            formData.isInstructor ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+          )}>
+            <GraduationCap className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold leading-none">I want to teach</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Create courses and manage students</p>
+          </div>
+          <div className={cn(
+            "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors",
+            formData.isInstructor ? "border-primary bg-primary" : "border-muted-foreground/30"
+          )}>
+            {formData.isInstructor && <div className="h-2 w-2 rounded-full bg-white" />}
+          </div>
+        </div>
+
         <div className="flex items-center gap-2 justify-start">
           <input
             type="checkbox"
@@ -172,7 +206,7 @@ export function SignupPage() {
         )}
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? 'Creating account...' : 'Create account'}
+          {isLoading ? 'Creating account...' : formData.isInstructor ? 'Continue to Profile' : 'Create account'}
         </Button>
       </form>
 

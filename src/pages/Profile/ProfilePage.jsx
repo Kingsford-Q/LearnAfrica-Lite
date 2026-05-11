@@ -28,9 +28,10 @@ export default function ProfilePage() {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        bio: user.bio || '',
-        location: user.location || '',
-        website: user.website || '',
+        // Look inside user.profile if it exists, otherwise fall back to top-level
+        bio: user.profile?.bio || user.bio || '',
+        location: user.profile?.location || user.location || '',
+        website: user.profile?.website || user.website || '',
       });
     }
   }, [user]);
@@ -55,21 +56,28 @@ export default function ProfilePage() {
     
     setIsSaving(true);
     try {
-      // Create the payload for the backend
+      // Construct payload based on role
+      const isInstructor = user?.role === 'instructor';
+      
       const payload = {
-        ...formData,
+        name: formData.name,
         avatar: previewImage || user?.avatar,
+        // If instructor, keep the nested structure
+        profile: isInstructor ? {
+          ...user.profile, // keep rating, coursesCount, etc.
+          bio: formData.bio,
+          location: formData.location,
+          website: formData.website,
+        } : null,
+        // Fallback for students who might just have a top-level bio
+        ...( !isInstructor && { 
+          bio: formData.bio, 
+          location: formData.location 
+        }),
         updatedAt: new Date().toISOString()
       };
 
-      /** * BACKEND READY: 
-       * If you have an API endpoint, you would add the call here:
-       * await axios.patch('/api/user/profile', payload);
-       */
-
-      // Update global context state (Updates dropdown and persistence)
       await updateUser(payload); 
-      
       setIsEditing(false);
     } catch (error) {
       console.error("Submission error:", error);

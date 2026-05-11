@@ -57,19 +57,14 @@ export function QuizPage() {
 
   // Format time display (MM:SS)
   const formatTime = (seconds) => {
-  if (seconds === null || seconds < 0) return "00:00";
-
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  // If the quiz is an hour or longer, show H:MM:SS
-  if (hrs > 0) {
-    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-
-  // Otherwise, stick to MM:SS
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+    if (seconds === null || seconds < 0) return "00:00";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleSelectAnswer = (answerIndex) => {
@@ -91,17 +86,21 @@ export function QuizPage() {
     }
   }
 
+  // ✅ OPTIMIZED: Backend-ready submit logic
   const handleSubmit = () => {
     if (isSubmitted) return;
     setIsSubmitted(true)
     
-    // Attempt navigation to results page
+    // Passing full payload to the results page for logic processing
     navigate(`/learn/course/${courseId}/quiz/${lessonId}/results`, {
       state: {
         answers,
         questions,
         quizTitle: quiz.title,
-        exitPath 
+        courseId,
+        lessonId,
+        exitPath,
+        submittedAt: new Date().toISOString()
       }
     })
   }
@@ -112,7 +111,6 @@ export function QuizPage() {
 
   if (!quiz) return null;
 
-  // Fallback UI if results page route is missing or navigation is pending
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">

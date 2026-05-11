@@ -27,6 +27,7 @@ import  SettingsPage  from './pages/Settings/SettingsPage';
 import  CertificatePage  from './pages/Certificate/CertificatePage';
 import  LeaderboardPage  from './pages/Leaderboard/LeaderboardPage';
 import  NotFoundPage  from './pages/NotFound/NotFoundPage';
+import  InstructorOnboarding  from './pages/Auth/InstructorOnboarding';
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -90,6 +91,14 @@ function AppRoutes() {
             </PublicOnlyRoute>
           }
         />
+        <Route
+          path="signup/instructor-onboarding"
+          element={
+            <PublicOnlyRoute>
+              <InstructorOnboarding />
+            </PublicOnlyRoute>
+          }
+        />
       </Route>
 
       {/* Shared Authenticated Routes - Ensures /settings always works */}
@@ -115,8 +124,9 @@ function AppRoutes() {
       >
         <Route index element={<StudentDashboard />} />
         <Route path="leaderboard" element={<LeaderboardPage />} />
-        <Route path="certificate/:courseId" element={<CertificatePage />} />
       </Route>
+
+      <Route path="/certificate/:courseId" element={<CertificatePage />} />
 
       {/* Learning Routes */}
       <Route
