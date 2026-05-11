@@ -84,7 +84,7 @@ export default function Navbar() {
         </nav>
 
         {/* Desktop Right Section */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-2">
           <div className="relative">
             {isSearchOpen ? (
               <Input
@@ -97,7 +97,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+                className="flex h-9 w-10 items-center justify-center rounded-lg border border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
               >
                 <Search className="w-[18px] h-[18px]" />
               </button>
@@ -137,7 +137,7 @@ export default function Navbar() {
       </div>
 
       
-{/* --- UNIFIED COMPACT MOBILE MENU --- */}
+      {/* --- UNIFIED COMPACT MOBILE MENU --- */}
 
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[150] md:hidden bg-background animate-in fade-in duration-200">
@@ -195,7 +195,7 @@ export default function Navbar() {
                           {/* Standardized Width with no shrinkage */}
                           <div className="flex w-8 shrink-0 justify-start">
                             <Icon 
-                              className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground/70")} 
+                              className={cn("h-5 w-5", isActive ? "text-primary" : "text")} 
                               strokeWidth={2.5} 
                             />
                           </div>
@@ -205,7 +205,7 @@ export default function Navbar() {
                         <ChevronRight 
                           className={cn(
                             "h-4 w-4 transition-transform duration-200 group-hover:translate-x-1",
-                            isActive ? "text-primary opacity-100" : "text-muted-foreground/60"
+                            isActive ? "text-primary opacity-100" : "text"
                           )} 
                           strokeWidth={3}
                         />

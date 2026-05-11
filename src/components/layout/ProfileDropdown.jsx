@@ -55,12 +55,11 @@ export default function ProfileDropdown({ hideChevron = false }) {
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="
-          group flex px-3 md:px-0 md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card md:bg-none border md:border-none border-input hover:bg-muted active:scale-[0.98] shadow-sm  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
-        "
+          group flex px-3 md:px-0 md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card md:bg-transparent border md:border:input border-input hover:bg-muted active:scale-[0.98] "
       >
 
         {/* Avatar */}
-        <div className="ml-4 md:ml-0 flex md:w-full shrink-0 justify-start md:justify-center bg-transparent">
+        <div className="ml-3 md:ml-0 flex md:w-full shrink-0 justify-start md:justify-center bg-transparent">
           <div className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border-none bg-transparent overflow-hidden">
             {!imgError && user?.avatar && user.avatar !== '/placeholder-user.jpg' ? (
               <img
@@ -71,7 +70,7 @@ export default function ProfileDropdown({ hideChevron = false }) {
               />
             ) : (
               <User
-                className="h-5 w-5 text-muted-foreground"
+                className="h-5 w-5"
                 strokeWidth={2.25}
               />
             )}
@@ -80,7 +79,7 @@ export default function ProfileDropdown({ hideChevron = false }) {
         </div>
 
         {/* Mobile label */}
-        <span className="ml-4 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
+        <span className="ml-3 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
           Profile Settings
         </span>
 

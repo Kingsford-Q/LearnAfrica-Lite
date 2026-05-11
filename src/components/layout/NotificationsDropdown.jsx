@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, ChevronDown } from "lucide-react"
 import { cn } from '@/lib/utils'
+import MobileNotificationsDrawer from './MobileNotificationsDrawer';
 
 
 const mockNotifications = [
@@ -109,7 +110,7 @@ export default function NotificationsDropdown( {hideChevron = false}) {
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card md:bg-none border md:border-none border-input px-3 md:hover:bg-accent hover:bg-muted active:scale-[0.98] shadow-sm  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center  bg-card md:bg-transparent rounded-lg border md:border-none border-input px-3 md:px-1 md:hover:bg-accent hover:bg-muted active:scale-[0.98]  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Notifications"
       >
         {/* Icon */}
@@ -118,7 +119,7 @@ export default function NotificationsDropdown( {hideChevron = false}) {
 
           {/* Badge */}
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 md:-right-0 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
               {unreadCount}
             </span>
           )}
@@ -139,46 +140,38 @@ export default function NotificationsDropdown( {hideChevron = false}) {
         )}
       </div>
 
+      {/* DESKTOP DROPDOWN */}
       {isOpen && (
-        <div className={`
-          z-50 flex flex-col bg-card border border-border rounded-xl shadow-xl overflow-hidden
-          /* Layout Base */
-          absolute top-full mt-2
-          /* MOBILE: Floating and centered */
-          left-1/2 -translate-x-1/2 w-[calc(100vw-32px)] max-w-[300px]
-          /* MD (Tablets) & LG: Fixed to right side */
-          md:right-0 md:left-auto md:translate-x-0 md:w-80
-          /* SAFETY: Prevents the whole dropdown from going off-screen height-wise */
-          max-h-[calc(100vh-120px)]
-        `}>
+        /* The parent container handles the positioning and the 'hidden md:flex' toggle */
+        <div className="hidden md:flex absolute top-full right-0 mt-2 w-80 z-50 flex-col bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           
           {/* Header */}
-          <div className="p-3 md:p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
-            <h3 className="font-semibold text-xs md:text-sm text-foreground uppercase tracking-wider">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-card shrink-0">
+            <h3 className="font-semibold text-sm text-foreground uppercase tracking-wider">
               Notifications
             </h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-[10px] md:text-xs text-primary font-medium hover:underline"
+                className="text-xs text-primary font-medium hover:underline"
               >
                 Mark all as read
               </button>
             )}
-
-
           </div>
 
           {/* Scrollable Area */}
-          <div className="overflow-y-auto flex-1 min-h-0 custom-scrollbar max-h-64 md:max-h-80 lg:max-h-[450px]">
+          <div className="overflow-y-auto flex-1 min-h-0 custom-scrollbar max-h-80 lg:max-h-[450px]">
             {isLoading ? (
-              <div className="p-8 text-center"><div className="animate-spin inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full" /></div>
+              <div className="p-8 text-center">
+                <div className="animate-spin inline-block w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+              </div>
             ) : notifications.length > 0 ? (
               notifications.map((notification) => (
                 <button
                   key={notification.id}
                   onClick={() => markAsRead(notification.id)}
-                  className={`w-full p-3 md:p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0 ${
+                  className={`w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left border-b border-border/50 last:border-0 ${
                     !notification.read ? 'bg-primary/5' : ''
                   }`}
                 >
@@ -188,17 +181,17 @@ export default function NotificationsDropdown( {hideChevron = false}) {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-1">
-                      <p className={`font-medium text-xs md:text-sm leading-tight truncate ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <p className={`font-medium text-sm leading-tight truncate ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {notification.title}
                       </p>
                       {!notification.read && (
                         <span className="w-2 h-2 bg-primary rounded-full shrink-0 mt-1" />
                       )}
                     </div>
-                    <p className="text-[10px] md:text-xs text-muted-foreground mt-1 line-clamp-2">
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {notification.message}
                     </p>
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground/70 mt-1 uppercase">
+                    <p className="text-[10px] text-muted-foreground/70 mt-1 uppercase">
                       {notification.time}
                     </p>
                   </div>
@@ -214,12 +207,27 @@ export default function NotificationsDropdown( {hideChevron = false}) {
           {/* Footer */}
           <Link
             to="/dashboard"
-            className="block p-3 text-center text-xs md:text-sm font-semibold text-primary hover:bg-muted/50 border-t border-border bg-muted/20 shrink-0"
+            onClick={() => setIsOpen(false)}
+            className="block p-3 text-center text-sm font-semibold text-primary hover:bg-muted/50 border-t border-border bg-muted/20 shrink-0"
           >
             View All
           </Link>
         </div>
       )}
+
+      {/* MOBILE DRAWER (Handles its own z-index and fixed positioning) */}
+      <MobileNotificationsDrawer 
+        isOpen={isOpen} 
+        onClose={() => setIsOpen(false)}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        markAllAsRead={markAllAsRead}
+        markAsRead={markAsRead}
+        notificationIcons={notificationIcons}
+        notificationColors={notificationColors}
+        isLoading={isLoading}
+      />
+    
     </div>
   );
 }

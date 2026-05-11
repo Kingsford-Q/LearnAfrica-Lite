@@ -7,7 +7,7 @@ export function ThemeToggle() {
   return (
     <div
       onClick={toggleTheme}
-      className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card border border-input px-3 shadow-sm  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent"
+      className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card border border-input px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hover:bg-accent"
     >
       <div className="ml-4 md:ml-0 flex md:w-full shrink-0 justify-start scale-110">
         {theme === 'light' ? (
