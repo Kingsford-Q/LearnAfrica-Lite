@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Bell } from "lucide-react"
 
 const mockNotifications = [
   { id: 1, type: 'course', title: 'New lesson available', message: 'Introduction to JavaScript has a new lesson: "Async/Await"', time: '2 hours ago', read: false },
@@ -104,20 +105,28 @@ export default function NotificationsDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+      <div
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl hover:bg-muted transition-colors"
+        className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card border border-input px-3 hover:bg-muted active:scale-[0.98] shadow-sm transition-all  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Notifications"
       >
-        <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center">
-            {unreadCount}
-          </span>
-        )}
-      </button>
+        {/* Icon */}
+        <div className="ml-4 md:ml-0 relative flex md:w-full shrink-0 justify-start md:justify-center">
+          <Bell className="w-[18px] h-[18px] text-foreground" />
+
+          {/* Badge */}
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+
+        {/* Mobile label */}
+        <span className="ml-4 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
+          Notifications
+        </span>
+      </div>
 
       {isOpen && (
         <div className={`

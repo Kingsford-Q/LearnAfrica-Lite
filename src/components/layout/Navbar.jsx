@@ -225,14 +225,7 @@ export default function Navbar() {
                   {isAuthenticated ? (
                     <div className="space-y-3">
                       {/* Notifications */}
-                      <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted ">
-                        <div className="flex w-8 shrink-0 justify-start scale-110 group-hover:text-primary">
-                          <NotificationsDropdown />
-                        </div>
-                        <span className="ml-4 text-foreground/80 text-sm font-semibold transition-colors group-hover:text-primary">
-                          Notifications
-                        </span>
-                      </div>
+                      <NotificationsDropdown />
 
                       {/* Profile - Chevron/Dropdown Icon Hidden */}
                       <div className="group flex h-14 items-center rounded-xl bg-card border border-border px-4 shadow-sm hover:bg-muted">
