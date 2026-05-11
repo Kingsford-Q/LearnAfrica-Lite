@@ -107,7 +107,7 @@ export default function NotificationsDropdown() {
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card border border-input px-3 hover:bg-muted active:scale-[0.98] shadow-sm transition-all  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="group flex md:h-9 h-14 cursor-pointer items-center md:justify-center rounded-lg bg-card border border-input px-3 hover:bg-muted active:scale-[0.98] shadow-sm  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label="Notifications"
       >
         {/* Icon */}
