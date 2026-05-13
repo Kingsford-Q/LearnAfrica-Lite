@@ -156,6 +156,7 @@ const [notifications, setNotifications] = useState(() => {
     }
   };
 
+
   const login = useCallback(async (credentials) => {
     const newUser = {
       ...credentials,

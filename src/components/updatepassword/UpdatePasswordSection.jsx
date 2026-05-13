@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '../../components/common/Button';
 import { Loader2, ShieldCheck, Eye, EyeOff, Lock, X } from 'lucide-react';
 
-export default function UpdatePasswordSection({ onCancel }) {
+export default function UpdatePasswordSection({ onCancel, onSuccess }) {
   const [showPasswords, setShowPasswords] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -26,10 +26,15 @@ export default function UpdatePasswordSection({ onCancel }) {
     }
     setIsUpdating(true);
     try {
+      // Logic for password update would go here (e.g., Firebase or API call)
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      onCancel();
+      
+      // SUCCESS: Call onSuccess to trigger the feedback alert in SettingsPage
+      if (onSuccess) {
+        onSuccess("Your password has been updated securely.");
+      }
     } catch (err) {
-      setError("Update failed. Please try again.");
+      setError("Update failed. Please check your current password and try again.");
     } finally {
       setIsUpdating(false);
     }
@@ -41,7 +46,7 @@ export default function UpdatePasswordSection({ onCancel }) {
     formData.newPassword === formData.confirmPassword;
 
   return (
-    <div className="mt-4 p-6 rounded-2xl bg-background border border-border/50 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="mt-0 md:mt-4 p-6 rounded-2xl bg-background border border-border/50 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center gap-3">

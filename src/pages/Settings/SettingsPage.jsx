@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
@@ -42,7 +42,7 @@ const Switch = ({ checked, onChange, disabled }) => (
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  const { isInstructorMode, user } = useAuth();
+  const { isInstructorMode, user, updateUser} = useAuth();
   
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -65,18 +65,55 @@ export default function SettingsPage() {
     setHasChanges(true);
   };
 
+  useEffect(() => {
+    if (user?.settings) {
+      // Hydrating local state from the persistent user object
+      setSettings({
+        notifications: user.settings.notifications || { email: true, push: false, updates: true },
+        privacy: user.settings.privacy || { twoFactor: false },
+        instructor: user.settings.instructor || { payout: true, messages: true }
+      });
+      
+      // We reset hasChanges to false because these values 
+      // are now identical to what's in the database/context.
+      setHasChanges(false); 
+    }
+  }, [user]);
+
   const saveSettings = async () => {
     setIsSaving(true);
+    // Clear previous status before starting
+    setStatus({ type: null, message: '' });
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setStatus({ type: 'success', message: 'Settings saved successfully!' });
+      
+      await updateUser({
+        ...user,
+        settings: {
+          ...settings,
+          // Syncing the theme preference here ensures it persists across logins
+          appearance: theme 
+        }
+      });
+
+      setStatus({ 
+        type: 'success', 
+        message: 'Settings updated and saved successfully!' 
+      });
+      
+      // Reset the "Save Changes" button state
       setHasChanges(false);
     } catch (error) {
-      setStatus({ type: 'error', message: 'Something went wrong. Please try again.' });
+      console.error("Settings Save Error:", error);
+      setStatus({ 
+        type: 'error', 
+        message: 'Failed to sync settings. Please try again.' 
+      });
     } finally {
       setIsSaving(false);
     }
   };
+
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6">
@@ -167,38 +204,61 @@ export default function SettingsPage() {
         </Card>
 
         {/* Security Section */}
-        <Card className="border-border/60 pb-3">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              <CardTitle className = "text-lg">Privacy & Security</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!showPasswordForm ? (
-              <div className="flex md:flex-row flex-col md:items-start md:justify-between gap-5 md:gap-0 animate-in fade-in duration-300">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Account Password</p>
-                  <p className="text-sm text-muted-foreground">Change your password to keep your account secure</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowPasswordForm(true)}
-                  className=""
-                >
-                  Update Password
-                </Button>
-              </div>
-            ) : (
-              <UpdatePasswordSection onCancel={() => setShowPasswordForm(false)} />
-            )}
-          </CardContent>
-        </Card>
+        {/* Security Section */}
+{/* Security Section */}
+{/* Security Section */}
+{/* Security Section */}
+<Card className="border-border/60 overflow-hidden bg-card">
+  {/* 
+      1. Hide the parent header ONLY on mobile when the form is open. 
+      This prevents the "double-layered" look in image_1ef0ad.png.
+  */}
+  <CardHeader className={`${showPasswordForm ? 'hidden sm:block' : 'block'} border-b border-border/40`}>
+    <div className="flex items-center gap-2">
+      <Shield className="h-5 w-5 text-primary" />
+      <CardTitle className="text-lg">Privacy & Security</CardTitle>
+    </div>
+  </CardHeader>
+  
+  {/* 
+      2. The Fix: We use p-0 (all sides) on mobile when the form is open. 
+      This ensures the internal component is perfectly flush with the Card borders.
+  */}
+  <CardContent className={`w-full transition-all duration-300 ${showPasswordForm ? 'p-0 sm:p-6' : 'p-6'}`}>
+    {!showPasswordForm ? (
+      <div className="flex md:flex-row flex-col md:items-start md:justify-between gap-5 animate-in fade-in duration-300">
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Account Password</p>
+          <p className="text-sm text-muted-foreground">Change your password to keep your account secure</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setShowPasswordForm(true)}
+        >
+          Update Password
+        </Button>
+      </div>
+    ) : (
+      <div className="w-full animate-in slide-in-from-top-2 duration-300">
+        {/* 
+            3
+        */}
+        <UpdatePasswordSection 
+          onCancel={() => setShowPasswordForm(false)} 
+          onSuccess={(message) => {
+            setShowPasswordForm(false);
+            setStatus({ type: 'success', message: message });
+          }}
+        />
+      </div>
+    )}
+  </CardContent>
+</Card>
 
         {/* Danger Zone */}
-        {!showDeleteVerification ? (
-          <div className="pt-6 mt-6 border-t border-destructive/20">
+        <div className="pt-6 mt-6 border-t border-destructive/20 w-full overflow-hidden"> {/* Ensure wrapper is clean */}
+          {!showDeleteVerification ? (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-2xl bg-destructive/5 border border-destructive/10 gap-6">
               <div className="space-y-1">
                 <h3 className="text-md md:text-lg font-bold text-destructive flex items-center gap-2">
@@ -219,16 +279,15 @@ export default function SettingsPage() {
                 Delete Account
               </Button>
             </div>
-          </div>
-        ) : (
-          /* The fix is applying break-all and overflow control to this wrapper */
-          <div className="pt-6 mt-6 border-t border-destructive/20 w-full max-w-full overflow-hidden break-all">
-            <DeleteAccountSection 
-              userEmail={user?.email || "user@example.com"} 
-              onCancel={() => setShowDeleteVerification(false)}
-            />
-          </div>
-        )}
+          ) : (
+            <div className="w-full max-w-full overflow-hidden animate-in zoom-in-95 duration-200">
+              <DeleteAccountSection 
+                userEmail={user?.email || "user@example.com"} 
+                onCancel={() => setShowDeleteVerification(false)}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
