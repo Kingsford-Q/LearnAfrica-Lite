@@ -90,20 +90,50 @@ export default function ProfilePage() {
     <div className="max-w-6xl mx-auto p-4 md:p-10 space-y-6 md:space-y-8 animate-in fade-in duration-500">
       
       {/* STATS BAR */}
+      {/* STATS BAR - UPDATED FOR DYNAMIC DATA */}
+      {/* STATS BAR - MAPPED TO AUTHCONTEXT RESOLVER */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
         {[
-          { label: 'Courses Completed', value: '12', icon: Book, theme: 'text-primary bg-primary/10' },
-          { label: 'Hours Learned', value: '156h', icon: Clock, theme: 'text-foreground bg-muted' },
-          { label: 'Certificates', value: '08', icon: Trophy, theme: 'text-accent-foreground bg-accent' },
-          { label: 'Current Streak', value: '14d', icon: Flame, theme: 'text-orange-500 bg-orange-500/10' },
+          { 
+            label: 'Courses Completed', 
+            // Matches 'coursesCompletedCount' from getLiveStats()
+            value: user?.stats?.coursesCompletedCount || 0, 
+            icon: Book, 
+            theme: 'text-primary bg-primary/10' 
+          },
+          { 
+            label: 'Lessons Done', 
+            // Matches 'lessonsCompletedCount' from getLiveStats()
+            value: user?.stats?.lessonsCompletedCount || 0, 
+            icon: Clock, 
+            theme: 'text-foreground bg-muted' 
+          },
+          { 
+            label: 'Perfect Quizzes', 
+            // Matches 'perfectQuizzes' from getLiveStats()
+            value: user?.stats?.perfectQuizzes || 0, 
+            icon: Trophy, 
+            theme: 'text-accent-foreground bg-accent' 
+          },
+          { 
+            label: 'Current Streak', 
+            // Matches 'streak' from getLiveStats()
+            value: `${user?.stats?.streak || 1}d`, 
+            icon: Flame, 
+            theme: 'text-orange-500 bg-orange-500/10' 
+          },
         ].map((stat, i) => (
           <div key={i} className="flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-2xl bg-card border border-border shadow-sm">
             <div className={cn("p-2.5 md:p-3 rounded-xl", stat.theme)}>
               <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-lg md:text-xl font-bold tracking-tight text-foreground truncate">{stat.value}</p>
-              <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-tight truncate">{stat.label}</p>
+              <p className="text-lg md:text-xl font-bold tracking-tight text-foreground truncate">
+                {stat.value}
+              </p>
+              <p className="text-[9px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-tight truncate">
+                {stat.label}
+              </p>
             </div>
           </div>
         ))}
@@ -163,13 +193,13 @@ export default function ProfilePage() {
             <CardHeader className="py-5 px-6 md:px-8 border-b border-border flex flex-row items-center justify-between bg-primary/[0.01]">
               <CardTitle className="text-xs md:text-sm font-bold uppercase tracking-widest text-primary">Personal Details</CardTitle>
               {!isEditing && (
-                <Button 
+                <button 
                   type="button"
                   onClick={() => setIsEditing(true)} 
                   className="bg-primary text-primary-foreground text-[10px] md:text-[11px] font-bold uppercase tracking-widest px-4 md:px-6 h-9 md:h-10 rounded-lg shadow-md shadow-primary/20"
                 >
                   Edit Profile
-                </Button>
+                </button>
               )}
             </CardHeader>
             <CardContent className="p-6 md:p-8 flex-grow">

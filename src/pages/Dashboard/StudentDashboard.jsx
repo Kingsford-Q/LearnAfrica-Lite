@@ -134,7 +134,7 @@ export default function StudentDashboard() {
             <>
               <StatsCard title="Enrolled Courses" value={enrolledCourses.length} icon={<BookIcon />} trend="up" trendValue="+2 this month" />
               <StatsCard title="Completed Courses" value={completedCourses.length} icon={<AwardIcon />} trend="up" trendValue="+1 this week" />
-              <StatsCard title="Hours Learned" value={totalHours} icon={<ClockIcon />} trend="up" trendValue="+5 this week" />
+              <StatsCard title="Perfect Quizzes" value={user?.stats?.perfectQuizzes || 0} icon={<TrophyIcon />} trend="up" trendValue="100% Score" />
               <StatsCard title="Badges Earned" value={earnedCount} icon={<TrophyIcon />} trend="up" trendValue={`${earnedCount}/${badgeConfig.length}`} />
             </>
           )}
@@ -178,7 +178,7 @@ export default function StudentDashboard() {
       {/* Achievements Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">Achievements</h2>
+          <h2 className="text-xl font-bold text-foreground">Badges</h2>
           <span className="text-sm text-muted-foreground">
             {earnedCount} of {badgeConfig.length} badges earned
           </span>
