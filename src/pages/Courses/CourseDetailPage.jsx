@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { 
   Clock, 
@@ -15,15 +15,13 @@ import {
   AlertCircle,
   XCircle,
   Lock,
-  Loader2 // Added for a cleaner loading UI
+  Loader2 
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
-import { CourseCard } from '@/components/course/CourseCard'
-// Assuming you have an AuthContext to manage global user state
-// import { useAuth } from '@/contexts/AuthContext' 
-import { courses, lessons } from '@/data/mockData'
+import  CourseCard  from '@/components/course/CourseCard'
+import { useAuth } from '@/context/AuthContext' // Updated path to your context
 import { cn } from '@/lib/utils'
 
 export function CourseDetailPage() {
@@ -31,71 +29,73 @@ export function CourseDetailPage() {
   const navigate = useNavigate()
   const [expandedSection, setExpandedSection] = useState(true)
   
-  // --- BACKEND READY INTEGRATION ---
-  // In a real app, 'user' would contain 'enrolledCourses: [1, 2, 3]'
-  // const { user, isLoading: authLoading } = useAuth() 
-  const [isLoading, setIsLoading] = useState(true)
-  const [isEnrolled, setIsEnrolled] = useState(false)
+  // --- AUTH-DRIVEN DATA FETCHING ---
+  const { user, courses, lessons, enrollInCourse } = useAuth() 
+  const [isLocalLoading, setIsLocalLoading] = useState(true)
 
-  const course = courses.find(c => String(c.id) === String(courseId));
+  // Memoize course and related lessons for performance
+  const course = useMemo(() => 
+    courses.find(c => String(c.id) === String(courseId)), 
+  [courseId, courses]);
+
+  const courseLessons = useMemo(() => 
+    lessons.filter(l => String(l.courseId) === String(courseId)),
+  [courseId, lessons]);
+
+  const isEnrolled = useMemo(() => 
+    user?.enrolledCourses?.includes(Number(courseId)),
+  [user, courseId]);
 
   useEffect(() => {
-    // Simulate fetching enrollment status from backend/auth context
-    const checkEnrollment = async () => {
-      setIsLoading(true)
-      // simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 600))
-      
-      // Real Logic: setIsEnrolled(user?.enrolledCourses?.includes(course.id))
-      setIsEnrolled(false) 
-      setIsLoading(false)
+    // Briefly simulate check to align with your loading state UI
+    if (course) {
+      const timer = setTimeout(() => setIsLocalLoading(false), 400);
+      return () => clearTimeout(timer);
     }
-
-    if (course) checkEnrollment()
-  }, [courseId, course])
+  }, [course]);
 
   if (!course) {
-    return <div className="container py-20 text-center font-bold">Course not found</div>;
+    return (
+      <div className="container py-20 text-center font-bold">
+        Course not found
+      </div>
+    );
   }
 
-  const courseLessons = lessons.filter(l => l.courseId === course.id)
-  const relatedCourses = courses.filter(c => c.id !== course.id && c.category === course.category).slice(0, 3)
+  const relatedCourses = courses.filter(c => 
+    String(c.id) !== String(courseId) && c.category === course.category
+  ).slice(0, 3)
 
-  // --- LOGIC IMPROVEMENTS START ---
-
-  // Progress logic
-  const completedLessons = courseLessons.filter(l => l.isCompleted).length
-  const progress = Math.round((completedLessons / courseLessons.length) * 100) || 0
+  // --- PROGRESS & NAVIGATION LOGIC ---
+  const completedLessonsCount = courseLessons.filter(l => l.isCompleted).length
+  const progress = Math.round((completedLessonsCount / courseLessons.length) * 100) || 0
   const isCourseCompleted = progress === 100;
 
-  // Find the specific lesson to "Continue" to (first one not completed)
+  // Find the correct lesson to resume
   const nextToCompleteLesson = courseLessons.find(l => !l.isCompleted);
-  
-  // Logic for the Main Action Button
   const resumeLessonId = isCourseCompleted 
     ? courseLessons[0]?.id 
     : (nextToCompleteLesson?.id || courseLessons[0]?.id);
 
   const buttonText = isCourseCompleted ? "Review Course" : "Continue Learning";
 
-  // helper to check if a lesson should be locked
+  // Strict linear locking logic
   const isLessonLocked = (index) => {
-    if (!isEnrolled) return true; // Visitor: Everything locked
-    if (isCourseCompleted) return false; // Graduate: Everything unlocked
-    if (index === 0) return false; // First lesson: Always unlocked for students
-
-    // Student: Unlock only if the previous lesson is completed
+    if (!isEnrolled) return true; 
+    if (isCourseCompleted) return false; 
+    if (index === 0) return false; 
     return !courseLessons[index - 1]?.isCompleted;
   };
 
-  // --- LOGIC IMPROVEMENTS END ---
-
-  const handleEnroll = () => {
-    if (course.isFree) {
-      // Here you would normally call your backend: await api.enroll(course.id)
-      setIsEnrolled(true)
-    } else if (course.paymentLink) {
-      window.location.href = course.paymentLink;
+  const handleEnroll = async () => {
+    try {
+      if (course.isFree) {
+        await enrollInCourse(course.id);
+      } else if (course.paymentLink) {
+        window.location.href = course.paymentLink;
+      }
+    } catch (error) {
+      console.error("Enrollment failed", error);
     }
   }
 
@@ -118,7 +118,6 @@ export function CourseDetailPage() {
               <h1 className="text-3xl lg:text-4xl font-bold">{course.title}</h1>
               <p className="text-lg text-muted-foreground">{course.description}</p>
 
-              {/* Stats */}
               <div className="flex flex-wrap items-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
@@ -133,7 +132,7 @@ export function CourseDetailPage() {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <BookOpen className="h-4 w-4" />
-                  {course.lessons} lessons
+                  {courseLessons.length} lessons
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Globe className="h-4 w-4" />
@@ -141,7 +140,6 @@ export function CourseDetailPage() {
                 </div>
               </div>
 
-              {/* Instructor */}
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-full bg-muted overflow-hidden border">
                   <img src={course.instructorAvatar} alt={course.instructor} className="h-full w-full object-cover" />
@@ -165,8 +163,7 @@ export function CourseDetailPage() {
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  {/* Handling Backend Loading State to prevent UI flickering */}
-                  {isLoading ? (
+                  {isLocalLoading ? (
                     <div className="flex flex-col items-center justify-center py-4 space-y-2">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       <p className="text-xs text-muted-foreground">Checking enrollment...</p>
@@ -205,7 +202,7 @@ export function CourseDetailPage() {
                         <div className="space-y-3">
                           <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20">
                             <XCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                            <p>Direct enrollment is currently unavailable for this course.</p>
+                            <p>Direct enrollment is currently unavailable.</p>
                           </div>
                           <Button className="w-full" variant="primary" onClick={() => navigate('/courses')}>
                             Browse Other Courses
@@ -224,7 +221,7 @@ export function CourseDetailPage() {
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex items-center gap-2">
                         <Play className="h-4 w-4 text-primary" />
-                        {course.lessons} video lessons
+                        {courseLessons.length} video lessons
                       </li>
                       <li className={cn("flex items-center gap-2", !course.hasResources && "opacity-50")}>
                         <BookOpen className="h-4 w-4 text-primary" />
@@ -253,7 +250,7 @@ export function CourseDetailPage() {
           <div className="lg:col-span-2 space-y-8">
             <Card className="p-6">
               <h2 className="text-lg md:text-xl font-bold mb-4">What you&apos;ll learn</h2>
-              {course.whatYouLearn && course.whatYouLearn.length > 0 ? (
+              {course.whatYouLearn?.length > 0 ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {course.whatYouLearn.map((item, index) => (
                     <div key={index} className="flex items-start gap-2">
@@ -265,7 +262,7 @@ export function CourseDetailPage() {
               ) : (
                 <div className="flex items-center gap-2 text-muted-foreground bg-muted/30 p-4 rounded-lg">
                   <AlertCircle className="h-5 w-5" />
-                  <p className="text-sm italic">Learning objectives have not been listed for this course yet.</p>
+                  <p className="text-sm italic">Learning objectives have not been listed yet.</p>
                 </div>
               )}
             </Card>
@@ -276,7 +273,7 @@ export function CourseDetailPage() {
                 <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
                   <span>{courseLessons.length} lessons</span>
                   <span className="text-muted-foreground/30">•</span>
-                  <span>{completedLessons} completed</span>
+                  <span>{completedLessonsCount} completed</span>
                 </div>
               </div>
 

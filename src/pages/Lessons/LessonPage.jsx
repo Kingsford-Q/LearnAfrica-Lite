@@ -16,12 +16,13 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
-import { lessons, courses } from '@/data/mockData'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
 
 const DiscussionForum = lazy(() => Promise.resolve({ default: () => <div className="p-12 text-center italic">Forum Loading...</div> }));
 
 export function LessonPage() {
+  const { user, courses, lessons, updateProgress } = useAuth() // Pull stateful data
   const { courseId, lessonId } = useParams()
   const navigate = useNavigate()
   const [isCompleted, setIsCompleted] = useState(false)
@@ -31,13 +32,13 @@ export function LessonPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'success'
 
-  // 1. Find the course
-  const course = useMemo(() => courses.find(c => String(c.id) === String(courseId)), [courseId])
+  const course = useMemo(() => 
+      courses.find(c => String(c.id) === String(courseId)), 
+    [courseId, courses])
   
-  // 2. Filter lessons for this course
   const courseLessons = useMemo(() => 
-    lessons.filter(l => String(l.courseId) === String(courseId)), 
-  [courseId])
+    lessons.filter(l => String(l.courseId) === String(courseId)),
+  [courseId, lessons])
   
   // 3. Find the specific lesson
   const lesson = useMemo(() => 
@@ -49,7 +50,7 @@ export function LessonPage() {
   const prevLesson = currentIndex > 0 ? courseLessons[currentIndex - 1] : null
   const nextLesson = currentIndex < courseLessons.length - 1 && currentIndex !== -1 ? courseLessons[currentIndex + 1] : null
 
-  // 5. REVISED GUARD LOGIC
+  // 5. REVISED GUARD LOGIC - Strict linear progression
   const firstIncompleteIndex = courseLessons.findIndex(l => !l.isCompleted)
   const isAccessingIllegally = firstIncompleteIndex !== -1 && currentIndex > firstIncompleteIndex
 
@@ -92,7 +93,7 @@ export function LessonPage() {
       fetchNotesFromBackend();
     }
 
-    setIsCompleted(false);
+    setIsCompleted(lesson?.isCompleted || false);
   }, [lessonId, isAccessingIllegally, navigate, courseId, courseLessons, firstIncompleteIndex, lesson]);
 
   // UI GUARDS
@@ -168,9 +169,17 @@ export function LessonPage() {
   const showQuizButton = isLastLesson && currentLessonFinished
 
   const handleMarkComplete = async () => {
-    setIsCompleted(true)
-    if (lesson) lesson.isCompleted = true 
+  try {
+    setIsSaving(true);
+    // Directly call updateProgress; the context logic handles state and DB persistence
+    await updateProgress(courseId, lessonId); 
+    setIsCompleted(true);
+  } catch (error) {
+    console.error("Failed to update progress", error);
+  } finally {
+    setIsSaving(false);
   }
+};
 
   const navBtnClass = "h-11 px-3 sm:px-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center justify-center gap-2 shrink-0"
   const takeQuizClass = "h-11 px-4 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md w-full sm:w-auto"
@@ -374,10 +383,11 @@ export function LessonPage() {
                     <Button 
                       variant="primary" 
                       onClick={handleMarkComplete} 
+                      disabled={isSaving}
                       className="w-full max-w-[170px] h-11 font-bold uppercase tracking-widest text-[10px] sm:text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                       <CheckCircle className="h-4 w-4 shrink-0" />
-                      <span>Mark Complete</span>
+                      <span>{isSaving ? "Saving..." : "Mark Complete"}</span>
                     </Button>
                   ) : (
                     <div className={cn(

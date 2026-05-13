@@ -13,8 +13,13 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
-import { testimonials, courses } from '@/data/mockData'
-import { CourseCard } from '@/components/course/CourseCard'
+import { testimonials } from '@/data/mockData'
+import { useAuth } from '@/context/AuthContext'
+import { useState, useMemo, lazy, Suspense } from 'react'
+import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
+
+// Lazy load the CourseCard component
+const CourseCard = lazy(() => import('@/components/course/CourseCard'))
 
 const features = [
   {
@@ -70,6 +75,22 @@ const stats = [
 ]
 
 export function LandingPage() {
+  const { user, courses } = useAuth()
+
+  const displayCourses = useMemo(() => {
+    if (!user) return courses.slice(0, 3);
+
+    const enrolledIds = user.enrolledCourses || [];
+
+    return courses
+      .filter((course) => {
+        const isEnrolled = enrolledIds.some(id => id == course.id);
+        const hasProgress = (course.progress || 0) > 0;
+        return !isEnrolled && !hasProgress;
+      })
+      .slice(0, 3);
+  }, [user, courses]);
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -140,7 +161,6 @@ export function LandingPage() {
             <div className="relative hidden lg:block">
               <div className="relative rounded-3xl bg-gradient-to-br from-primary/10 via-transparent to-accent/10 p-8 border border-border/50">
                 <div className="grid grid-cols-2 gap-6">
-                  {/* Card 1: Growth */}
                   <Card className="p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300 gap-3">
                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                       <TrendingUp className="h-6 w-6 text-primary" />
@@ -151,7 +171,6 @@ export function LandingPage() {
                     </div>
                   </Card>
 
-                  {/* Card 2: Students */}
                   <Card className="p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300 gap-3">
                     <div className="h-12 w-12 rounded-2xl bg-accent/10 flex items-center justify-center">
                       <Users className="h-6 w-6 text-accent" />
@@ -162,7 +181,6 @@ export function LandingPage() {
                     </div>
                   </Card>
 
-                  {/* Card 3: Certificates */}
                   <Card className="p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300 gap-3">
                     <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
                       <Award className="h-6 w-6 text-emerald-600" />
@@ -173,7 +191,6 @@ export function LandingPage() {
                     </div>
                   </Card>
 
-                  {/* Card 4: Lessons */}
                   <Card className="p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300 gap-3">
                     <div className="h-12 w-12 rounded-2xl bg-orange-500/10 flex items-center justify-center">
                       <BookOpen className="h-6 w-6 text-orange-600" />
@@ -189,7 +206,6 @@ export function LandingPage() {
           </div>
         </div>
 
-        {/* Background decorations */}
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
       </section>
@@ -259,9 +275,20 @@ export function LandingPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {courses.slice(0, 3).map(course => (
-              <CourseCard key={course.id} course={course} />
-            ))}
+            <Suspense 
+              fallback={
+                <>
+                  {/* Providing unique keys to skeletons prevents the 'removeChild' DOM exception */}
+                  {[1, 2, 3].map((id) => (
+                    <CourseCardSkeleton key={`skeleton-${id}`} />
+                  ))}
+                </>
+              }
+            >
+              {displayCourses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </Suspense>
           </div>
         </div>
       </section>
@@ -311,19 +338,16 @@ export function LandingPage() {
           <div className="grid gap-6 md:grid-cols-3">
             {testimonials.map(testimonial => (
               <Card key={testimonial.id} className="p-6 flex flex-col justify-between h-full">
-                {/* 1. Rating Stars: Always at the top */}
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                   ))}
                 </div>
 
-                {/* 2. Testimonial Content: Always in the middle */}
                 <p className="text-muted-foreground mb-6 flex-grow">
                   {testimonial.content}
                 </p>
 
-                {/* 3. Person Information: Always at the bottom */}
                 <div className="flex items-center gap-3 mt-auto">
                   <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
                     <img
@@ -370,7 +394,6 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Decorative elements */}
             <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary-foreground/10" />
             <div className="absolute -bottom-20 right-40 h-40 w-40 rounded-full bg-accent/20" />
           </Card>

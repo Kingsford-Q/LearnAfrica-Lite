@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/common/Card';
 // Updated import path based on your folder structure
 import { StatsCardSkeleton, CourseCardSkeleton } from '@/components/common/LoadingSkeleton';
 import { useAuth } from '@/context/AuthContext';
-import { courses, badges } from '@/data/mockData';
+import { courses, badgeConfig } from '@/data/mockData';
 
 // Lazy loaded components for code splitting
 const StatsCard = lazy(() => import('@/components/dashboard/StatsCard'));
@@ -38,7 +38,7 @@ const TrophyIcon = () => (
 );
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, courses: coursesState } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,10 +47,11 @@ export default function StudentDashboard() {
   }, []);
 
   // Optimized Logic for Backend Readiness
-  const enrolledCourses = useMemo(() => (courses || []).filter((c) => c.progress > 0), []);
-  const completedCourses = useMemo(() => (courses || []).filter((c) => c.progress === 100), []);
-  const earnedBadges = useMemo(() => (badges || []).filter((b) => b.earned), []);
-  const recommendedCourses = useMemo(() => (courses || []).filter((c) => c.progress === 0).slice(0, 3), []);
+  const enrolledCourses = useMemo(() => (coursesState || []).filter((c) => c.progress > 0), [coursesState]);
+  const completedCourses = useMemo(() => (coursesState || []).filter((c) => c.progress === 100), [coursesState]);
+  
+  // recommended courses logic
+  const recommendedCourses = useMemo(() => (coursesState || []).filter((c) => c.progress === 0).slice(0, 3), [coursesState]);
   
   const totalHours = user?.totalHoursLearned || 42;
 
@@ -63,6 +64,42 @@ export default function StudentDashboard() {
       <StatsCardSkeleton />
     </>
   );
+
+  
+  const liveBadges = useMemo(() => {
+    if (!user || !badgeConfig) return []; // Defensive check for mockData
+
+    return badgeConfig.map((config) => {
+      const hasBadgeRecord = user.badges?.some((b) => b.badgeId === config.id);
+
+      const requirementMap = {
+        'lessons_completed': user.stats?.lessonsCompletedCount || 0,
+        'courses_completed': user.stats?.coursesCompletedCount || 0,
+        'day_streak': user.stats?.streak || 0,
+        'perfect_quizzes': user.stats?.perfectQuizzes || 0,
+        'reviews_submitted': user.stats?.reviewsCount || 0,
+        'fast_finish': user.stats?.fastFinishCount || 0,
+        'profile_completed': user.stats?.isProfileComplete ? 1 : 0,
+      };
+
+      const currentProgress = requirementMap[config.requirementType] || 0;
+      const isEarned = hasBadgeRecord || currentProgress >= config.goal;
+
+      return {
+        ...config,
+        earned: isEarned,
+        currentProgress,
+        earnedDate: isEarned ? (hasBadgeRecord ? 'Verified' : 'Recently') : null,
+      };
+    }).sort((a, b) => {
+      if (a.earned !== b.earned) return a.earned ? -1 : 1;
+      return (b.currentProgress / b.goal) - (a.currentProgress / a.goal);
+    });
+  }, [user]);
+
+  const earnedCount = useMemo(() => 
+    liveBadges.filter(b => b.earned).length, 
+  [liveBadges]);
 
   return (
     <div className="w-full max-w-full overflow-hidden space-y-8 p-6">
@@ -98,7 +135,7 @@ export default function StudentDashboard() {
               <StatsCard title="Enrolled Courses" value={enrolledCourses.length} icon={<BookIcon />} trend="up" trendValue="+2 this month" />
               <StatsCard title="Completed Courses" value={completedCourses.length} icon={<AwardIcon />} trend="up" trendValue="+1 this week" />
               <StatsCard title="Hours Learned" value={totalHours} icon={<ClockIcon />} trend="up" trendValue="+5 this week" />
-              <StatsCard title="Badges Earned" value={earnedBadges.length} icon={<TrophyIcon />} trend="up" trendValue="+3 badges" />
+              <StatsCard title="Badges Earned" value={earnedCount} icon={<TrophyIcon />} trend="up" trendValue={`${earnedCount}/${badgeConfig.length}`} />
             </>
           )}
         </Suspense>
@@ -143,12 +180,12 @@ export default function StudentDashboard() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Achievements</h2>
           <span className="text-sm text-muted-foreground">
-            {earnedBadges.length} of {badges.length} badges earned
+            {earnedCount} of {badgeConfig.length} badges earned
           </span>
         </div>
         <Suspense fallback={<div className="grid gap-4 grid-cols-2 sm:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />}>
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {badges.map((badge) => (
+            {liveBadges.map((badge) => (
               <BadgeCard key={badge.id} badge={badge} />
             ))}
           </div>

@@ -6,8 +6,11 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('theme')
+      // If the user has been here before, use their saved choice
       if (stored) return stored
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      
+      // For everyone else, default to light
+      return 'light' 
     }
     return 'light'
   })

@@ -1,13 +1,19 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
 import { Grid3X3, List, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/common/Button'
-import { CourseCard } from '@/components/course/CourseCard'
 import { SearchBar } from '@/components/course/SearchBar'
-import { FilterPanel } from '@/components/course/FilterPanel'
-import { courses, categories, difficulties } from '@/data/mockData'
+import { categories, difficulties } from '@/data/mockData'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
+import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
+
+// Lazy loaded components
+const CourseCard = lazy(() => import('@/components/course/CourseCard'))
+const FilterPanel = lazy(() => import('@/components/course/FilterPanel'))
 
 export function CoursesPage() {
+  const { courses: liveCourses } = useAuth()
+  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
   const [selectedDifficulty, setSelectedDifficulty] = useState('All Levels')
@@ -15,8 +21,13 @@ export function CoursesPage() {
   const [viewMode, setViewMode] = useState('grid')
   const [showFilters, setShowFilters] = useState(false)
 
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1000)
+    return () => clearTimeout(timer)
+  }, [])
+
   const filteredCourses = useMemo(() => {
-    let result = [...courses]
+    let result = [...liveCourses]
 
     // Search filter
     if (searchQuery) {
@@ -60,7 +71,7 @@ export function CoursesPage() {
     }
 
     return result
-  }, [searchQuery, selectedCategory, selectedDifficulty, sortBy])
+  }, [liveCourses, searchQuery, selectedCategory, selectedDifficulty, sortBy])
 
   const clearFilters = () => {
     setSelectedCategory('All Categories')
@@ -68,13 +79,28 @@ export function CoursesPage() {
     setSearchQuery('')
   }
 
+  const renderSkeletons = () => (
+    <div
+      className={cn(
+        'gap-6',
+        viewMode === 'grid'
+          ? 'grid md:grid-cols-2 xl:grid-cols-3'
+          : 'flex flex-col'
+      )}
+    >
+      {[...Array(6)].map((_, i) => (
+        <CourseCardSkeleton key={i} />
+      ))}
+    </div>
+  )
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Explore Courses</h1>
         <p className="text-muted-foreground">
-          Discover {courses.length}+ courses to boost your skills
+          Discover {liveCourses.length}+ courses to boost your skills
         </p>
       </div>
 
@@ -144,15 +170,17 @@ export function CoursesPage() {
             showFilters ? 'block' : 'hidden lg:block'
           )}
         >
-          <FilterPanel
-            categories={categories}
-            difficulties={difficulties}
-            selectedCategory={selectedCategory}
-            selectedDifficulty={selectedDifficulty}
-            onCategoryChange={setSelectedCategory}
-            onDifficultyChange={setSelectedDifficulty}
-            onClear={clearFilters}
-          />
+          <Suspense fallback={<div className="h-64 w-full bg-muted animate-pulse rounded-xl" />}>
+            <FilterPanel
+              categories={categories}
+              difficulties={difficulties}
+              selectedCategory={selectedCategory}
+              selectedDifficulty={selectedDifficulty}
+              onCategoryChange={setSelectedCategory}
+              onDifficultyChange={setSelectedDifficulty}
+              onClear={clearFilters}
+            />
+          </Suspense>
         </aside>
 
         {/* Course Grid */}
@@ -163,37 +191,41 @@ export function CoursesPage() {
             </p>
           </div>
 
-          {filteredCourses.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="rounded-full bg-muted p-4 mb-4">
-                <SlidersHorizontal className="h-8 w-8 text-muted-foreground" />
+          <Suspense fallback={renderSkeletons()}>
+            {isLoading ? (
+              renderSkeletons()
+            ) : filteredCourses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="rounded-full bg-muted p-4 mb-4">
+                  <SlidersHorizontal className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No courses found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your filters or search query
+                </p>
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear Filters
+                </Button>
               </div>
-              <h3 className="text-lg font-semibold mb-2">No courses found</h3>
-              <p className="text-muted-foreground mb-4">
-                Try adjusting your filters or search query
-              </p>
-              <Button variant="outline" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div
-              className={cn(
-                'gap-6',
-                viewMode === 'grid'
-                  ? 'grid md:grid-cols-2 xl:grid-cols-3'
-                  : 'flex flex-col'
-              )}
-            >
-              {filteredCourses.map(course => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  enrolled={course.progress > 0}
-                />
-              ))}
-            </div>
-          )}
+            ) : (
+              <div
+                className={cn(
+                  'gap-6',
+                  viewMode === 'grid'
+                    ? 'grid md:grid-cols-2 xl:grid-cols-3'
+                    : 'flex flex-col'
+                )}
+              >
+                {filteredCourses.map(course => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    enrolled={course.progress > 0}
+                  />
+                ))}
+              </div>
+            )}
+          </Suspense>
         </div>
       </div>
     </div>

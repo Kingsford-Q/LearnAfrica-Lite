@@ -1,6 +1,29 @@
 import { useState } from 'react';
-import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2 } from "lucide-react";
+import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2, BookOpen, Trophy, Settings, UserPlus, MessageSquare, ShieldCheck, Info} from "lucide-react";
 import { cn } from '@/lib/utils';
+
+// Icons and Colors maps for the detail view
+const notificationIcons = {
+  course: <BookOpen className="w-5 h-5" />,
+  achievement: <Trophy className="w-5 h-5" />,
+  reminder: <Clock className="w-5 h-5" />,
+  system: <Settings className="w-5 h-5" />,
+  enrollment: <UserPlus className="w-5 h-5" />,
+  community: <MessageSquare className="w-5 h-5" />,
+  security: <ShieldCheck className="w-5 h-5" />,
+  info: <Info className="w-5 h-5" />,
+};
+
+const notificationColors = {
+  course: 'bg-primary/10 text-primary',
+  achievement: 'bg-yellow-500/10 text-yellow-600',
+  reminder: 'bg-orange-500/10 text-orange-600',
+  system: 'bg-slate-500/10 text-slate-600',
+  enrollment: 'bg-green-500/10 text-green-600',
+  community: 'bg-blue-500/10 text-blue-600',
+  security: 'bg-red-500/10 text-red-600',
+  info: 'bg-cyan-500/10 text-cyan-600',
+};
 
 export default function MobileNotificationsDrawer({ 
   isOpen, 
@@ -9,8 +32,7 @@ export default function MobileNotificationsDrawer({
   unreadCount, 
   markAllAsRead, 
   markAsRead, 
-  notificationIcons, 
-  notificationColors,
+  NotificationIcon, // The helper component passed as a prop
   isLoading,
   onDelete,
   isDesktopPopover = false // New flow prop for md and lg screens
@@ -113,37 +135,42 @@ export default function MobileNotificationsDrawer({
                     </div>
 
                     {notifications.map((notification) => (
-                      <button
-                        key={notification.id}
-                        onClick={() => handleNotificationClick(notification)}
-                        className={cn(
-                          "w-full p-4 flex items-start gap-4 rounded-2xl mb-2 text-left transition-all border",
-                          !notification.read 
+                    <button
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={cn(
+                        "w-full p-4 flex items-start gap-4 rounded-2xl mb-2 text-left transition-all border",
+                        !notification.read 
                           ? 'bg-primary/[0.02] border-primary/20 shadow-sm shadow-primary/5' 
                           : 'bg-card border-border/40'
-                        )}
-                      >
-                        <div className={cn(
-                          "p-2.5 rounded-xl shrink-0 transition-transform",
-                          notificationColors[notification.type],
-                          !notification.read && "scale-105"
-                        )}>
-                          {notificationIcons[notification.type]}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className={cn("font-bold text-[13px] leading-tight", !notification.read ? 'text-foreground' : 'text-muted-foreground')}>
-                              {notification.title}
-                            </p>
-                            {!notification.read && <div className="h-2 w-2 rounded-full bg-primary mt-1 animate-pulse" />}
-                          </div>
-                          <p className="text-xs text-muted-foreground/60 mt-1 line-clamp-2 leading-snug font-medium">
-                            {notification.message}
+                      )}
+                    >
+                      {/* Using the Helper Component while maintaining your specific scale and padding classes */}
+                      <div className={cn(
+                        "shrink-0 transition-transform",
+                        !notification.read && "scale-105"
+                      )}>
+                        <NotificationIcon type={notification.type} />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={cn(
+                            "font-bold text-[13px] leading-tight", 
+                            !notification.read ? 'text-foreground' : 'text-muted-foreground'
+                          )}>
+                            {notification.title}
                           </p>
+                          {!notification.read && (
+                            <div className="h-2 w-2 rounded-full bg-primary mt-1 animate-pulse" />
+                          )}
                         </div>
-                      </button>
-                    ))}
+                        <p className="text-xs text-muted-foreground/60 mt-1 line-clamp-2 leading-snug font-medium">
+                          {notification.message}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
                   </>
                 ) : (
                   <div className="py-24 text-center flex flex-col items-center">
@@ -184,7 +211,7 @@ export default function MobileNotificationsDrawer({
                 <div className="p-4 rounded-2xl bg-card border border-border/40 flex flex-col items-center text-center">
                   <Calendar className="h-4 w-4 text-primary/60 mb-2" />
                   <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Date</p>
-                  <p className="text-xs font-bold text-foreground">May 11, 2026</p>
+                  <p className="text-xs font-bold text-foreground">May 13, 2026</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-card border border-border/40 flex flex-col items-center text-center">
                   <Clock className="h-4 w-4 text-primary/60 mb-2" />

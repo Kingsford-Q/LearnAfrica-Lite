@@ -12,7 +12,7 @@ export const courses = [
     lessons: 24,
     enrollments: 1234,
     rating: 4.8,
-    progress: 65,
+    progress: 40,
     price: 0,
     isFree: true,
     tags: ['HTML', 'CSS', 'JavaScript'],
@@ -88,7 +88,7 @@ export const courses = [
     lessons: 28,
     enrollments: 743,
     rating: 4.8,
-    progress: 45,
+    progress: 0,
     price: 59.99,
     isFree: true,
     tags: ['Figma', 'UI Design', 'UX Research'],
@@ -259,88 +259,6 @@ export const quizzes = [
   }
 ]
 
-export const badges = [
-  {
-    id: '1',
-    title: 'First Steps',
-    description: 'Complete your first lesson',
-    icon: '🎯',
-    earned: true,
-    earnedDate: '2024-01-20'
-  },
-  {
-    id: '2',
-    title: 'Course Champion',
-    description: 'Complete an entire course',
-    icon: '🏆',
-    earned: true,
-    earnedDate: '2024-02-15'
-  },
-  {
-    id: '3',
-    title: 'Quiz Master',
-    description: 'Score 100% on 5 quizzes',
-    icon: '🧠',
-    earned: false,
-    earnedDate: null
-  },
-  {
-    id: '4',
-    title: 'Consistent Learner',
-    description: 'Study for 7 days in a row',
-    icon: '🔥',
-    earned: true,
-    earnedDate: '2024-03-01'
-  },
-  {
-    id: '5',
-    title: 'Social Butterfly',
-    description: 'Leave 10 course reviews',
-    icon: '💬',
-    earned: false,
-    earnedDate: null
-  },
-  {
-    id: '6',
-    title: 'Speed Learner',
-    description: 'Complete a course in under a week',
-    icon: '⚡',
-    earned: false,
-    earnedDate: null
-  }
-]
-
-export const recentActivity = [
-  {
-    id: '1',
-    type: 'lesson_completed',
-    title: 'Completed "CSS Fundamentals"',
-    course: 'Introduction to Web Development',
-    timestamp: '2 hours ago'
-  },
-  {
-    id: '2',
-    type: 'quiz_passed',
-    title: 'Passed HTML Basics Quiz',
-    course: 'Introduction to Web Development',
-    score: 90,
-    timestamp: '5 hours ago'
-  },
-  {
-    id: '3',
-    type: 'course_enrolled',
-    title: 'Enrolled in Python for Data Science',
-    course: 'Python for Data Science',
-    timestamp: '1 day ago'
-  },
-  {
-    id: '4',
-    type: 'badge_earned',
-    title: 'Earned "Consistent Learner" badge',
-    timestamp: '2 days ago'
-  }
-]
-
 export const categories = [
   'All Categories',
   'Web Development',
@@ -413,3 +331,86 @@ export const testimonials = [
     rating: 5
   }
 ]
+
+export const badgeConfig = [
+  {
+    id: '1',
+    key: 'FIRST_STEPS',
+    title: 'First Steps',
+    description: 'Unlocked by completing your very first lesson.',
+    iconName: 'Target',
+    requirementType: 'lessons_completed',
+    goal: 1,
+    color: 'orange'
+  },
+  {
+    id: '2',
+    key: 'COURSE_CHAMPION',
+    title: 'Course Champion',
+    description: 'Awarded for successfully finishing an entire course.',
+    iconName: 'Trophy',
+    requirementType: 'courses_completed',
+    goal: 1,
+    color: 'yellow'
+  },
+  {
+    id: '3',
+    key: 'QUIZ_MASTER',
+    title: 'Quiz Master',
+    description: 'Achieve a perfect 100% score on 5 different quizzes.',
+    iconName: 'Brain',
+    requirementType: 'perfect_quizzes',
+    goal: 5,
+    color: 'purple'
+  },
+  {
+    id: '4',
+    key: 'CONSISTENT_LEARNER',
+    title: 'Consistent Learner',
+    description: 'Maintain a learning streak for 7 consecutive days.',
+    iconName: 'Flame',
+    requirementType: 'day_streak',
+    goal: 7,
+    color: 'red'
+  },
+  {
+    id: '5',
+    key: 'SOCIAL_BUTTERFLY',
+    title: 'Social Butterfly',
+    description: 'Contribute to the community by leaving 10 course reviews.',
+    iconName: 'MessageSquare',
+    requirementType: 'reviews_submitted',
+    goal: 10,
+    color: 'blue'
+  },
+  {
+    id: '6',
+    key: 'SPEED_LEARNER',
+    title: 'Speed Learner',
+    description: 'Finish any full course within 7 days of enrollment.',
+    iconName: 'Zap',
+    requirementType: 'fast_finish',
+    goal: 1,
+    color: 'amber'
+  },
+  {
+    id: '7',
+    key: 'PATHFINDER',
+    title: 'Pathfinder',
+    description: 'Complete your profile and set your learning goals.',
+    iconName: 'Compass',
+    requirementType: 'profile_completed',
+    goal: 1,
+    color: 'emerald'
+  }
+];
+
+export const notifications = [
+  { id: 1, type: 'course', title: 'New lesson available', message: 'Introduction to JavaScript has a new lesson: "Async/Await"', time: '2 hours ago', read: false },
+  { id: 2, type: 'achievement', title: 'Achievement unlocked!', message: 'You earned the "Fast Learner" badge', time: '5 hours ago', read: false },
+  { id: 3, type: 'reminder', title: 'Continue learning', message: "You're 3 days away from losing your streak!", time: '1 day ago', read: true },
+  { id: 4, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+  { id: 5, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+  { id: 6, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+  { id: 7, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
+];

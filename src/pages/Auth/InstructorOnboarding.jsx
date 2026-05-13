@@ -55,7 +55,7 @@ export default function InstructorOnboarding() {
       await signup(completeInstructorData)
       
       // Navigate to the instructor's specific view
-      navigate('/instructor/dashboard')
+      navigate('/instructor')
     } catch (err) {
       setErrors({ submit: 'Failed to create instructor profile. Please try again.' })
     } finally {
@@ -143,7 +143,7 @@ export default function InstructorOnboarding() {
 
         <Button 
           type="submit" 
-          className="w-full font-black uppercase tracking-tighter h-11" 
+          className="w-full" 
           disabled={isLoading}
         >
           {isLoading ? (
@@ -152,7 +152,7 @@ export default function InstructorOnboarding() {
               Verifying Profile...
             </>
           ) : (
-            'Complete Instructor Registration'
+            'Complete Registration'
           )}
         </Button>
       </form>

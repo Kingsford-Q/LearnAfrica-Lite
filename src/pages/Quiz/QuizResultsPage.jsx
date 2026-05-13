@@ -1,18 +1,39 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
 import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowRight, AlertCircle, Loader2, FileCheck } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
+import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
 export function QuizResultsPage() {
   const { courseId, lessonId } = useParams()
   const location = useLocation()
+  const { updateProgress } = useAuth()
   
   // State for backend data
   const [resultData, setResultData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  // Calculation Logic using resultData
+  const answers = resultData?.answers || {}
+  const questions = resultData?.questions || []
+  
+  const { correctCount, score, passed } = useMemo(() => {
+    let correct = 0
+    questions.forEach((q, index) => {
+      if (answers[index] === q.correctAnswer) {
+        correct++
+      }
+    })
+    const calculatedScore = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
+    return {
+      correctCount: correct,
+      score: calculatedScore,
+      passed: calculatedScore >= 70
+    }
+  }, [answers, questions])
 
   useEffect(() => {
     const loadResults = async () => {
@@ -20,9 +41,19 @@ export function QuizResultsPage() {
       if (location.state?.answers && location.state?.questions) {
         setResultData(location.state)
         
-        // FLOW INTEGRATION: Here is where you would sync with the backend
-        // to record the pass and "unlock" the certificate.
-        // Example: if (passed) { await api.saveCompletion(courseId) }
+        // NEW LOGIC: Sync progress and quiz score to AuthContext
+        // This triggers the Badge update for "Quiz Master" if score is 100
+        const currentAnswers = location.state.answers
+        const currentQuestions = location.state.questions
+        let correct = 0
+        currentQuestions.forEach((q, index) => {
+          if (currentAnswers[index] === q.correctAnswer) {
+            correct++
+          }
+        })
+        const finalScore = currentQuestions.length > 0 ? Math.round((correct / currentQuestions.length) * 100) : 0
+        
+        await updateProgress(courseId, lessonId, finalScore)
         
         setIsLoading(false)
         return
@@ -31,7 +62,6 @@ export function QuizResultsPage() {
       // 2. If no state (user refreshed), fetch from the backend
       try {
         setIsLoading(true)
-        // In a real setup, you'd fetch the saved score for this user/lesson
         throw new Error("No active session found") 
       } catch (err) {
         setError(err.message)
@@ -41,21 +71,7 @@ export function QuizResultsPage() {
     }
 
     loadResults()
-  }, [location.state, lessonId, courseId])
-
-  // Calculation Logic using resultData
-  const answers = resultData?.answers || {}
-  const questions = resultData?.questions || []
-  
-  let correctCount = 0
-  questions.forEach((q, index) => {
-    if (answers[index] === q.correctAnswer) {
-      correctCount++
-    }
-  })
-
-  const score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
-  const passed = score >= 70
+  }, [location.state, lessonId, courseId, updateProgress])
 
   // Loading State
   if (isLoading) {
@@ -170,7 +186,6 @@ export function QuizResultsPage() {
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {/* INCLUSION: The Certificate Button only appears if the user passed */}
             {passed ? (
               <Link to={`/certificate/${courseId}`}>
                 <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">

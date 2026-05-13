@@ -11,7 +11,7 @@ const difficultyColors = {
   Advanced: 'destructive'
 }
 
-export function CourseCard({ course, enrolled = false }) {
+export default function CourseCard({ course, enrolled = false }) {
   return (
    <Card className="overflow-hidden transition-all duration-300 group flex flex-col h-full bg-card hover:shadow-xl hover:scale-[1.02] cursor-pointer">
   {/* Thumbnail Area */}
@@ -92,7 +92,7 @@ export function CourseCard({ course, enrolled = false }) {
     <div className="mt-4 pt-3 border-t border-border/40 space-y-3">
       {/* Progress Bar: Reserved height prevents button jumping */}
       <div className="min-h-[20px]">
-        {enrolled && course.progress > 0 && (
+        {enrolled &&  (
           <div className="space-y-1.5">
             <div className="flex justify-between text-[10px] font-bold">
               <span className="text-muted-foreground">Progress</span>

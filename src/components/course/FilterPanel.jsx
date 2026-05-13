@@ -2,7 +2,7 @@ import { Filter, X } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { cn } from '@/lib/utils'
 
-export function FilterPanel({
+export default function FilterPanel({
   categories,
   difficulties,
   selectedCategory,
