@@ -73,19 +73,19 @@ export function LessonPage() {
       navigate(`/learn/course/${courseId}/lesson/${correctLesson.id}`, { replace: true });
     }
 
-    if (!lessonId) return;
+    if (!lessonId || !user?.id) return; // Ensure we have a user ID before trying to load notes
 
-    // Load from Local Storage first (Immediate)
-    const savedNotes = localStorage.getItem(`notes_${courseId}_${lessonId}`);
+    // ✅ LOAD USER-SPECIFIC NOTES
+    const storageKey = `notes_user_${user.id}_${courseId}_${lessonId}`;
+    const savedNotes = localStorage.getItem(storageKey);
+    
     if (savedNotes) {
       setUserNotes(savedNotes);
     } else {
-      // Load from Backend (Ready for API)
       const fetchNotesFromBackend = async () => {
         try {
-          // const response = await api.get(`/notes/${courseId}/${lessonId}`);
-          // if (response.data) setUserNotes(response.data.content);
-          setUserNotes(''); // Reset if no local or backend data
+          // Reset state to empty if no user-specific notes exist locally
+          setUserNotes(''); 
         } catch (err) {
           console.error("Failed to load backend notes", err);
         }
@@ -94,7 +94,8 @@ export function LessonPage() {
     }
 
     setIsCompleted(lesson?.isCompleted || false);
-  }, [lessonId, isAccessingIllegally, navigate, courseId, courseLessons, firstIncompleteIndex, lesson]);
+    // Added user.id to dependency array to re-run when switching accounts
+  }, [lessonId, isAccessingIllegally, navigate, courseId, courseLessons, firstIncompleteIndex, lesson, user?.id]);
 
   // UI GUARDS
   if (!course) {
@@ -110,25 +111,27 @@ export function LessonPage() {
     )
   }
 
-  const handleSaveNotes = async () => {
-  setSaveStatus('saving');
-  try {
-    localStorage.setItem(`notes_${courseId}_${lessonId}`, userNotes);
-    
-    // Simulate backend delay or actual API call
-    await new Promise(resolve => setTimeout(resolve, 800)); 
-    
-    setSaveStatus('success');
+    const handleSaveNotes = async () => {
+    if (!user?.id) return; // Defensive check to ensure a user is logged in
 
-    // Reset status back to idle after 3 seconds
-    setTimeout(() => {
+    setSaveStatus('saving');
+    try {
+      // Include user.id in the key to prevent data leakage between accounts
+      const storageKey = `notes_user_${user.id}_${courseId}_${lessonId}`;
+      localStorage.setItem(storageKey, userNotes);
+      
+      await new Promise(resolve => setTimeout(resolve, 800)); 
+      
+      setSaveStatus('success');
+
+      setTimeout(() => {
+        setSaveStatus('idle');
+      }, 3000);
+    } catch (error) {
+      console.error("Save failed", error);
       setSaveStatus('idle');
-    }, 3000);
-  } catch (error) {
-    console.error("Save failed", error);
-    setSaveStatus('idle');
-  }
-};
+    }
+  };
 
   if (courseLessons.length === 0) {
     return (

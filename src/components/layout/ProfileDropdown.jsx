@@ -87,7 +87,7 @@ export default function ProfileDropdown({ hideChevron = false, closeMainMenu }) 
 
         {/* Mobile label */}
         <span className="ml-3 md:hidden text-sm font-semibold text-foreground/80 group-hover:text-primary">
-          Profile Settings
+          Profile
         </span>
 
         {/* Chevron (desktop only optionally hidden) */}

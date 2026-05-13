@@ -175,25 +175,29 @@ export default function StudentDashboard() {
         </Suspense>
       </div>
 
-      {/* Achievements Section */}
+      {/* Badges Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Badges</h2>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-primary">
             {earnedCount} of {badgeConfig.length} badges earned
           </span>
         </div>
-        <Suspense fallback={<div className="grid gap-4 grid-cols-2 sm:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />}>
-          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {liveBadges.map((badge) => (
-              <BadgeCard key={badge.id} badge={badge} />
-            ))}
-          </div>
-        </Suspense>
+        <Suspense 
+    fallback={
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
+    }
+  >
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6">
+      {liveBadges.map((badge) => (
+        <BadgeCard key={badge.id} badge={badge} />
+      ))}
+    </div>
+  </Suspense>
       </div>
 
       {/* Recommended Courses Section */}
-      <div className="space-y-4">
+      <div className="space-y-4 mt-6 md:mt-0">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Recommended For You</h2>
           <Link to="/courses" className="text-sm text-primary hover:underline">View all</Link>
