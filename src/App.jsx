@@ -28,10 +28,19 @@ import  CertificatePage  from './pages/Certificate/CertificatePage';
 import  LeaderboardPage  from './pages/Leaderboard/LeaderboardPage';
 import  NotFoundPage  from './pages/NotFound/NotFoundPage';
 import  InstructorOnboarding  from './pages/Auth/InstructorOnboarding';
+import { Loader2 } from "lucide-react";
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+      </div>
+    );
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -46,7 +55,9 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 // Public Only Route (redirect if authenticated)
 function PublicOnlyRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading} = useAuth();
+
+  if (isLoading) return null;
   
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;

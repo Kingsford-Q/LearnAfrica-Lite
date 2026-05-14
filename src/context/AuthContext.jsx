@@ -295,11 +295,12 @@ export function AuthProvider({ children }) {
     deleteNotification,
     unreadCount,
     isAuthenticated: !!user,
+    isLoading,
     enrollInCourse,
     toggleInstructorMode,
     isInstructorMode,
     role: user?.role,
-  }), [user, coursesState, lessonsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, enrollInCourse]);
+  }), [user, coursesState, lessonsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse]);
 
   if (isLoading) return null;
 
