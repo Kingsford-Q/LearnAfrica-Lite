@@ -69,6 +69,11 @@ export function CourseDetailPage() {
   // --- PROGRESS & NAVIGATION LOGIC ---
   const completedLessonsCount = courseLessons.filter(l => l.isCompleted).length
   const progress = Math.round((completedLessonsCount / courseLessons.length) * 100) || 0
+
+  const totalResources = useMemo(() => {
+    return courseLessons.reduce((acc, lesson) => acc + (lesson.resources?.length || 0), 0);
+  }, [courseLessons]);
+
   const isCourseCompleted = progress === 100;
 
   // Find the correct lesson to resume
@@ -219,21 +224,25 @@ export function CourseDetailPage() {
                   <div className="space-y-3 pt-4 border-t">
                     <h4 className="font-semibold">This course includes:</h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-center gap-2">
+                      
+                      <li className={cn("flex items-center gap-2", courseLessons.length === 0 && "opacity-50")}>
                         <Play className="h-4 w-4 text-primary" />
-                        {courseLessons.length} video lessons
+                        {courseLessons.length > 0 ? `${courseLessons.length} lessons` : 'No lessons available'}
                       </li>
+
+
                       <li className={cn("flex items-center gap-2", !course.hasResources && "opacity-50")}>
                         <BookOpen className="h-4 w-4 text-primary" />
-                        {course.hasResources ? "Downloadable resources" : "No downloadable resources"}
+                        {totalResources > 0 ? (totalResources === 1 ? `${totalResources} resource` : `${totalResources} resources`) : 'No additional resources'}
                       </li>
+
                       <li className={cn("flex items-center gap-2", !course.hasCertificate && "opacity-50")}>
                         <Award className="h-4 w-4 text-primary" />
-                        {course.hasCertificate ? "Certificate of completion" : "No certificate included"}
+                        {course.hasCertificate ? "Has Certificate of completion" : "No certificate included"}
                       </li>
                       <li className={cn("flex items-center gap-2", !course.hasLifetimeAccess && "opacity-50")}>
                         <Calendar className="h-4 w-4 text-primary" />
-                        {course.hasLifetimeAccess ? "Lifetime access" : "Limited time access"}
+                        {course.hasLifetimeAccess ? "Unlimited Lifetime access" : "Limited time access"}
                       </li>
                     </ul>
                   </div>
@@ -248,20 +257,23 @@ export function CourseDetailPage() {
       <section className="container mx-auto px-4 py-12">
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
-            <Card className="p-6">
+            <Card className="p-6 border-muted/20 bg-card/50">
               <h2 className="text-lg md:text-xl font-bold mb-4">What you&apos;ll learn</h2>
-              {course.whatYouLearn?.length > 0 ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {course.whatYouLearn.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <span className="text-sm">{item}</span>
+              {course.learningOutcomes?.length > 0 ? (
+                /* Changed grid-cols-2 to a simple flex-col or a single-column grid */
+                <div className="grid gap-4"> 
+                  {course.learningOutcomes.map((item, index) => (
+                    <div key={index} className="flex items-start gap-3 group">
+                      <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5 transition-transform group-hover:scale-110" />
+                      <span className="text-sm md:text-base text-muted-foreground group-hover:text-foreground transition-colors">
+                        {item}
+                      </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-muted-foreground bg-muted/30 p-4 rounded-lg">
-                  <AlertCircle className="h-5 w-5" />
+                <div className="flex items-center gap-2 text-muted-foreground bg-muted/20 p-4 rounded-xl border border-dashed border-muted">
+                  <AlertCircle className="h-5 w-5 text-primary/60" />
                   <p className="text-sm italic">Learning objectives have not been listed yet.</p>
                 </div>
               )}

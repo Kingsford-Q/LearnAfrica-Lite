@@ -12,7 +12,13 @@ import {
   Menu,
   X,
   Save,
-  Lock 
+  Lock,
+  FolderOpen,
+  ExternalLink, 
+  Download, 
+  Image as ImageIcon, 
+  File,
+  ArrowUpRight
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
@@ -20,6 +26,24 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 
 const DiscussionForum = lazy(() => Promise.resolve({ default: () => <div className="p-12 text-center italic">Forum Loading...</div> }));
+
+const getEmbedUrl = (url) => {
+    if (!url) return null;
+    
+    // Handle standard watch links: youtube.com/watch?v=VIDEO_ID
+    if (url.includes("youtube.com/watch")) {
+      const videoId = new URL(url).searchParams.get("v");
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    // Handle shortened links: youtu.be/VIDEO_ID
+    if (url.includes("youtu.be/")) {
+      const videoId = url.split("/").pop().split("?")[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    return url; // Return as is if it's already an embed link or other source
+  };
 
 export function LessonPage() {
   const { user, courses, lessons, updateProgress } = useAuth() // Pull stateful data
@@ -44,6 +68,9 @@ export function LessonPage() {
   const lesson = useMemo(() => 
     courseLessons.find(l => String(l.id) === String(lessonId)), 
   [courseLessons, lessonId])
+
+  const resources = useMemo(() => lesson?.resources || [], [lesson]);
+
 
   // 4. Calculate indexes safely
   const currentIndex = lesson ? courseLessons.findIndex(l => String(l.id) === String(lesson.id)) : -1
@@ -184,6 +211,101 @@ export function LessonPage() {
   }
 };
 
+ const ResourceItem = ({ resource }) => {
+  const { title, url, type, fileName } = resource;
+  const isDownloadable = type === 'file' || type === 'image' || type === 'downloadable';
+
+  // 1. Move the helper outside or keep it as a memoized value
+  const getSafeFileName = (url, type, providedName) => {
+    if (providedName) return providedName;
+    
+    // Extract extension from URL
+    const extension = url.split('.').pop().split(/[?#]/)[0];
+    const baseName = title.replace(/\s+/g, '_').toLowerCase();
+    
+    const validExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'zip'];
+    if (validExtensions.includes(extension.toLowerCase())) {
+      return `${baseName}.${extension}`;
+    }
+    
+    const fallbacks = { image: 'jpg', file: 'pdf' };
+    return `${baseName}.${fallbacks[type] || 'dat'}`;
+  };
+
+  // 2. Define the variable at the component level scope
+  const finalFileName = getSafeFileName(url, type, fileName);
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Fetch failed');
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = finalFileName; // Now defined in scope
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', finalFileName);
+      link.setAttribute('target', '_blank');
+      link.click();
+    }
+  };
+
+  const handleOpen = () => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+
+  return (
+    <div
+      onClick={handleOpen}
+      className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-border hover:border-primary/50 hover:bg-card transition-all group cursor-pointer"
+    >
+      <div className="flex items-center gap-4">
+        <div className="p-2 rounded bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          {type === 'image' && <ImageIcon className="h-5 w-5" />}
+          {type === 'link' && <ExternalLink className="h-5 w-5" />}
+          {type === 'file' && <File className="h-5 w-5" />}
+        </div>
+        
+        <div>
+          <p className="text-sm font-bold text-foreground">{title}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{type}</p>
+        </div>
+      </div>
+      
+      <div className="flex items-center">
+        {type === 'link' ? (
+          <div className="text-muted-foreground group-hover:text-primary transition-colors">
+            <ArrowUpRight className="h-4 w-4" />
+          </div>
+        ) : (
+          <button
+            onClick={handleDownload}
+            title={`Download ${finalFileName}`} // Correctly references scoped variable
+            className="p-2 -mr-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-all"
+          >
+            <Download className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
   const navBtnClass = "h-11 px-3 sm:px-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center justify-center gap-2 shrink-0"
   const takeQuizClass = "h-11 px-4 sm:px-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md w-full sm:w-auto"
 
@@ -218,17 +340,31 @@ export function LessonPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 overflow-y-auto outline-none">
-          <div className="aspect-video w-full bg-slate-950 relative shadow-inner">
-            <div className="absolute inset-0 flex items-center justify-center text-center p-6">
-              <div className="group cursor-pointer">
-                <div className="flex h-16 w-16 sm:h-20 sm:w-20 mx-auto items-center justify-center rounded-full bg-primary/20 backdrop-blur-md group-hover:scale-110 transition-transform mb-4 border border-white/10">
-                  <Play className="h-8 w-8 sm:h-10 sm:w-10 ml-1 fill-white text-white" />
-                </div>
-                <p className="text-base sm:text-lg font-bold text-white tracking-tight">Lesson Video</p>
-                <p className="text-xs font-medium text-white/60 mt-1 uppercase tracking-widest">{lesson.duration}</p>
-              </div>
-            </div>
-          </div>
+          {/* Only render this entire block if a video source exists */}
+{(lesson.videoUrl || lesson.videoFile) && (
+  <div className="aspect-video w-full bg-slate-950 relative shadow-inner">
+    {lesson.videoUrl ? (
+      <iframe
+        src={getEmbedUrl(lesson.videoUrl)}
+        className="w-full h-full"
+        allowFullScreen
+        title={lesson.title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      />
+    ) : (
+      <video 
+        key={lesson.videoFile} // Crucial: forces player to reload when source changes
+        controls 
+        className="w-full h-full object-cover"
+        preload="metadata"
+      >
+        {/* Explicitly define the type in case the DB URL is a blob or signed link */}
+        <source src={lesson.videoFile} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    )}
+  </div>
+)}
 
           <div className="container mx-auto max-w-4xl px-4 py-8 sm:py-12">
             <div className="mb-10">
@@ -249,8 +385,9 @@ export function LessonPage() {
             </div>
 
             <div className="border-b border-border mb-8 w-full max-w-full overflow-hidden">
-              <div className="flex items-center gap-4 sm:gap-10 overflow-x-auto no-scrollbar pb-px touch-pan-x">
-                {['content', 'notes', 'discussion'].map(id => (
+              <div className="flex items-center gap-4 sm:gap-10 overflow-x-auto no-scrollbar pb-px touch-pan-x scroll-smooth">
+        
+                {['content', 'resources', 'notes', 'discussion'].map(id => (
                   <button
                     key={id}
                     onClick={() => setActiveTab(id)}
@@ -262,6 +399,8 @@ export function LessonPage() {
                     )}
                   >
                     {id === 'content' && <FileText className="h-4 w-4 shrink-0" />}
+                    {/* Added Folder icon for Resources */}
+                    {id === 'resources' && <FolderOpen className="h-4 w-4 shrink-0" />} 
                     {id === 'notes' && <BookOpen className="h-4 w-4 shrink-0" />}
                     {id === 'discussion' && <MessageSquare className="h-4 w-4 shrink-0" />}
                     <span>{id}</span>
@@ -276,6 +415,20 @@ export function LessonPage() {
                   className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-p:text-muted-foreground prose-p:leading-7" 
                   dangerouslySetInnerHTML={{ __html: lesson.content }} 
                 />
+              )}
+              {activeTab === 'resources' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <h3 className="text-lg font-bold mb-4">Lesson Resources</h3>
+                  {resources.length > 0 ? (
+                    resources.map((res, index) => (
+                      <ResourceItem key={index} resource={res} />
+                    ))
+                  ) : (
+                    <div className="text-center py-10 border border-dashed border-border rounded-xl">
+                      <p className="text-muted-foreground">No resources available for this lesson.</p>
+                    </div>
+                  )}
+                </div>
               )}
               {activeTab === 'notes' && (
                 <Card className="p-6 sm:p-8 border-dashed bg-muted/30 relative overflow-hidden">
@@ -412,22 +565,16 @@ export function LessonPage() {
                       </Button>
                     </Link>
                   ) : (
-                    <Link 
-                      to={currentLessonFinished && nextLesson ? `/learn/course/${courseId}/lesson/${nextLesson.id}` : '#'} 
-                      onClick={(e) => {
-                        if (!currentLessonFinished || !nextLesson) e.preventDefault();
-                      }}
-                      className={cn(!currentLessonFinished && "cursor-not-allowed")}
+                    <Button 
+                      variant="outline" 
+                      className={navBtnClass} 
+                      // Use navigate programmatically for better control
+                      onClick={() => nextLesson && navigate(`/learn/course/${courseId}/lesson/${nextLesson.id}`)}
+                      disabled={!currentLessonFinished || !nextLesson}
                     >
-                      <Button 
-                        variant="outline" 
-                        className={navBtnClass} 
-                        disabled={!currentLessonFinished}
-                      >
-                        <span className="hidden sm:inline">Next</span>
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                    </Link>
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
                   )}
                 </div>
               </div>

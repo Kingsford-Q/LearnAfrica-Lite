@@ -1,5 +1,5 @@
 export const courses = [
-  {
+    {
     id: '1',
     title: 'Introduction to Web Development',
     description: 'Learn the fundamentals of HTML, CSS, and JavaScript to build modern websites from scratch.',
@@ -9,14 +9,22 @@ export const courses = [
     category: 'Web Development',
     difficulty: 'Beginner',
     duration: '8 weeks',
-    lessons: 24,
     enrollments: 1234,
     rating: 4.8,
-    progress: 40,
     price: 0,
     isFree: true,
     tags: ['HTML', 'CSS', 'JavaScript'],
-    createdAt: '2024-01-15'
+    createdAt: '2024-01-15',
+    hasCertificate: true, 
+    hasLifetimeAccess: true,
+    hasResources: true, // Used for the opacity-50 logic in your list
+    paymentLink: 'https://example.com/enroll/web-development',
+    learningOutcomes: [ // The new field for "What You'll Learn"
+      "Understand how the web works and the role of HTML, CSS, and JS",
+      "Build responsive layouts using modern CSS techniques like Flexbox and Grid",
+      "Master JavaScript fundamentals including DOM manipulation and APIs",
+      "Deploy a live website to a professional hosting environment"
+    ],
   },
   {
     id: '2',
@@ -122,7 +130,8 @@ export const lessons = [
     title: 'Introduction to HTML',
     description: 'Learn the basic structure of HTML documents and common tags.',
     duration: '45 min',
-    videoUrl: 'https://music.youtube.com/watch?v=lVT5dnIibF4&si=_xaMHahKzh3ndlx4',
+    videoUrl: 'https://youtu.be/Wkn2hqIo0iE?si=Ehdltc3mthsHCIQB',
+    VideoFile: '',
     content: `
       <h2>What is HTML?</h2>
       <p>HTML (HyperText Markup Language) is the standard markup language for creating web pages. It describes the structure of a web page and consists of a series of elements that tell the browser how to display the content.</p>
@@ -139,8 +148,28 @@ export const lessons = [
         <li><strong>&lt;div&gt;</strong> - Divisions</li>
       </ul>
     `,
+    resources: [
+      {
+        id: 'r1',
+        title: 'HTML Cheat Sheet',
+        url: 'https://example.com/html-cheatsheet.pdf',
+        type: 'link',
+      },
+      {
+        id: 'r2',
+        title: 'MDN Structure Guide',
+        url: 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html',
+        type: 'link'
+      },
+      {
+        id: 'r3',
+        title: 'Document Flow Diagram',
+        url: '/images/student1.jpg',
+        type: 'image'
+      },
+    ],
     isCompleted: true,
-    order: 1
+    order: 1,
   },
   {
     id: '2',
@@ -148,7 +177,7 @@ export const lessons = [
     title: 'CSS Fundamentals',
     description: 'Style your web pages with CSS selectors, properties, and values.',
     duration: '60 min',
-    videoUrl: 'https://example.com/video2',
+    videoUrl: 'https://youtu.be/Wkn2hqIo0iE?si=Ehdltc3mthsHCIQB',
     content: `
       <h2>Introduction to CSS</h2>
       <p>CSS (Cascading Style Sheets) is used to style and layout web pages. It controls colors, fonts, spacing, and positioning of HTML elements.</p>
@@ -168,7 +197,7 @@ export const lessons = [
     title: 'JavaScript Basics',
     description: 'Add interactivity to your websites with JavaScript fundamentals.',
     duration: '75 min',
-    videoUrl: 'https://example.com/video3',
+    videoUrl: 'https://youtu.be/Wkn2hqIo0iE?si=Ehdltc3mthsHCIQB',
     content: `
       <h2>What is JavaScript?</h2>
       <p>JavaScript is a programming language that enables interactive web pages. It runs in the browser and allows you to create dynamic content.</p>
@@ -188,7 +217,7 @@ export const lessons = [
     title: 'DOM Manipulation',
     description: 'Learn to interact with HTML elements using JavaScript.',
     duration: '90 min',
-    videoUrl: 'https://example.com/video4',
+    videoUrl: '',
     content: `
       <h2>The Document Object Model</h2>
       <p>The DOM represents the HTML document as a tree structure. JavaScript can access and modify this structure.</p>
@@ -202,7 +231,7 @@ export const lessons = [
     title: 'Responsive Web Design',
     description: 'Create websites that work on all devices and screen sizes.',
     duration: '60 min',
-    videoUrl: 'https://example.com/video5',
+    videoUrl: '',
     content: `
       <h2>What is Responsive Design?</h2>
       <p>Responsive design ensures your website looks great on all devices, from phones to desktops.</p>
