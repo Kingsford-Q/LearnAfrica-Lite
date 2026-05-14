@@ -412,49 +412,49 @@ export const getMilestones = (stats, user, unreadCount) => [
     condition: stats.lessonsCompletedCount >= 1,
     id: 'FIRST_STEPS',
     type: 'achievement',
-    title: 'Target: Badge Unlocked: First Steps',
+    title: 'First Step Badge Unlocked',
     message: 'You completed your very first lesson.'
   },
   {
     condition: stats.coursesCompletedCount >= 1,
     id: 'COURSE_CHAMPION',
     type: 'achievement',
-    title: 'Trophy: Badge Unlocked: Course Champion',
+    title: 'Course Champion Badge Unlocked',
     message: 'Awarded for successfully finishing an entire course.'
   },
   {
     condition: stats.perfectQuizzes >= 5,
     id: 'QUIZ_MASTER',
     type: 'achievement',
-    title: 'Brain: Badge Unlocked: Quiz Master',
+    title: 'Quiz Master Badge Unlocked',
     message: 'Achieve a perfect 100% score on 5 different quizzes.'
   },
   {
     condition: stats.streak >= 7,
     id: 'CONSISTENT_LEARNER',
     type: 'achievement',
-    title: 'Flame: Badge Unlocked: Consistent Learner',
+    title: 'Consistent Learner Badge Unlocked',
     message: 'Maintain a learning streak for 7 consecutive days.'
   },
   {
     condition: stats.reviewsCount >= 10,
     id: 'SOCIAL_BUTTERFLY',
     type: 'community',
-    title: 'MessageSquare: Badge Unlocked: Social Butterfly',
+    title: 'Social Butterfly Badge Unlocked',
     message: 'Contribute to the community by leaving 10 course reviews.'
   },
   {
     condition: stats.fastFinishCount >= 1,
     id: 'SPEED_LEARNER',
     type: 'achievement',
-    title: 'Zap: Badge Unlocked: Speed Learner',
+    title: 'Speed Learner Badge Unlocked',
     message: 'Finish any full course within 7 days of enrollment.'
   },
   {
     condition: stats.isProfileComplete === 1,
     id: 'PATHFINDER',
-    type: 'system',
-    title: 'Compass: Badge Unlocked: Pathfinder',
+    type: 'achievement',
+    title: 'Pathfinder Badge Unlocked',
     message: 'Complete your profile and set your learning goals.'
   }
 ];

@@ -213,7 +213,7 @@ export default function MobileNotificationsDrawer({
                 <div className="p-4 rounded-2xl bg-card border border-border/40 flex flex-col items-center text-center">
                   <Calendar className="h-4 w-4 text-primary/60 mb-2" />
                   <p className="text-[8px] font-black text-muted-foreground/40 uppercase tracking-widest">Date</p>
-                  <p className="text-xs font-bold text-foreground">May 13, 2026</p>
+                  <p className="text-xs font-bold text-foreground">{selectedNotification.date || "Today"}</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-card border border-border/40 flex flex-col items-center text-center">
                   <Clock className="h-4 w-4 text-primary/60 mb-2" />

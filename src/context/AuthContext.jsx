@@ -38,7 +38,11 @@ export function AuthProvider({ children }) {
       return duration <= (7 * 24 * 60 * 60 * 1000);
     }).length;
 
-    const isProfileComplete = !!(user?.avatar && user?.profile?.bio);
+    // IMPROVED LOGIC: Check both root and profile object for bio 
+    // to ensure students (who might have null profile) are included.
+    const hasBio = !!(user?.bio || user?.profile?.bio);
+    const hasAvatar = !!user?.avatar;
+    const isProfileComplete = hasBio && hasAvatar;
 
     return {
       lessonsCompletedCount,
@@ -50,7 +54,15 @@ export function AuthProvider({ children }) {
       isProfileComplete: isProfileComplete ? 1 : 0,
       streak: user?.stats?.streak || 1,
     };
-  }, [lessonsState, coursesState, user?.avatar, user?.profile?.bio, user?.reviews?.length, user?.stats?.streak]);
+  }, [
+    lessonsState, 
+    coursesState, 
+    user?.avatar, 
+    user?.bio, 
+    user?.profile?.bio, 
+    user?.reviews?.length, 
+    user?.stats?.streak
+  ]);
 
   const markMilestoneAsDismissed = useCallback((internalId) => {
     if (!user?.id || !internalId) return;
@@ -68,16 +80,14 @@ export function AuthProvider({ children }) {
   // --- NOTIFICATION ACTIONS ---
 
   const triggerNotification = useCallback((type, title, message, internalId) => {
-    // 1. Instant check against the processed/banned Ref
     if (processedMilestonesRef.current.has(internalId)) return;
 
     setNotifications(prev => {
-      // 2. Atomic check against the LATEST state
-      // This is the "Shield" that stops the engine from re-adding a 
-      // notification while a delete or mark-all operation is still in progress.
       if (prev.some(n => n.internalId === internalId)) {
         return prev; 
       }
+
+      const now = new Date(); // Use a single reference for time consistency
 
       const newNotif = {
         id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -86,7 +96,19 @@ export function AuthProvider({ children }) {
         title,
         message,
         read: false,
-        timestamp: new Date().toISOString(),
+        // Match the key 'time' used in your Drawer component
+        time: now.toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+        // Add a 'date' key to replace the hardcoded "May 13, 2026"
+        date: now.toLocaleDateString([], {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }),
+        timestamp: now.toISOString(), // Keep for sorting/logic
       };
 
       return [newNotif, ...prev];
@@ -188,7 +210,7 @@ export function AuthProvider({ children }) {
     const welcomeId = `welcome_msg_${user.id}`;
     if (!sessionWelcomedRef.current && !processedMilestonesRef.current.has(welcomeId)) {
       triggerNotification(
-        'info', 
+        'system', 
         "Welcome back, " + user.name, 
         "We're glad to have you back!", 
         welcomeId 
@@ -229,45 +251,48 @@ export function AuthProvider({ children }) {
 
   // Initial Auth Hydration
   useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        const stored = sessionStorage.getItem('user');
-        if (stored) {
-          const basicUser = JSON.parse(stored);
-          const uID = basicUser.id;
-          
-          // Hydrate memory of dismissed milestones
-          syncDismissedRef(uID);
+  const initializeAuth = () => {
+    try {
+      const stored = sessionStorage.getItem('user');
+      if (stored) {
+        const basicUser = JSON.parse(stored);
+        const uID = basicUser.id;
 
-          const uCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
-          const uLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
-          const uNotifs = sessionStorage.getItem(`u_${uID}_notifications_data`);
+        syncDismissedRef(uID);
 
-          if (uCourses) setCoursesState(JSON.parse(uCourses));
-          if (uLessons) setLessonsState(JSON.parse(uLessons));
-          
-          if (uNotifs) {
-            const parsedNotifs = JSON.parse(uNotifs);
-            setNotifications(parsedNotifs);
-            parsedNotifs.forEach(n => {
-              if (n.internalId) processedMilestonesRef.current.add(n.internalId);
-            });
-          }
+        const uCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
+        const uLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
+        const uNotifs = sessionStorage.getItem(`u_${uID}_notifications_data`);
 
-          setUser({
-            ...basicUser,
-            stats: getLiveStats(),
-            badges: basicUser.badges || []
+        if (uCourses) setCoursesState(JSON.parse(uCourses));
+        if (uLessons) setLessonsState(JSON.parse(uLessons));
+
+        if (uNotifs) {
+          const parsedNotifs = JSON.parse(uNotifs);
+          setNotifications(parsedNotifs);
+
+          parsedNotifs.forEach(n => {
+            if (n.internalId) {
+              processedMilestonesRef.current.add(n.internalId);
+            }
           });
         }
-      } catch (err) {
-        console.warn('Auth init failed:', err);
-      } finally {
-        setIsLoading(false);
+
+        setUser({
+          ...basicUser,
+          badges: basicUser.badges || [],
+          stats: basicUser.stats || {}
+        });
       }
-    };
-    initializeAuth();
-    }, [getLiveStats, syncDismissedRef]); 
+    } catch (err) {
+      console.warn('Auth init failed:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  initializeAuth();
+}, [syncDismissedRef]); 
 
     // Persistence Sync
   useEffect(() => {
@@ -410,14 +435,17 @@ export function AuthProvider({ children }) {
       stats: getLiveStats(),
       enrolledCourses: [],
       badges: [],
-      profile: role === 'instructor' ? {
+      // Provide a profile object for everyone so bio checks don't fail
+      profile: {
         bio: userData.bio || '',
         location: userData.location || '',
         website: userData.website || '',
-        rating: 0,
-        coursesCount: 0,
-      } : null
+        // Only instructors get these specific metrics
+        rating: role === 'instructor' ? 0 : null,
+        coursesCount: role === 'instructor' ? 0 : null,
+      }
     };
+
     setUser(newUser);
     sessionStorage.setItem('user', JSON.stringify(newUser));
   }, [getLiveStats]);
@@ -425,7 +453,17 @@ export function AuthProvider({ children }) {
   const updateUser = useCallback((updates) => {
     setUser((prev) => {
       if (!prev) return null;
-      const updatedUser = { ...prev, ...updates };
+
+      // Create the updated user object
+      const updatedUser = { 
+        ...prev, 
+        ...updates,
+        // If updates contains a profile, merge it with the existing one
+        profile: updates.profile 
+          ? { ...prev.profile, ...updates.profile } 
+          : prev.profile 
+      };
+
       sessionStorage.setItem('user', JSON.stringify(updatedUser));
       return updatedUser;
     });
