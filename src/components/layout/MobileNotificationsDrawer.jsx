@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2, BookOpen, Trophy, Settings, UserPlus, MessageSquare, ShieldCheck, Info} from "lucide-react";
 import { cn } from '@/lib/utils';
+import * as LucideIcons from "lucide-react";
+
 
 // Icons and Colors maps for the detail view
 const notificationIcons = {

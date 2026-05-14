@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { courses as initialCourses, lessons as initialLessons, notifications as initialNotifications } from '@/data/mockData';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { courses as initialCourses, lessons as initialLessons } from '@/data/mockData';
+import { getMilestones } from '@/lib/milestones';
 
 const AuthContext = createContext();
 
@@ -7,55 +8,31 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isInstructorMode, setIsInstructorMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [coursesState, setCoursesState] = useState(initialCourses);
+  const [lessonsState, setLessonsState] = useState(initialLessons);
 
-  // --- HELPER: Get User Specific Key ---
-  const getUKey = useCallback((key) => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) return key;
-    try {
-      const { id } = JSON.parse(storedUser);
-      return `u_${id}_${key}`;
-    } catch {
-      return key;
-    }
+  const processedMilestonesRef = useRef(new Set());
+  const sessionWelcomedRef = useRef(false);
+  const isLoggingOut = useRef(false);
+
+  const unreadCount = useMemo(() => 
+    notifications.filter(n => !n.read).length, 
+  [notifications]);
+
+  // --- PERSISTENCE & SYNC HELPERS ---
+
+  /**
+   * ✅ Restores dismissal memory from sessionStorage into the active Ref.
+   * This prevents deleted notifications from reappearing on login/logout.
+   */
+  const syncDismissedRef = useCallback((userId) => {
+    if (!userId) return;
+    const storageKey = `u_${userId}_dismissed_milestones`;
+    const dismissed = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+    dismissed.forEach(id => processedMilestonesRef.current.add(id));
   }, []);
 
-  // ✅ PERSISTENT STATE: Load from LocalStorage with fallback
-  const [notifications, setNotifications] = useState(() => {
-    const key = getUKey('notifications_data');
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialNotifications;
-  });
-
-  const [coursesState, setCoursesState] = useState(() => {
-    const key = getUKey('courses_data');
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialCourses;
-  });
-
-  const [lessonsState, setLessonsState] = useState(() => {
-    const key = getUKey('lessons_data');
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialLessons;
-  });
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const markAsRead = useCallback((notificationId) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
-  }, []);
-
-  const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  }, []);
-
-  const deleteNotification = useCallback((notificationId) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-  }, []);
-
-  // ✅ 1. DYNAMIC STATS RESOLVER
   const getLiveStats = useCallback(() => {
     const lessonsCompletedCount = lessonsState.filter((l) => l.isCompleted).length;
     const completedCourses = coursesState.filter((c) => c.progress === 100);
@@ -67,7 +44,7 @@ export function AuthProvider({ children }) {
       return duration <= (7 * 24 * 60 * 60 * 1000);
     }).length;
 
-    const isProfileComplete = !!(user?.avatar && user?.bio);
+    const isProfileComplete = !!(user?.avatar && user?.profile?.bio);
 
     return {
       lessonsCompletedCount,
@@ -79,25 +56,209 @@ export function AuthProvider({ children }) {
       isProfileComplete: isProfileComplete ? 1 : 0,
       streak: user?.stats?.streak || 1,
     };
-  }, [lessonsState, coursesState, user?.reviews?.length, user?.avatar, user?.bio, user?.stats?.streak]);
+  }, [lessonsState, coursesState, user?.avatar, user?.profile?.bio, user?.reviews?.length, user?.stats?.streak]);
 
-  // ✅ 2. INITIALIZE AUTH
+  const markMilestoneAsDismissed = useCallback((internalId) => {
+    if (!user?.id || !internalId) return;
+    
+    const storageKey = `u_${user.id}_dismissed_milestones`;
+    const dismissed = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+    
+    if (!dismissed.includes(internalId)) {
+      const updated = [...dismissed, internalId];
+      sessionStorage.setItem(storageKey, JSON.stringify(updated));
+      processedMilestonesRef.current.add(internalId);
+    }
+  }, [user?.id]);
+
+  // --- NOTIFICATION ACTIONS ---
+
+  const triggerNotification = useCallback((type, title, message, internalId) => {
+    // 1. Instant check against the processed/banned Ref
+    if (processedMilestonesRef.current.has(internalId)) return;
+
+    setNotifications(prev => {
+      // 2. Atomic check against the LATEST state
+      // This is the "Shield" that stops the engine from re-adding a 
+      // notification while a delete or mark-all operation is still in progress.
+      if (prev.some(n => n.internalId === internalId)) {
+        return prev; 
+      }
+
+      const newNotif = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        internalId,
+        type,
+        title,
+        message,
+        read: false,
+        timestamp: new Date().toISOString(),
+      };
+
+      return [newNotif, ...prev];
+    });
+  }, []);
+
+  const markAsRead = useCallback((notificationId) => {
+    setNotifications(prev => {
+      const target = prev.find(n => n.id === notificationId);
+      
+      // Lock the ref synchronously inside the setter
+      if (target?.internalId) {
+        processedMilestonesRef.current.add(target.internalId);
+      }
+
+      const updated = prev.map(n => 
+        n.id === notificationId ? { ...n, read: true } : n
+      );
+
+      if (user?.id) {
+        sessionStorage.setItem(`u_${user.id}_notifications_data`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  }, [user?.id]); // notifications dependency is now removed!
+
+  const markAllAsRead = useCallback(() => {
+    setNotifications(prev => {
+      // 1. Saturation: Lock the shield for every single item 
+      prev.forEach(n => {
+        if (n.internalId) {
+          processedMilestonesRef.current.add(n.internalId);
+        }
+      });
+
+      // 2. Map transition
+      const updated = prev.map(n => n.read ? n : { ...n, read: true });
+
+      // 3. Atomic Storage Update
+      if (user?.id) {
+        sessionStorage.setItem(
+          `u_${user.id}_notifications_data`, 
+          JSON.stringify(updated)
+        );
+      }
+      
+      return updated;
+    });
+  }, [user?.id]);
+
+  const deleteNotification = useCallback((notificationId) => {
+    setNotifications(prev => {
+      const target = prev.find(n => n.id === notificationId);
+      
+      if (!target) return prev; // Exit early if already gone
+
+      if (target.internalId) {
+        // 1. SILENT LOCK: Immediately block the engine
+        processedMilestonesRef.current.add(target.internalId);
+        
+        // 2. PERSISTENT BANS: Ensure it never comes back after refresh
+        if (user?.id) {
+          const storageKey = `u_${user.id}_dismissed_milestones`;
+          const dismissed = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+          if (!dismissed.includes(target.internalId)) {
+            sessionStorage.setItem(storageKey, JSON.stringify([...dismissed, target.internalId]));
+          }
+        }
+      }
+
+      const updated = prev.filter(n => n.id !== notificationId);
+      
+      // 3. ATOMIC STORAGE UPDATE: Sync the notification list immediately
+      if (user?.id) {
+        sessionStorage.setItem(`u_${user.id}_notifications_data`, JSON.stringify(updated));
+      }
+      
+      return updated;
+    });
+  }, [user?.id]);
+
+  useEffect(() => {
+    // 1. EXIT GATE: Prevent execution during loading, logout, or if no user exists
+    if (!user || isLoading || isLoggingOut.current) return;
+
+    /**
+     * 2. INITIAL SHIELD HYDRATION
+     * Only sync from storage if the Ref is empty. This prevents the engine 
+     * from "re-learning" dismissed items and flickering during bulk updates.
+     */
+    if (processedMilestonesRef.current.size === 0) {
+      syncDismissedRef(user.id);
+      const storageKey = `u_${user.id}_dismissed_milestones`;
+      const dismissed = JSON.parse(sessionStorage.getItem(storageKey) || '[]');
+      dismissed.forEach(id => processedMilestonesRef.current.add(id));
+    }
+
+    // 3. HANDLE WELCOME MESSAGE
+    const welcomeId = `welcome_msg_${user.id}`;
+    if (!sessionWelcomedRef.current && !processedMilestonesRef.current.has(welcomeId)) {
+      triggerNotification(
+        'info', 
+        "Welcome back, " + user.name, 
+        "We're glad to have you back!", 
+        welcomeId 
+      );
+      sessionWelcomedRef.current = true;
+    }
+
+    // 4. EVALUATE MILESTONES
+    // Uses the latest stats to check against defined milestone conditions
+    const currentStats = getLiveStats();
+    const milestones = getMilestones(currentStats, user);
+
+    milestones.forEach(m => {
+      const mInternalId = `badge_${m.id}`;
+      
+      // Check only the Ref here for maximum speed. 
+      // The "alreadyExists" atomic check happens inside triggerNotification.
+      const isProcessed = processedMilestonesRef.current.has(mInternalId);
+
+      if (m.condition && !isProcessed) {
+        triggerNotification(m.type, m.title, m.message, mInternalId);
+      }
+    });
+
+    /**
+     * NOTE: 'notifications' and 'notifications.length' are strictly excluded 
+     * from the dependency array to prevent infinite re-triggering loops.
+     */
+  }, [
+    user?.id, 
+    isLoading, 
+    getLiveStats, 
+    triggerNotification, 
+    syncDismissedRef
+  ]);
+
+
+
+  // Initial Auth Hydration
   useEffect(() => {
     const initializeAuth = () => {
       try {
-        const stored = localStorage.getItem('user');
+        const stored = sessionStorage.getItem('user');
         if (stored) {
           const basicUser = JSON.parse(stored);
-          
-          // Re-load the data for THIS specific user to avoid data leakage from previous sessions
           const uID = basicUser.id;
-          const uCourses = localStorage.getItem(`u_${uID}_courses_data`);
-          const uLessons = localStorage.getItem(`u_${uID}_lessons_data`);
-          const uNotifs = localStorage.getItem(`u_${uID}_notifications_data`);
+          
+          // Hydrate memory of dismissed milestones
+          syncDismissedRef(uID);
+
+          const uCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
+          const uLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
+          const uNotifs = sessionStorage.getItem(`u_${uID}_notifications_data`);
 
           if (uCourses) setCoursesState(JSON.parse(uCourses));
           if (uLessons) setLessonsState(JSON.parse(uLessons));
-          if (uNotifs) setNotifications(JSON.parse(uNotifs));
+          
+          if (uNotifs) {
+            const parsedNotifs = JSON.parse(uNotifs);
+            setNotifications(parsedNotifs);
+            parsedNotifs.forEach(n => {
+              if (n.internalId) processedMilestonesRef.current.add(n.internalId);
+            });
+          }
 
           setUser({
             ...basicUser,
@@ -106,35 +267,39 @@ export function AuthProvider({ children }) {
           });
         }
       } catch (err) {
-        console.warn('Failed to parse stored user:', err);
-        localStorage.removeItem('user');
+        console.warn('Auth init failed:', err);
       } finally {
         setIsLoading(false);
       }
     };
     initializeAuth();
-  }, []); // Run only once on mount
+    }, [getLiveStats, syncDismissedRef]); 
 
-  // ✅ 3. PERSISTENCE SYNC: Save data states to storage whenever they change
+    // Persistence Sync
   useEffect(() => {
-    if (user?.id) {
-      localStorage.setItem(`u_${user.id}_courses_data`, JSON.stringify(coursesState));
-    }
-  }, [coursesState, user?.id]);
+    // 1. Exit if no user session exists or if the logout process has initiated
+    if (!user?.id || isLoggingOut.current) return;
 
-  useEffect(() => {
-    if (user?.id) {
-      localStorage.setItem(`u_${user.id}_lessons_data`, JSON.stringify(lessonsState));
-    }
-  }, [lessonsState, user?.id]);
+    try {
+      // 2. Sync Course Data
+      sessionStorage.setItem(
+        `u_${user.id}_courses_data`, 
+        JSON.stringify(coursesState)
+      );
 
-  useEffect(() => {
-    if (user?.id) {
-      localStorage.setItem(`u_${user.id}_notifications_data`, JSON.stringify(notifications));
+      // 3. Sync Lesson Data
+      sessionStorage.setItem(
+        `u_${user.id}_lessons_data`, 
+        JSON.stringify(lessonsState)
+      );
+      
+    } catch (err) {
+      console.warn('Persistence sync failed:', err);
     }
-  }, [notifications, user?.id]);
+    
+  }, [coursesState, lessonsState, user?.id]);
 
-  // ✅ 4. AUTO-STATS SYNC
+  // Update stats on data change
   useEffect(() => {
     if (user) {
       const freshStats = getLiveStats();
@@ -144,7 +309,66 @@ export function AuthProvider({ children }) {
     }
   }, [lessonsState, coursesState, getLiveStats]);
 
-  // ✅ 5. ROBUST PROGRESS UPDATER
+  // --- HANDLERS ---
+
+  const login = useCallback(async (credentials) => {
+    isLoggingOut.current = false; 
+    processedMilestonesRef.current.clear();
+    sessionWelcomedRef.current = false;
+    
+    const uID = credentials.id || credentials.email;
+    
+    // Sync dismissal memory for this specific user immediately
+    syncDismissedRef(uID);
+    
+    const savedNotifs = sessionStorage.getItem(`u_${uID}_notifications_data`);
+    const initialNotifs = savedNotifs ? JSON.parse(savedNotifs) : [];
+    
+    const savedCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
+    const savedLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
+
+    initialNotifs.forEach(n => {
+      if (n.internalId) processedMilestonesRef.current.add(n.internalId);
+    });
+
+    setNotifications(initialNotifs);
+    setCoursesState(savedCourses ? JSON.parse(savedCourses) : initialCourses);
+    setLessonsState(savedLessons ? JSON.parse(savedLessons) : initialLessons);
+
+    const newUser = {
+      ...credentials,
+      id: uID,
+      role: credentials.role || 'student',
+      stats: getLiveStats(),
+      joinedDate: new Date().toISOString(),
+    };
+
+    setUser(newUser);
+    sessionStorage.setItem('user', JSON.stringify(newUser));
+
+    console.log("LOGIN USER ID:", uID);
+
+  }, [getLiveStats, syncDismissedRef]);
+
+  const logout = useCallback(() => {
+    isLoggingOut.current = true; 
+
+    processedMilestonesRef.current.clear();
+    sessionWelcomedRef.current = false;
+
+    setUser(null);
+    setNotifications([]); 
+    setCoursesState(initialCourses);
+    setLessonsState(initialLessons);
+    setIsInstructorMode(false);
+    
+    sessionStorage.removeItem('user');
+
+    setTimeout(() => {
+      isLoggingOut.current = false;
+    }, 100);
+  }, []);
+
   const updateProgress = useCallback((courseId, lessonId, score = null) => {
     return new Promise((resolve) => {
       setLessonsState(prevLessons => {
@@ -175,29 +399,12 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  const saveToStorage = (userData) => {
-    try {
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (err) {
-      console.error('Storage sync failed:', err);
-    }
-  };
-
-  const login = useCallback(async (credentials) => {
-    const newUser = {
-      ...credentials,
-      id: credentials.id || crypto.randomUUID(), // Preserve ID if provided
-      role: credentials.role || 'student',
-      joinedDate: new Date().toISOString(),
-      stats: getLiveStats(),
-      enrolledCourses: [],
-      badges: []
-    };
-    setUser(newUser);
-    saveToStorage(newUser);
-  }, [getLiveStats]);
-
   const signup = useCallback(async (userData) => {
+    isLoggingOut.current = false;
+    processedMilestonesRef.current.clear();
+    sessionWelcomedRef.current = false;
+    setNotifications([]);
+    
     const role = userData.isInstructor ? 'instructor' : 'student';
     const newUser = {
       id: crypto.randomUUID(),
@@ -218,26 +425,14 @@ export function AuthProvider({ children }) {
       } : null
     };
     setUser(newUser);
-    saveToStorage(newUser);
+    sessionStorage.setItem('user', JSON.stringify(newUser));
   }, [getLiveStats]);
-
-  const logout = useCallback(() => {
-    setUser(null);
-    setIsInstructorMode(false);
-    localStorage.removeItem('user');
-    // Note: We don't necessarily need to clear user-specific data here 
-    // because it's namespaced and won't be seen by others.
-    // Reset states back to initial for the next "guest"
-    setCoursesState(initialCourses);
-    setLessonsState(initialLessons);
-    setNotifications(initialNotifications);
-  }, []);
 
   const updateUser = useCallback((updates) => {
     setUser((prev) => {
       if (!prev) return null;
       const updatedUser = { ...prev, ...updates };
-      saveToStorage(updatedUser);
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
       return updatedUser;
     });
   }, []);
@@ -249,7 +444,6 @@ export function AuthProvider({ children }) {
     }
   }, [user?.role]);
 
-  // ✅ 6. ENROLLMENT HANDLER
   const enrollInCourse = useCallback(async (courseId) => {
     return new Promise((resolve) => {
       setCoursesState(prevCourses => prevCourses.map(course => {
@@ -273,7 +467,7 @@ export function AuthProvider({ children }) {
           enrolledCourses: [...(prevUser.enrolledCourses || []), Number(courseId)]
         };
         
-        saveToStorage(updatedUser);
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
         return updatedUser;
       });
       resolve(true);
@@ -302,11 +496,9 @@ export function AuthProvider({ children }) {
     role: user?.role,
   }), [user, coursesState, lessonsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse]);
 
-  if (isLoading) return null;
-
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 }

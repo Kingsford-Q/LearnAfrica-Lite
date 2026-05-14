@@ -405,12 +405,4 @@ export const badgeConfig = [
   }
 ];
 
-export const notifications = [
-  { id: 1, type: 'course', title: 'New lesson available', message: 'Introduction to JavaScript has a new lesson: "Async/Await"', time: '2 hours ago', read: false },
-  { id: 2, type: 'achievement', title: 'Achievement unlocked!', message: 'You earned the "Fast Learner" badge', time: '5 hours ago', read: false },
-  { id: 3, type: 'reminder', title: 'Continue learning', message: "You're 3 days away from losing your streak!", time: '1 day ago', read: true },
-  { id: 4, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
-  { id: 5, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
-  { id: 6, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
-  { id: 7, type: 'system', title: 'Welcome to LearnAfrica!', message: 'Start your learning journey today', time: '2 days ago', read: true },
-];
+export const notifications = [];
