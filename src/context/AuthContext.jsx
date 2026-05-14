@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { courses as initialCourses, lessons as initialLessons } from '@/data/mockData';
-import { getMilestones } from '@/lib/milestones';
+import { courses as initialCourses, lessons as initialLessons,getMilestones } from '@/data/mockData';
 
 const AuthContext = createContext();
 
@@ -20,12 +19,7 @@ export function AuthProvider({ children }) {
     notifications.filter(n => !n.read).length, 
   [notifications]);
 
-  // --- PERSISTENCE & SYNC HELPERS ---
-
-  /**
-   * ✅ Restores dismissal memory from sessionStorage into the active Ref.
-   * This prevents deleted notifications from reappearing on login/logout.
-   */
+  
   const syncDismissedRef = useCallback((userId) => {
     if (!userId) return;
     const storageKey = `u_${userId}_dismissed_milestones`;
