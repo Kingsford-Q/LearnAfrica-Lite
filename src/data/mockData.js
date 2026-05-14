@@ -297,7 +297,7 @@ export const categories = [
   'Design',
   'Cybersecurity',
   'Business',
-  'Finance'
+  'Finance',
 ]
 
 export const difficulties = ['All Levels', 'Beginner', 'Intermediate', 'Advanced']
