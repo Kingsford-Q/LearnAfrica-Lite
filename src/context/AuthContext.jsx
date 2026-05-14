@@ -8,20 +8,34 @@ export function AuthProvider({ children }) {
   const [isInstructorMode, setIsInstructorMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // --- HELPER: Get User Specific Key ---
+  const getUKey = useCallback((key) => {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) return key;
+    try {
+      const { id } = JSON.parse(storedUser);
+      return `u_${id}_${key}`;
+    } catch {
+      return key;
+    }
+  }, []);
 
-const [notifications, setNotifications] = useState(() => {
-  const saved = localStorage.getItem('notifications_data');
-  return saved ? JSON.parse(saved) : initialNotifications;
-});  
+  // ✅ PERSISTENT STATE: Load from LocalStorage with fallback
+  const [notifications, setNotifications] = useState(() => {
+    const key = getUKey('notifications_data');
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : initialNotifications;
+  });
 
-  // ✅ PERSISTENT STATE: Load from LocalStorage if available, otherwise use mockData
   const [coursesState, setCoursesState] = useState(() => {
-    const saved = localStorage.getItem('courses_data');
+    const key = getUKey('courses_data');
+    const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : initialCourses;
   });
 
   const [lessonsState, setLessonsState] = useState(() => {
-    const saved = localStorage.getItem('lessons_data');
+    const key = getUKey('lessons_data');
+    const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : initialLessons;
   });
 
@@ -74,10 +88,20 @@ const [notifications, setNotifications] = useState(() => {
         const stored = localStorage.getItem('user');
         if (stored) {
           const basicUser = JSON.parse(stored);
-          const initialStats = getLiveStats(); 
+          
+          // Re-load the data for THIS specific user to avoid data leakage from previous sessions
+          const uID = basicUser.id;
+          const uCourses = localStorage.getItem(`u_${uID}_courses_data`);
+          const uLessons = localStorage.getItem(`u_${uID}_lessons_data`);
+          const uNotifs = localStorage.getItem(`u_${uID}_notifications_data`);
+
+          if (uCourses) setCoursesState(JSON.parse(uCourses));
+          if (uLessons) setLessonsState(JSON.parse(uLessons));
+          if (uNotifs) setNotifications(JSON.parse(uNotifs));
+
           setUser({
             ...basicUser,
-            stats: initialStats,
+            stats: getLiveStats(),
             badges: basicUser.badges || []
           });
         }
@@ -89,18 +113,28 @@ const [notifications, setNotifications] = useState(() => {
       }
     };
     initializeAuth();
-  }, []); 
+  }, []); // Run only once on mount
 
   // ✅ 3. PERSISTENCE SYNC: Save data states to storage whenever they change
   useEffect(() => {
-    localStorage.setItem('courses_data', JSON.stringify(coursesState));
-  }, [coursesState]);
+    if (user?.id) {
+      localStorage.setItem(`u_${user.id}_courses_data`, JSON.stringify(coursesState));
+    }
+  }, [coursesState, user?.id]);
 
   useEffect(() => {
-    localStorage.setItem('lessons_data', JSON.stringify(lessonsState));
-  }, [lessonsState]);
+    if (user?.id) {
+      localStorage.setItem(`u_${user.id}_lessons_data`, JSON.stringify(lessonsState));
+    }
+  }, [lessonsState, user?.id]);
 
-  // ✅ 4. AUTO-STATS SYNC: Updates the user object when progress is made
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`u_${user.id}_notifications_data`, JSON.stringify(notifications));
+    }
+  }, [notifications, user?.id]);
+
+  // ✅ 4. AUTO-STATS SYNC
   useEffect(() => {
     if (user) {
       const freshStats = getLiveStats();
@@ -108,22 +142,15 @@ const [notifications, setNotifications] = useState(() => {
         setUser(prev => ({ ...prev, stats: freshStats }));
       }
     }
+  }, [lessonsState, coursesState, getLiveStats]);
 
-    localStorage.setItem('notifications_data', JSON.stringify(notifications));
-  }, [lessonsState, coursesState, getLiveStats, notifications]);
-
-  // ✅ 5. ROBUST PROGRESS UPDATER (Now includes quizScore support)
+  // ✅ 5. ROBUST PROGRESS UPDATER
   const updateProgress = useCallback((courseId, lessonId, score = null) => {
     return new Promise((resolve) => {
       setLessonsState(prevLessons => {
         const updatedLessons = prevLessons.map(l => 
           String(l.id) === String(lessonId) 
-            ? { 
-                ...l, 
-                isCompleted: true, 
-                // Only update score if a new one is provided
-                quizScore: score !== null ? score : l.quizScore 
-              } 
+            ? { ...l, isCompleted: true, quizScore: score !== null ? score : l.quizScore } 
             : l
         );
 
@@ -156,11 +183,10 @@ const [notifications, setNotifications] = useState(() => {
     }
   };
 
-
   const login = useCallback(async (credentials) => {
     const newUser = {
       ...credentials,
-      id: crypto.randomUUID(),
+      id: credentials.id || crypto.randomUUID(), // Preserve ID if provided
       role: credentials.role || 'student',
       joinedDate: new Date().toISOString(),
       stats: getLiveStats(),
@@ -199,9 +225,12 @@ const [notifications, setNotifications] = useState(() => {
     setUser(null);
     setIsInstructorMode(false);
     localStorage.removeItem('user');
-    localStorage.removeItem('courses_data'); 
-    localStorage.removeItem('lessons_data');
-    localStorage.removeItem('notifications_data');
+    // Note: We don't necessarily need to clear user-specific data here 
+    // because it's namespaced and won't be seen by others.
+    // Reset states back to initial for the next "guest"
+    setCoursesState(initialCourses);
+    setLessonsState(initialLessons);
+    setNotifications(initialNotifications);
   }, []);
 
   const updateUser = useCallback((updates) => {
@@ -236,7 +265,6 @@ const [notifications, setNotifications] = useState(() => {
 
       setUser(prevUser => {
         if (!prevUser) return null;
-        
         const alreadyEnrolled = prevUser.enrolledCourses?.includes(Number(courseId));
         if (alreadyEnrolled) return prevUser;
 
@@ -248,7 +276,6 @@ const [notifications, setNotifications] = useState(() => {
         saveToStorage(updatedUser);
         return updatedUser;
       });
-
       resolve(true);
     });
   }, []);
@@ -270,8 +297,9 @@ const [notifications, setNotifications] = useState(() => {
     isAuthenticated: !!user,
     enrollInCourse,
     toggleInstructorMode,
+    isInstructorMode,
     role: user?.role,
-  }), [user, coursesState, lessonsState, updateProgress, login, signup, logout, updateUser,notifications, markAsRead, markAllAsRead, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, enrollInCourse]);
+  }), [user, coursesState, lessonsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, enrollInCourse]);
 
   if (isLoading) return null;
 
