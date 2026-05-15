@@ -1,5 +1,4 @@
-import { Filter, X } from 'lucide-react'
-import { Button } from '@/components/common/Button'
+import { Filter, X, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function FilterPanel({
@@ -14,16 +13,17 @@ export default function FilterPanel({
   const hasFilters = selectedCategory !== 'All Categories' || selectedDifficulty !== 'All Levels'
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium">
+    <div className="flex flex-col gap-8 py-2">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b pb-4">
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
           <Filter className="h-4 w-4" />
           Filters
         </div>
         {hasFilters && (
           <button
             onClick={onClear}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-destructive hover:underline transition-all"
           >
             <X className="h-3 w-3" />
             Clear all
@@ -31,40 +31,47 @@ export default function FilterPanel({
         )}
       </div>
 
-      {/* Category Filter */}
-      <div className="space-y-2">
-        <label className="text-sm text-muted-foreground">Category</label>
-        <div className="flex flex-wrap gap-2">
-          {categories.map(category => (
+      {/* Category Filter - Vertical List for better readability with 15+ items */}
+      <div className="space-y-3">
+        <label className="text-xs font-bold uppercase text-muted-foreground/70">
+          Category
+        </label>
+        <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+          {categories.map((category) => (
             <button
               key={category}
               onClick={() => onCategoryChange(category)}
               className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                'group flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all',
                 selectedCategory === category
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               )}
             >
-              {category}
+              <span className="truncate">{category}</span>
+              {selectedCategory !== category && (
+                <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Difficulty Filter */}
-      <div className="space-y-2">
-        <label className="text-sm text-muted-foreground">Difficulty</label>
+      {/* Difficulty Filter - Pills stay here because there are usually only 3-4 options */}
+      <div className="space-y-3">
+        <label className="text-xs font-bold uppercase text-muted-foreground/70">
+          Difficulty
+        </label>
         <div className="flex flex-wrap gap-2">
-          {difficulties.map(difficulty => (
+          {difficulties.map((difficulty) => (
             <button
               key={difficulty}
               onClick={() => onDifficultyChange(difficulty)}
               className={cn(
-                'rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                'rounded-full px-4 py-1.5 text-xs font-semibold border transition-all active:scale-95',
                 selectedDifficulty === difficulty
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  ? 'bg-primary text-background border-primary'
+                  : 'border-input hover:border-accent/50 hover:bg-accent'
               )}
             >
               {difficulty}

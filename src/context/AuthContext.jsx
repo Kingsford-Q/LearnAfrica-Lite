@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { courses as initialCourses, lessons as initialLessons,getMilestones } from '@/data/mockData';
+import { courses as initialCourses, lessons as initialLessons,getMilestones, instructors as initialInstructors } from '@/data/mockData';
 
 const AuthContext = createContext();
 
@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [coursesState, setCoursesState] = useState(initialCourses);
   const [lessonsState, setLessonsState] = useState(initialLessons);
+  const [instructorsState, setInstructorsState] = useState(initialInstructors);
 
   const processedMilestonesRef = useRef(new Set());
   const sessionWelcomedRef = useRef(false);
@@ -63,6 +64,53 @@ export function AuthProvider({ children }) {
     user?.reviews?.length, 
     user?.stats?.streak
   ]);
+
+  const addReview = useCallback(async (courseId, newReview) => {
+    return new Promise((resolve) => {
+      // 1. Update the Courses State
+      // This calculates the new average and adds the review to the course list
+      setCoursesState((prevCourses) => {
+        const updatedCourses = prevCourses.map((course) => {
+          if (String(course.id) === String(courseId)) {
+            const currentReviews = course.reviews || [];
+            const updatedReviews = [newReview, ...currentReviews];
+
+            // Calculate new average rating
+            const totalRating = updatedReviews.reduce((acc, rev) => acc + rev.rating, 0);
+            const newAverage = parseFloat((totalRating / updatedReviews.length).toFixed(1));
+
+            return {
+              ...course,
+              reviews: updatedReviews,
+              rating: newAverage,
+            };
+          }
+          return course;
+        });
+
+        // The Persistence Sync useEffect in your AuthContext 
+        // will automatically save updatedCourses to sessionStorage
+        return updatedCourses;
+      });
+
+      // 2. Update the User State
+      // This ensures the student's review count updates for milestones/stats
+      setUser((prevUser) => {
+        if (!prevUser) return null;
+
+        const updatedUser = {
+          ...prevUser,
+          reviews: [...(prevUser.reviews || []), { courseId, reviewId: newReview.id }],
+        };
+
+        // Sync user to sessionStorage immediately
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        return updatedUser;
+      });
+
+      resolve(true);
+    });
+  }, []);
 
   const markMilestoneAsDismissed = useCallback((internalId) => {
     if (!user?.id || !internalId) return;
@@ -194,11 +242,6 @@ export function AuthProvider({ children }) {
     // 1. EXIT GATE: Prevent execution during loading, logout, or if no user exists
     if (!user || isLoading || isLoggingOut.current) return;
 
-    /**
-     * 2. INITIAL SHIELD HYDRATION
-     * Only sync from storage if the Ref is empty. This prevents the engine 
-     * from "re-learning" dismissed items and flickering during bulk updates.
-     */
     if (processedMilestonesRef.current.size === 0) {
       syncDismissedRef(user.id);
       const storageKey = `u_${user.id}_dismissed_milestones`;
@@ -263,9 +306,16 @@ export function AuthProvider({ children }) {
         const uCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
         const uLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
         const uNotifs = sessionStorage.getItem(`u_${uID}_notifications_data`);
+        const uInstructors = sessionStorage.getItem(`u_${uID}_instructors_data`);
 
         if (uCourses) setCoursesState(JSON.parse(uCourses));
         if (uLessons) setLessonsState(JSON.parse(uLessons));
+
+        if (uInstructors) {
+          setInstructorsState(JSON.parse(uInstructors));
+        } else {
+          setInstructorsState(initialInstructors);
+        }
 
         if (uNotifs) {
           const parsedNotifs = JSON.parse(uNotifs);
@@ -311,12 +361,17 @@ export function AuthProvider({ children }) {
         `u_${user.id}_lessons_data`, 
         JSON.stringify(lessonsState)
       );
+
+      sessionStorage.setItem(
+        `u_${user.id}_instructors_data`,
+        JSON.stringify(instructorsState)
+      );
       
     } catch (err) {
       console.warn('Persistence sync failed:', err);
     }
     
-  }, [coursesState, lessonsState, user?.id]);
+  }, [coursesState, lessonsState, instructorsState, user?.id]);
 
   // Update stats on data change
   useEffect(() => {
@@ -346,6 +401,8 @@ export function AuthProvider({ children }) {
     const savedCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
     const savedLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
 
+    const savedInstructors = sessionStorage.getItem(`u_${uID}_instructors_data`);
+
     initialNotifs.forEach(n => {
       if (n.internalId) processedMilestonesRef.current.add(n.internalId);
     });
@@ -353,6 +410,7 @@ export function AuthProvider({ children }) {
     setNotifications(initialNotifs);
     setCoursesState(savedCourses ? JSON.parse(savedCourses) : initialCourses);
     setLessonsState(savedLessons ? JSON.parse(savedLessons) : initialLessons);
+    setInstructorsState(savedInstructors ? JSON.parse(savedInstructors) : initialInstructors);
 
     const newUser = {
       ...credentials,
@@ -380,6 +438,7 @@ export function AuthProvider({ children }) {
     setCoursesState(initialCourses);
     setLessonsState(initialLessons);
     setIsInstructorMode(false);
+    setInstructorsState(initialInstructors);
     
     sessionStorage.removeItem('user');
 
@@ -510,6 +569,7 @@ export function AuthProvider({ children }) {
     user,
     courses: coursesState, 
     lessons: lessonsState,
+    instructors: instructorsState,
     updateProgress,
     login,
     signup,
@@ -518,6 +578,7 @@ export function AuthProvider({ children }) {
     notifications,
     markAsRead,
     markAllAsRead,
+    addReview,
     deleteNotification,
     unreadCount,
     isAuthenticated: !!user,
@@ -526,7 +587,7 @@ export function AuthProvider({ children }) {
     toggleInstructorMode,
     isInstructorMode,
     role: user?.role,
-  }), [user, coursesState, lessonsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse]);
+  }), [user, coursesState, lessonsState,instructorsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead,addReview, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse]);
 
   return (
     <AuthContext.Provider value={value}>

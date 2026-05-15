@@ -17,16 +17,16 @@ const useResponsiveItemsPerPage = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setItemsPerPage(6) // Mobile
+      if (window.innerWidth < 768) {
+        setItemsPerPage(6) // Small screens
       } else if (window.innerWidth < 1024) {
-        setItemsPerPage(9) // Tablet
+        setItemsPerPage(8) // Medium screens
       } else {
         setItemsPerPage(12) // Desktop
       }
     }
 
-    handleResize() // Call once on mount
+    handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -52,61 +52,101 @@ export function CoursesPage() {
   }, [])
 
   const filteredCourses = useMemo(() => {
-    let result = [...liveCourses]
+    let result = [...liveCourses];
 
-    // Search filter
+    // 1. SEARCH BAR FILTER (Always applies if query exists)
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        course =>
-          course.title.toLowerCase().includes(query) ||
-          course.description.toLowerCase().includes(query) ||
-          course.instructor.toLowerCase().includes(query) ||
-          course.tags.some(tag => tag.toLowerCase().includes(query))
-      )
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(course => {
+        const titleMatch = course.title.toLowerCase().includes(query);
+        const descMatch = course.description.toLowerCase().includes(query);
+        const instructorMatch = course.instructor.toLowerCase().includes(query);
+        const categoryMatch = course.category.toLowerCase().includes(query);
+        const tagMatch = course.tags.some(tag => tag.toLowerCase().includes(query));
+
+        return titleMatch || descMatch || instructorMatch || categoryMatch || tagMatch;
+      });
     }
 
-    // Category filter
+    // 2. CATEGORY FILTER (Applies on top of search results)
     if (selectedCategory !== 'All Categories') {
-      result = result.filter(course => course.category === selectedCategory)
+      const categoryQuery = selectedCategory.toLowerCase().trim();
+      
+      result = result.filter(course => {
+        // Direct Match
+        const isDirectMatch = course.category === selectedCategory;
+
+        // Deep Fuzzy Match (Title, Tags, and Description)
+        const isTitleMatch = course.title.toLowerCase().includes(categoryQuery);
+        const isDescriptionMatch = course.description.toLowerCase().includes(categoryQuery);
+        const isTagMatch = course.tags.some(tag => tag.toLowerCase().includes(categoryQuery));
+
+        // Others Safety Net
+        if (selectedCategory === 'Others') {
+          const isExplicitlyOther = course.category === 'Others';
+          const isNotInMainList = !categories.includes(course.category);
+          return isExplicitlyOther || isNotInMainList;
+        }
+
+        return isDirectMatch || isTitleMatch || isTagMatch || isDescriptionMatch;
+      });
     }
 
-    // Difficulty filter
+    // 3. DIFFICULTY FILTER
     if (selectedDifficulty !== 'All Levels') {
-      result = result.filter(course => course.difficulty === selectedDifficulty)
+      result = result.filter(course => course.difficulty === selectedDifficulty);
     }
 
-    // Sort
+    // 4. SORTING LOGIC (Keep your existing switch statement here...)
     switch (sortBy) {
       case 'popular':
-        result.sort((a, b) => b.enrollments - a.enrollments)
-        break
+        result.sort((a, b) => {
+          const aActive = (a.progress > 0 && a.progress < 100) ? 1 : 0;
+          const bActive = (b.progress > 0 && b.progress < 100) ? 1 : 0;
+          if (aActive !== bActive) return bActive - aActive;
+          if (a.progress < 100 && b.progress < 100) {
+            if (b.enrollments !== a.enrollments) return b.enrollments - a.enrollments;
+          }
+          const aDone = a.progress === 100 ? 1 : 0;
+          const bDone = b.progress === 100 ? 1 : 0;
+          if (aDone !== bDone) return aDone - bDone;
+          return b.enrollments - a.enrollments;
+        });
+        break;
       case 'newest':
-        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        break
+        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
       case 'rating':
-        result.sort((a, b) => b.rating - a.rating)
-        break
+        result.sort((a, b) => b.rating - a.rating);
+        break;
       case 'price-low':
-        result.sort((a, b) => a.price - b.price)
-        break
+        result.sort((a, b) => a.price - b.price);
+        break;
       case 'price-high':
-        result.sort((a, b) => b.price - a.price)
-        break
+        result.sort((a, b) => b.price - a.price);
+        break;
     }
 
-    return result
-  }, [liveCourses, searchQuery, selectedCategory, selectedDifficulty, sortBy])
+    return result;
+  }, [liveCourses, searchQuery, selectedCategory, selectedDifficulty, sortBy, categories]);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage)
+  // Improved Pagination Logic
+  const totalPages = Math.max(1, Math.ceil(filteredCourses.length / itemsPerPage))
+  
   const paginatedCourses = useMemo(() => {
-    const startIdx = (currentPage - 1) * itemsPerPage
+    // Ensure we don't calculate based on a page that doesn't exist anymore after resize/filter
+    const safePage = Math.min(currentPage, totalPages)
+    const startIdx = (safePage - 1) * itemsPerPage
     const endIdx = startIdx + itemsPerPage
     return filteredCourses.slice(startIdx, endIdx)
-  }, [filteredCourses, currentPage, itemsPerPage])
+  }, [filteredCourses, currentPage, itemsPerPage, totalPages])
 
-  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages || 1)
+    }
+  }, [currentPage, totalPages])
+
   useEffect(() => {
     setCurrentPage(1)
   }, [liveCourses, searchQuery, selectedCategory, selectedDifficulty, sortBy])
@@ -118,19 +158,63 @@ export function CoursesPage() {
   }
 
   const renderSkeletons = () => (
-    <div
-      className={cn(
-        'gap-6',
-        viewMode === 'grid'
-          ? 'grid md:grid-cols-2 xl:grid-cols-3'
-          : 'flex flex-col'
-      )}
-    >
+    <div className={cn('gap-6', viewMode === 'grid' ? 'grid md:grid-cols-2 xl:grid-cols-3' : 'flex flex-col')}>
       {[...Array(6)].map((_, i) => (
         <CourseCardSkeleton key={i} />
       ))}
     </div>
   )
+
+  // Helper to render page numbers with ellipsis
+  const renderPageNumbers = () => {
+    const pages = []
+    const showMax = window.innerWidth < 640 ? 3 : 5
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+        pages.push(
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i)}
+            className={cn(
+              'h-10 min-w-[40px] rounded-lg text-sm font-medium transition-all active:scale-95',
+              currentPage === i
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'border border-input hover:bg-accent'
+            )}
+          >
+            {i}
+          </button>
+        )
+      } else if (i === currentPage - 2 || i === currentPage + 2) {
+        pages.push(<span key={`ellipsis-${i}`} className="text-muted-foreground px-1">...</span>)
+      }
+    }
+    return pages
+  }
+
+  const suggestedTags = useMemo(() => {
+    if (!searchQuery) return [];
+
+    // 1. Find all courses that belong to the current selected category
+    const categoryCourses = liveCourses.filter(c => 
+      selectedCategory === 'All Categories' || c.category === selectedCategory
+    );
+
+    // 2. Get all tags from those courses
+    const allTags = categoryCourses.flatMap(c => c.tags);
+
+    // 3. Count occurrences to find "Most Popular" in this category
+    const tagCounts = allTags.reduce((acc, tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+      return acc;
+    }, {});
+
+    // 4. Sort by popularity and pick top 6
+    return Object.keys(tagCounts)
+      .sort((a, b) => tagCounts[b] - tagCounts[a])
+      .slice(0, 6);
+  }, [liveCourses, searchQuery, selectedCategory]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -153,7 +237,6 @@ export function CoursesPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Sort Dropdown */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -166,7 +249,6 @@ export function CoursesPage() {
             <option value="price-high">Price: High to Low</option>
           </select>
 
-          {/* View Mode Toggle */}
           <div className="hidden sm:flex items-center rounded-lg border border-input p-1">
             <button
               onClick={() => setViewMode('grid')}
@@ -188,7 +270,6 @@ export function CoursesPage() {
             </button>
           </div>
 
-          {/* Mobile Filter Toggle */}
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
@@ -201,13 +282,7 @@ export function CoursesPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
-        <aside
-          className={cn(
-            'lg:w-64 shrink-0 space-y-6',
-            showFilters ? 'block' : 'hidden lg:block'
-          )}
-        >
+        <aside className={cn('lg:w-64 shrink-0 space-y-6', showFilters ? 'block' : 'hidden lg:block')}>
           <Suspense fallback={<div className="h-64 w-full bg-muted animate-pulse rounded-xl" />}>
             <FilterPanel
               categories={categories}
@@ -221,7 +296,6 @@ export function CoursesPage() {
           </Suspense>
         </aside>
 
-        {/* Course Grid */}
         <div className="flex-1">
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
@@ -233,110 +307,74 @@ export function CoursesPage() {
             {isLoading ? (
               renderSkeletons()
             ) : filteredCourses.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="rounded-full bg-muted p-4 mb-4">
-                  <SlidersHorizontal className="h-8 w-8 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center py-16 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="rounded-full bg-muted p-4 mb-4">
+                    <SlidersHorizontal className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">No direct matches found</h3>
+                  <p className="text-muted-foreground mb-6 max-w-xs mx-auto">
+                    We couldn't find anything matching "{searchQuery || 'your filters'}". 
+                    Try one of these popular topics instead:
+                  </p>
+
+                  {/* Suggested Tags Area */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-8 max-w-md">
+                    {suggestedTags.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => setSearchQuery(tag)}
+                        className="px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium hover:bg-primary hover:text-white transition-all active:scale-95"
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={clearFilters}>
+                      Clear All Filters
+                    </Button>
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No courses found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your filters or search query
-                </p>
-                <Button variant="outline" onClick={clearFilters}>
-                  Clear Filters
-                </Button>
-              </div>
-            ) : (
+              ) : (
               <>
-                <div
-                  className={cn(
-                    'gap-6',
-                    viewMode === 'grid'
-                      ? 'grid md:grid-cols-2 xl:grid-cols-3'
-                      : 'flex flex-col'
-                  )}
-                >
+                <div className={cn('gap-6', viewMode === 'grid' ? 'grid md:grid-cols-2 xl:grid-cols-3' : 'flex flex-col')}>
                   {paginatedCourses.map(course => (
                     <CourseCard
                       key={course.id}
                       course={course}
                       enrolled={course.progress > 0}
+                      searchQuery={searchQuery}
                     />
                   ))}
                 </div>
 
-                {/* Pagination Controls - Responsive */}
+                {/* Optimized Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
-                    {/* Previous Button */}
+                  <div className="mt-12 flex items-center justify-center gap-2 sm:gap-4">
+                    
+                    {/* Previous Button - Icon only on mobile */}
                     <Button
                       variant="outline"
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      aria-label="Previous page"
-                      className="gap-2 sm:order-first w-full sm:w-auto"
+                      className="h-10 px-2 sm:px-4 rounded-xl flex items-center gap-2"
                     >
                       <ChevronLeft className="h-4 w-4" />
                       <span className="hidden sm:inline">Previous</span>
                     </Button>
 
-                    {/* Page Numbers - Hidden on mobile, visible on tablet+ */}
-                    <div className="hidden md:flex items-center gap-2">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
-                        // Show first page, last page, current page, and adjacent pages
-                        const isVisible =
-                          page === 1 ||
-                          page === totalPages ||
-                          Math.abs(page - currentPage) <= 1 ||
-                          (page === 2 && currentPage === 1) ||
-                          (page === totalPages - 1 && currentPage === totalPages)
-
-                        if (!isVisible && page !== 2 && page !== totalPages - 1) {
-                          return null
-                        }
-
-                        if (page === 2 && currentPage > 3 && totalPages > 5) {
-                          return (
-                            <span key="ellipsis-start" className="text-muted-foreground">...</span>
-                          )
-                        }
-
-                        if (page === totalPages - 1 && currentPage < totalPages - 2 && totalPages > 5) {
-                          return (
-                            <span key="ellipsis-end" className="text-muted-foreground">...</span>
-                          )
-                        }
-
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            aria-label={`Go to page ${page}`}
-                            aria-current={currentPage === page ? 'page' : undefined}
-                            className={cn(
-                              'h-10 w-10 rounded-lg text-sm font-medium transition-colors',
-                              currentPage === page
-                                ? 'bg-primary text-primary-foreground'
-                                : 'border border-input hover:bg-accent'
-                            )}
-                          >
-                            {page}
-                          </button>
-                        )
-                      })}
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      {renderPageNumbers()}
                     </div>
 
-                    {/* Mobile Page Indicator - Visible only on mobile */}
-                    <div className="md:hidden text-sm font-medium text-muted-foreground">
-                      Page {currentPage} of {totalPages}
-                    </div>
-
-                    {/* Next Button */}
+                    {/* Next Button - Icon only on mobile */}
                     <Button
                       variant="outline"
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      aria-label="Next page"
-                      className="gap-2 w-full sm:w-auto"
+                      className="h-10 px-2 sm:px-4 rounded-xl flex items-center gap-2"
                     >
                       <span className="hidden sm:inline">Next</span>
                       <ChevronRight className="h-4 w-4" />

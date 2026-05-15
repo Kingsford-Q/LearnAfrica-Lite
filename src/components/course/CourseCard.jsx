@@ -4,6 +4,8 @@ import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import { Button } from '@/components/common/Button'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext' // Updated path to your context
+
 
 const difficultyColors = {
   Beginner: 'success',
@@ -11,7 +13,14 @@ const difficultyColors = {
   Advanced: 'destructive'
 }
 
-export default function CourseCard({ course, enrolled = false }) {
+
+export default function CourseCard({ course, enrolled = false, searchQuery = '' }) {
+
+  const { instructors } = useAuth();
+  const instructor = instructors.find((inst) => inst.id === course.instructorId);
+  const avatar = instructor?.avatar || '/default-avatar.png';
+  const name = instructor?.name || 'No name available.';
+
   return (
    <Card className="overflow-hidden transition-all duration-300 group flex flex-col h-full bg-card hover:shadow-xl hover:scale-[1.02] cursor-pointer">
   {/* Thumbnail Area */}
@@ -46,6 +55,12 @@ export default function CourseCard({ course, enrolled = false }) {
         </span>
       </div>
 
+      {searchQuery && course.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) && (
+          <Badge variant="outline" className="text-[9px] bg-primary/5 text-primary border-primary/20 animate-in fade-in zoom-in duration-300">
+            Tag: {searchQuery}
+          </Badge>
+        )}
+
       <Link to={`/courses/${course.id}`} className="block">
         {/* 
            The 'group-hover:text-primary' ensures the color change happens 
@@ -64,13 +79,13 @@ export default function CourseCard({ course, enrolled = false }) {
       <div className="flex items-center gap-2 pt-1">
         <div className="h-6 w-6 overflow-hidden rounded-full bg-muted border border-border/50">
           <img
-            src={course.instructorAvatar}
-            alt={course.instructor}
+            src={avatar}
+            alt={name}
             loading="lazy"
             className="h-full w-full object-cover"
           />
         </div>
-        <span className="text-xs font-medium text-foreground/80">{course.instructor}</span>
+        <span className="text-xs font-medium text-foreground/80">{name}</span>
       </div>
 
       {/* Stats Row */}
