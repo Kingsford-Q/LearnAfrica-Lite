@@ -64,6 +64,15 @@ export const courses = [{
       'Analyze datasets using Pandas',
       'Visualize data with Matplotlib',
       'Build simple machine learning models'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -93,6 +102,15 @@ export const courses = [{
       'Use navigation and state management',
       'Integrate APIs',
       'Publish apps to app stores'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -122,6 +140,15 @@ export const courses = [{
       'Run social media campaigns',
       'Create content strategies',
       'Track marketing metrics'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -151,6 +178,15 @@ export const courses = [{
       'Create prototypes',
       'Conduct user research',
       'Build design systems'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -180,6 +216,15 @@ export const courses = [{
       'Secure systems',
       'Understand encryption',
       'Perform vulnerability assessments'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -204,7 +249,16 @@ export const courses = [{
     hasLifetimeAccess: true,
     hasResources: true,
     paymentLink: '',
-    learningOutcomes: ['Master closures', 'Understand prototypes', 'Use async/await', 'Apply design patterns']
+    learningOutcomes: ['Master closures', 'Understand prototypes', 'Use async/await', 'Apply design patterns'],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
+    ]
   },
   {
     id: '8',
@@ -233,6 +287,15 @@ export const courses = [{
       'Build RESTful APIs with Express',
       'Work with NoSQL databases',
       'Deploy applications to production'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -262,6 +325,15 @@ export const courses = [{
       'Implement classification and regression models',
       'Evaluate and optimize ML models',
       'Handle real-world datasets'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -291,6 +363,15 @@ export const courses = [{
       'Work with EC2, S3, and RDS',
       'Deploy applications on AWS',
       'Understand cloud security and cost optimization'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -320,6 +401,15 @@ export const courses = [{
       'Create a comprehensive business plan',
       'Understand market research and competition',
       'Learn funding strategies for startups'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -349,6 +439,15 @@ export const courses = [{
       'Read and analyze financial statements',
       'Calculate and interpret financial ratios',
       'Make data-driven financial decisions'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -378,6 +477,15 @@ export const courses = [{
       'Calculate derivatives and apply them',
       'Integrate functions',
       'Solve real-world optimization problems'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -407,6 +515,15 @@ export const courses = [{
       'Apply concepts of work, energy, and momentum',
       'Solve mechanics problems',
       'Understand rotational dynamics'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -436,6 +553,15 @@ export const courses = [{
       'Analyze the impact of significant historical figures',
       'Explore cultural and social changes',
       'Connect history to contemporary issues'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -465,6 +591,15 @@ export const courses = [{
       'Build conversational skills',
       'Understand Spanish grammar fundamentals',
       'Explore Hispanic culture and customs'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -494,6 +629,15 @@ export const courses = [{
       'Understand composition and framing',
       'Work with natural and artificial lighting',
       'Edit photos professionally with Lightroom and Photoshop'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -523,6 +667,15 @@ export const courses = [{
       'Learn music theory basics',
       'Use DAWs like Ableton or FL Studio',
       'Mix and master your tracks'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -552,6 +705,15 @@ export const courses = [{
       'Develop emotional intelligence',
       'Master communication and negotiation',
       'Build and manage high-performing teams'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -581,6 +743,15 @@ export const courses = [{
       'Design personalized workout plans',
       'Learn nutrition principles',
       'Build sustainable healthy habits'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -610,6 +781,15 @@ export const courses = [{
       'Create pivot tables and dashboards',
       'Visualize data effectively',
       'Perform complex business analysis'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -639,6 +819,15 @@ export const courses = [{
       'Create engaging blog posts and articles',
       'Master storytelling techniques',
       'Measure content performance'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -668,6 +857,15 @@ export const courses = [{
       'Create vector graphics with Illustrator',
       'Design layouts with InDesign',
       'Build a professional design portfolio'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -697,6 +895,15 @@ export const courses = [{
       'Edit videos with Adobe Premiere Pro',
       'Add effects and animations',
       'Export and optimize for different platforms'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   },
   {
@@ -726,6 +933,15 @@ export const courses = [{
       'Identify and eliminate productivity killers',
       'Build habits that stick',
       'Achieve work-life balance'
+    ],
+    reviews: [
+      {
+        id: "rev_1",
+        userName: "Isaac Hamid",
+        rating: 5,
+        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
+        date: "2026-04-12"
+      }
     ]
   }
 ];
