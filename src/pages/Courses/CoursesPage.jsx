@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
 import { Grid3X3, List, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { SearchBar } from '@/components/course/SearchBar'
-import { categories, difficulties } from '@/data/mockData'
+import { categories, difficulties, instructors } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
@@ -58,11 +58,19 @@ export function CoursesPage() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(course => {
-        const titleMatch = course.title.toLowerCase().includes(query);
-        const descMatch = course.description.toLowerCase().includes(query);
-        const instructorMatch = course.instructor.toLowerCase().includes(query);
-        const categoryMatch = course.category.toLowerCase().includes(query);
-        const tagMatch = course.tags.some(tag => tag.toLowerCase().includes(query));
+        // We use ?.toLowerCase() and ?? '' to handle missing data gracefully
+        const titleMatch = course.title?.toLowerCase().includes(query) ?? false;
+        const descMatch = course.description?.toLowerCase().includes(query) ?? false;
+
+        const instructorObj = instructors.find(ins => ins.id === course.instructorId);
+        const instructorMatch = instructorObj?.name?.toLowerCase().includes(query) ?? false;
+
+        const categoryMatch = course.category?.toLowerCase().includes(query) ?? false;
+        
+        // For tags, ensure course.tags is an array before calling .some
+        const tagMatch = Array.isArray(course.tags) && course.tags.some(tag => 
+          tag?.toLowerCase().includes(query)
+        );
 
         return titleMatch || descMatch || instructorMatch || categoryMatch || tagMatch;
       });

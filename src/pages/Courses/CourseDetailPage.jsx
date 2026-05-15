@@ -565,15 +565,28 @@ export function CourseDetailPage() {
           </div>
         ))}
 
-        {course.reviews.length > visibleReviews && (
-          <div className="flex justify-center pt-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setVisibleReviews(prev => prev + 3)}
-            >
-              Load More Reviews
-            </Button>
+        {/* Only show the button if there are more than the initial count of reviews */}
+        {course.reviews.length > 3 && (
+          <div className="flex justify-center pt-4 gap-3">
+            {course.reviews.length > visibleReviews ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="group"
+                onClick={() => setVisibleReviews(prev => prev + 3)}
+              >
+                Load More Reviews
+              </Button>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="group"
+                onClick={() => setVisibleReviews(3)}
+              >
+                Show Less
+              </Button>
+            )}
           </div>
         )}
       </>
