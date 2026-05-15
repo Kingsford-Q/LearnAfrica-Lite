@@ -469,10 +469,10 @@ export function CourseDetailPage() {
           {/* --- REVIEWS SECTION --- */}
           <section className="space-y-6 pt-12 border-t border-border/40">
   <div className="flex items-center justify-between">
-    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Student Reviews</h2>
+    <h2 className="text-lg md:text-xl font-bold tracking-tight">Student Reviews</h2>
     <div className="flex items-center gap-2">
       <Star className="h-5 w-5 fill-warning text-warning" />
-      <span className="font-bold text-lg">{averageRating}</span>
+      <span className="font-bold text-md">{averageRating}</span>
       <span className="text-muted-foreground text-sm">
         ({course.reviews?.length > 0 
           ? (course.reviews.length === 1 ? `1 review` : `${course.reviews.length} reviews`) 

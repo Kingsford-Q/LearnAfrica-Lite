@@ -26,8 +26,34 @@ export default function StudentDashboard() {
   const enrolledCourses = useMemo(() => (coursesState || []).filter((c) => c.progress > 0), [coursesState]);
   const completedCourses = useMemo(() => (coursesState || []).filter((c) => c.progress === 100), [coursesState]);
   
+
   // recommended courses logic
-  const recommendedCourses = useMemo(() => (coursesState || []).filter((c) => c.progress === 0).slice(0, 3), [coursesState]);
+  const recommendedCourses = useMemo(() => {
+    const allAvailable = (coursesState || []).filter((c) => c.progress === 0);
+    
+    // 1. Get the tags and categories the user is currently engaged with
+    const activeTags = new Set(enrolledCourses.flatMap(c => c.tags || []));
+    const activeCategories = new Set(enrolledCourses.map(c => c.category));
+
+    return allAvailable
+      .map(course => {
+        let score = 0;
+        
+        // Boost if category matches current interests
+        if (activeCategories.has(course.category)) score += 10;
+        
+        // Boost for every matching tag
+        const matchingTags = (course.tags || []).filter(tag => activeTags.has(tag));
+        score += matchingTags.length * 5;
+
+        // Boost for high ratings (Premium Feel)
+        if (course.rating >= 4.5) score += 3;
+
+        return { ...course, score };
+      })
+      .sort((a, b) => b.score - a.score) // Highest score first
+      .slice(0, 3);
+  }, [coursesState, enrolledCourses]);
   
   const totalHours = user?.totalHoursLearned || 42;
 
