@@ -26,7 +26,6 @@ export const courses = [{
       'Master JavaScript fundamentals including DOM manipulation and APIs',
       'Deploy a live website to a professional hosting environment'
     ],
-    rating: 4.8,
     reviews: [
       {
         id: "rev_1",
@@ -1357,3 +1356,62 @@ export const instructors = [
     skills: ['React Native', 'Node.js', 'TypeScript', 'AWS']
   }
 ]
+
+export const mockUser = {
+  id: 'user-1',
+  name: 'Adaeze Nwankwo',
+  email: 'adaeze@example.com',
+  role: 'student',
+  avatar: '/placeholder-user.jpg',
+  joinedDate: '2025-08-15T10:30:00.000Z',
+  
+  // Profile information (consolidated)
+  profile: {
+    bio: 'Full-stack developer passionate about building scalable web applications and teaching others.',
+    location: 'Accra, Ghana',
+    website: 'https://adaeze.dev',
+  },
+  
+  // Stats tracking
+  stats: {
+    coursesCompletedCount: 3,
+    lessonsCompletedCount: 42,
+    enrolledCoursesCount: 5,
+    perfectQuizzes: 5,
+    fastFinishCount: 1,
+    reviewsCount: 8,
+    isProfileComplete: 1,
+    streak: 12,
+  },
+  
+  // Learning data
+  enrolledCourses: [1, 2, 4, 7, 8],
+  totalHoursLearned: 42,
+  
+  // Badges earned
+  badges: [
+    { badgeId: '1', key: 'FIRST_STEPS', earnedDate: '2025-09-10' },
+    { badgeId: '2', key: 'COURSE_CHAMPION', earnedDate: '2025-10-20' },
+    { badgeId: '3', key: 'QUIZ_MASTER', earnedDate: '2025-11-15' },
+    { badgeId: '6', key: 'SPEED_LEARNER', earnedDate: '2025-12-05' },
+  ],
+  
+  // Reviews submitted
+  reviews: [
+    { courseId: '1', reviewId: 'rev_1' },
+    { courseId: '2', reviewId: 'rev_2' },
+  ],
+  
+  // User preferences and settings
+  settings: {
+    notifications: {
+      email: true,
+      push: false,
+      updates: true,
+    },
+    privacy: {
+      twoFactor: false,
+    },
+    appearance: 'light',
+  },
+}
