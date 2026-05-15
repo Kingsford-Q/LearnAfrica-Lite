@@ -1119,7 +1119,7 @@ export const instructors = [
   {
     id: 'inst-1',
     name: 'Prof. Kwame Mensah',
-    role: 'Senior Data Scientist & Academic',
+    title: 'Senior Data Scientist & Academic',
     avatar: '/placeholder-user.jpg',
     bio: 'Over 15 years of experience in statistical modeling and machine learning. Kwame has led data teams at global tech firms.',
     rating: 4.9,
@@ -1131,7 +1131,7 @@ export const instructors = [
   {
     id: 'inst-2',
     name: 'Fatima Diallo',
-    role: 'Full Stack Engineer & Mobile Expert',
+    title: 'Full Stack Engineer & Mobile Expert',
     avatar: '/placeholder-user.jpg',
     bio: 'A passionate developer advocate and cross-platform specialist. Fatima has built apps used by millions in the fintech space.',
     rating: 4.8,

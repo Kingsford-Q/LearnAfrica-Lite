@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Globe, MapPin, FileText, ArrowLeft, Loader2 } from 'lucide-react'
+import { Globe, MapPin, FileText, ArrowLeft, Loader2, Briefcase } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Input, Label } from '@/components/common/Input'
 import { useAuth } from '@/context/AuthContext'
@@ -12,6 +12,7 @@ export default function InstructorOnboarding() {
   
   const [formData, setFormData] = useState({
     bio: '',
+    title: '',
     location: '',
     website: ''
   })
@@ -97,6 +98,24 @@ export default function InstructorOnboarding() {
             />
           </div>
           {errors.bio && <p className="text-xs text-destructive font-medium">{errors.bio}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location" className="text-xs font-bold uppercase tracking-wider">
+            Your Title
+          </Label>
+          <div className="relative">
+            <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g. Senior Software Analyst"
+              className="pl-10"
+            />
+          </div>
+          {errors.title && <p className="text-xs text-destructive font-medium">{errors.title}</p>}
         </div>
 
         <div className="space-y-2">

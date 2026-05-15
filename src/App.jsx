@@ -1,15 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
-// Layouts - Converted to Named Imports
-import  MainLayout  from './layouts/MainLayout';
-import  DashboardLayout  from './layouts/DashboardLayout';
-import  InstructorLayout  from './layouts/InstructorLayout';
-import { AuthLayout }  from './layouts/AuthLayout';
+// Layouts
+import MainLayout from './layouts/MainLayout';
+import DashboardLayout from './layouts/DashboardLayout';
+import InstructorLayout from './layouts/InstructorLayout';
+import { AuthLayout } from './layouts/AuthLayout';
 
-// Pages - Converted to Named Imports
+// Pages
 import { LandingPage } from './pages/Landing/LandingPage';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { SignupPage } from './pages/Auth/SignupPage';
@@ -19,21 +19,22 @@ import { CourseDetailPage } from './pages/Courses/CourseDetailPage';
 import { LessonPage } from './pages/Lessons/LessonPage';
 import { QuizPage } from './pages/Quiz/QuizPage';
 import { QuizResultsPage } from './pages/Quiz/QuizResultsPage';
-import  StudentDashboard  from './pages/Dashboard/StudentDashboard';
+import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import { InstructorDashboard } from './pages/Instructor/InstructorDashboard';
 import { CreateCoursePage } from './pages/Instructor/CreateCoursePage';
 import { AnalyticsPage } from './pages/Instructor/AnalyticsPage';
-import  ProfilePage from './pages/Profile/ProfilePage';
-import  SettingsPage  from './pages/Settings/SettingsPage';
-import  CertificatePage  from './pages/Certificate/CertificatePage';
-import  LeaderboardPage  from './pages/Leaderboard/LeaderboardPage';
-import  NotFoundPage  from './pages/NotFound/NotFoundPage';
-import  InstructorOnboarding  from './pages/Auth/InstructorOnboarding';
+import ProfilePage from './pages/Profile/ProfilePage';
+import SettingsPage from './pages/Settings/SettingsPage';
+import CertificatePage from './pages/Certificate/CertificatePage';
+import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
+import NotFoundPage from './pages/NotFound/NotFoundPage';
+import InstructorOnboarding from './pages/Auth/InstructorOnboarding';
 import { Loader2 } from "lucide-react";
 
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -44,7 +45,7 @@ function ProtectedRoute({ children, allowedRoles }) {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
@@ -57,11 +58,13 @@ function ProtectedRoute({ children, allowedRoles }) {
 // Public Only Route (redirect if authenticated)
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, isLoading} = useAuth();
+  const location = useLocation();
 
   if (isLoading) return null;
   
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const from = location.state?.from?.pathname || "/dashboard";
+    return <Navigate to={from} replace />;
   }
   
   return children;

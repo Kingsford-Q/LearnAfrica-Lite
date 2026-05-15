@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Input, Label } from '@/components/common/Input'
@@ -13,6 +13,7 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const validate = () => {
     const newErrors = {}
@@ -24,6 +25,8 @@ export function LoginPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const from = location.state?.from?.pathname || '/courses'
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
@@ -34,9 +37,12 @@ export function LoginPage() {
     
     login({ email, name: email.split('@')[0] })
     setIsLoading(false)
-    navigate('/courses')
+    
+    // Redirect to the original destination
+    navigate(from, { replace: true }) 
   }
 
+  
   return (
     <div className="space-y-6">
       <div className="space-y-2">

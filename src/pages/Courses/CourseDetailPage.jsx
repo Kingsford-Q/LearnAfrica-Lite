@@ -55,7 +55,7 @@ export function CourseDetailPage() {
   const avatar = instructor?.avatar || '/default-avatar.png';
   const name = instructor?.name || 'No name available.';
   const bio = instructor?.bio || 'No biography available.';
-  const role = instructor?.role || 'Instructor';
+  const title = instructor?.title || 'Instructor';
   const rating = instructor ? (instructor.rating || 'No ratings yet') : 'No ratings yet'; 
   const totalStudents = instructor ? (instructor?.totalStudents || 'No students yet') : 'No students yet';
   const instructorCourses = instructor?.coursesCount;
@@ -440,7 +440,7 @@ export function CourseDetailPage() {
                 <div className="flex-1 space-y-4 text-center md:text-left">
                   <div>
                     <h3 className="text-xl md:text-2xl font-bold tracking-tight">{name}</h3>
-                    <p className="text-primary font-medium text-sm md:text-base">{role}</p>
+                    <p className="text-primary font-medium text-sm md:text-base">{title}</p>
                   </div>
                   <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center md:justify-start gap-3 md:gap-6">
                     <div className="flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-xl bg-muted/50 sm:bg-transparent">

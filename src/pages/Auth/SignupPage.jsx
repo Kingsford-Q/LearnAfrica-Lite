@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock, User, GraduationCap } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Input, Label } from '@/components/common/Input'
@@ -21,6 +21,9 @@ export function SignupPage() {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const from = location.state?.from?.pathname || '/courses'
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -50,12 +53,10 @@ export function SignupPage() {
     await new Promise(resolve => setTimeout(resolve, 1000))
     
     if (formData.isInstructor) {
-      // Backend Optimized: Pass basic credentials to onboarding state
-      // to be finalized in the second step.
       navigate('/signup/instructor-onboarding', { state: { ...formData } })
     } else {
       login({ email: formData.email, name: formData.name, role: 'student' })
-      navigate('/courses')
+      navigate(from, { replace: true })
     }
     setIsLoading(false)
   }
