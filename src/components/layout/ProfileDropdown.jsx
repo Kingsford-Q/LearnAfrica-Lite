@@ -73,6 +73,7 @@ export default function ProfileDropdown({ hideChevron = false, closeMainMenu }) 
               <img
                 src={user.avatar}
                 alt=""
+                loading="lazy"
                 className="h-full w-full object-cover"
                 onError={() => setImgError(true)}
               />

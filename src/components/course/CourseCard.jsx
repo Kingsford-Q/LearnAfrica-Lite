@@ -19,6 +19,7 @@ export default function CourseCard({ course, enrolled = false }) {
     <img
       src={course.thumbnail}
       alt={course.title}
+      loading="lazy"
       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
     />
     {course.isFree && (
@@ -65,6 +66,7 @@ export default function CourseCard({ course, enrolled = false }) {
           <img
             src={course.instructorAvatar}
             alt={course.instructor}
+            loading="lazy"
             className="h-full w-full object-cover"
           />
         </div>

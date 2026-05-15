@@ -71,7 +71,7 @@ export default function MobileProfileDrawer({
             >
               <div className="h-12 w-12 overflow-hidden rounded-xl bg-background shrink-0 border border-border shadow-sm">
                 {!imgError && user?.avatar ? (
-                  <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+                  <img src={user.avatar} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/5 text-primary">
                     <User className="h-6 w-6" strokeWidth={2.5} />

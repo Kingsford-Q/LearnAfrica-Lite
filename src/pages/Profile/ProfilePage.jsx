@@ -157,7 +157,7 @@ export default function ProfilePage() {
                 >
                   <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
                     {previewImage || user?.avatar ? (
-                      <img src={previewImage || user.avatar} alt="User" className="w-full h-full object-cover" />
+                      <img src={previewImage || user.avatar} alt="User" loading="lazy" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-5xl font-bold text-primary">{user?.name?.charAt(0) || 'U'}</span>
                     )}

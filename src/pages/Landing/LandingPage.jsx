@@ -141,7 +141,8 @@ export function LandingPage() {
                   >
                     <img 
                       src={src} 
-                      alt={`Student ${i + 1}`} 
+                      alt={`Student ${i + 1}`}
+                      loading="lazy"
                       className="h-full w-full object-cover" 
                     />
                   </div>
@@ -353,6 +354,7 @@ export function LandingPage() {
                     <img
                       src={testimonial.avatar}
                       alt={testimonial.name}
+                      loading="lazy"
                       className="h-full w-full object-cover"
                     />
                   </div>

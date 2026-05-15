@@ -217,7 +217,7 @@ export function CreateCoursePage() {
               <CardContent className="p-5 md:p-6 flex flex-col sm:flex-row gap-6 items-center">
                 <div className={cn("relative group border-2 border-dashed border-border rounded-xl p-1 transition-all flex flex-col items-center justify-center aspect-video bg-muted/5 w-full sm:w-48 shrink-0", formData.thumbnailUrl ? "border-solid border-primary/20" : "hover:border-primary/30")}>
                   {formData.thumbnailUrl ? (
-                    <img src={formData.thumbnailUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+                    <img src={formData.thumbnailUrl} alt ="Preview" loading="lazy" className="w-full h-full object-cover rounded-lg" />
                   ) : (
                     <div className="text-center">
                       <Upload className="h-6 w-6 text-muted-foreground/40 mx-auto mb-1" />

@@ -147,7 +147,7 @@ export function CourseDetailPage() {
 
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-full bg-muted overflow-hidden border">
-                  <img src={course.instructorAvatar} alt={course.instructor} className="h-full w-full object-cover" />
+                  <img src={course.instructorAvatar} alt={course.instructor} loading="lazy" className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Created by</p>
@@ -160,7 +160,7 @@ export function CourseDetailPage() {
             <div className="lg:row-start-1">
               <Card className="sticky top-24 overflow-hidden border-2">
                 <div className="aspect-video bg-muted relative">
-                  <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />
+                  <img src={course.thumbnail} alt={course.title} loading="lazy" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-background/50">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Play className="h-7 w-7 ml-1" />
@@ -354,7 +354,7 @@ export function CourseDetailPage() {
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <div className="shrink-0">
                   <div className="h-24 w-24 md:h-28 md:w-28 rounded-2xl bg-primary/10 overflow-hidden ring-4 ring-background shadow-md">
-                    <img src={course.instructorAvatar} alt={course.instructor} className="h-full w-full object-cover" />
+                    <img src={course.instructorAvatar} alt={course.instructor} loading="lazy" className="h-full w-full object-cover" />
                   </div>
                 </div>
                 <div className="flex-1 space-y-4 text-center md:text-left">

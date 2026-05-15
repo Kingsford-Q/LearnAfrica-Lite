@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { Star, Award } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/common/Card';
 
 const leaderboardData = [
@@ -54,9 +55,7 @@ export default function LeaderboardPage() {
     };
     if (rank <= 3) {
       return (
-        <svg className={`w-6 h-6 ${colors[rank]}`} fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
+        <Award className={`w-6 h-6 ${colors[rank]}`} fill="currentColor" strokeWidth={0} />
       );
     }
     return <span className="text-muted-foreground font-bold">#{rank}</span>;
@@ -127,9 +126,7 @@ export default function LeaderboardPage() {
         <div className="order-0 md:order-2 -mt-4">
           <Card className="text-center pt-10 pb-8 bg-gradient-to-b from-yellow-100 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/20 border-yellow-300 dark:border-yellow-700 shadow-xl">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z" />
-              </svg>
+              <Star className="w-12 h-12 text-yellow-500" fill="currentColor" strokeWidth={0} />
             </div>
             <div className="relative inline-block">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-3xl font-bold text-white mx-auto ring-4 ring-yellow-300 dark:ring-yellow-600">

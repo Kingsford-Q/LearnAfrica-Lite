@@ -22,6 +22,7 @@ export default function ProgressCard({ course }) {
             <img
               src={course.thumbnail}
               alt={course.title}
+              loading="lazy"
               className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-105"
             />
 

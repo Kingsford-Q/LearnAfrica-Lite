@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
-import { Grid3X3, List, SlidersHorizontal } from 'lucide-react'
+import { Grid3X3, List, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { SearchBar } from '@/components/course/SearchBar'
 import { categories, difficulties } from '@/data/mockData'
@@ -11,8 +11,32 @@ import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
 const CourseCard = lazy(() => import('@/components/course/CourseCard'))
 const FilterPanel = lazy(() => import('@/components/course/FilterPanel'))
 
+// Hook for responsive items per page
+const useResponsiveItemsPerPage = () => {
+  const [itemsPerPage, setItemsPerPage] = useState(12)
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setItemsPerPage(6) // Mobile
+      } else if (window.innerWidth < 1024) {
+        setItemsPerPage(9) // Tablet
+      } else {
+        setItemsPerPage(12) // Desktop
+      }
+    }
+
+    handleResize() // Call once on mount
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  return itemsPerPage
+}
+
 export function CoursesPage() {
   const { courses: liveCourses } = useAuth()
+  const itemsPerPage = useResponsiveItemsPerPage()
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
@@ -20,6 +44,7 @@ export function CoursesPage() {
   const [sortBy, setSortBy] = useState('popular')
   const [viewMode, setViewMode] = useState('grid')
   const [showFilters, setShowFilters] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000)
@@ -71,6 +96,19 @@ export function CoursesPage() {
     }
 
     return result
+  }, [liveCourses, searchQuery, selectedCategory, selectedDifficulty, sortBy])
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage)
+  const paginatedCourses = useMemo(() => {
+    const startIdx = (currentPage - 1) * itemsPerPage
+    const endIdx = startIdx + itemsPerPage
+    return filteredCourses.slice(startIdx, endIdx)
+  }, [filteredCourses, currentPage, itemsPerPage])
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
   }, [liveCourses, searchQuery, selectedCategory, selectedDifficulty, sortBy])
 
   const clearFilters = () => {
@@ -187,7 +225,7 @@ export function CoursesPage() {
         <div className="flex-1">
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {filteredCourses.length} courses
+              Showing {filteredCourses.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredCourses.length)} of {filteredCourses.length} courses
             </p>
           </div>
 
@@ -208,22 +246,104 @@ export function CoursesPage() {
                 </Button>
               </div>
             ) : (
-              <div
-                className={cn(
-                  'gap-6',
-                  viewMode === 'grid'
-                    ? 'grid md:grid-cols-2 xl:grid-cols-3'
-                    : 'flex flex-col'
+              <>
+                <div
+                  className={cn(
+                    'gap-6',
+                    viewMode === 'grid'
+                      ? 'grid md:grid-cols-2 xl:grid-cols-3'
+                      : 'flex flex-col'
+                  )}
+                >
+                  {paginatedCourses.map(course => (
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      enrolled={course.progress > 0}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination Controls - Responsive */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
+                    {/* Previous Button */}
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      aria-label="Previous page"
+                      className="gap-2 sm:order-first w-full sm:w-auto"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="hidden sm:inline">Previous</span>
+                    </Button>
+
+                    {/* Page Numbers - Hidden on mobile, visible on tablet+ */}
+                    <div className="hidden md:flex items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                        // Show first page, last page, current page, and adjacent pages
+                        const isVisible =
+                          page === 1 ||
+                          page === totalPages ||
+                          Math.abs(page - currentPage) <= 1 ||
+                          (page === 2 && currentPage === 1) ||
+                          (page === totalPages - 1 && currentPage === totalPages)
+
+                        if (!isVisible && page !== 2 && page !== totalPages - 1) {
+                          return null
+                        }
+
+                        if (page === 2 && currentPage > 3 && totalPages > 5) {
+                          return (
+                            <span key="ellipsis-start" className="text-muted-foreground">...</span>
+                          )
+                        }
+
+                        if (page === totalPages - 1 && currentPage < totalPages - 2 && totalPages > 5) {
+                          return (
+                            <span key="ellipsis-end" className="text-muted-foreground">...</span>
+                          )
+                        }
+
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            aria-label={`Go to page ${page}`}
+                            aria-current={currentPage === page ? 'page' : undefined}
+                            className={cn(
+                              'h-10 w-10 rounded-lg text-sm font-medium transition-colors',
+                              currentPage === page
+                                ? 'bg-primary text-primary-foreground'
+                                : 'border border-input hover:bg-accent'
+                            )}
+                          >
+                            {page}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Mobile Page Indicator - Visible only on mobile */}
+                    <div className="md:hidden text-sm font-medium text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </div>
+
+                    {/* Next Button */}
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      aria-label="Next page"
+                      className="gap-2 w-full sm:w-auto"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 )}
-              >
-                {filteredCourses.map(course => (
-                  <CourseCard
-                    key={course.id}
-                    course={course}
-                    enrolled={course.progress > 0}
-                  />
-                ))}
-              </div>
+              </>
             )}
           </Suspense>
         </div>

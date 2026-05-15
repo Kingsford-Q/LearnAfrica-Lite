@@ -1,4 +1,5 @@
 import React, { isValidElement } from 'react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import { Card } from '../common/Card';
 import { cn } from '../../lib/utils';
 
@@ -34,13 +35,9 @@ export default function StatsCard({ title, value, icon: Icon, trend, trendValue,
               )}
             >
               {isPositive ? (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
+                <ArrowUp className="w-3 h-3" />
               ) : (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
+                <ArrowDown className="w-3 h-3" />
               )}
               <span>{trendValue}</span>
             </div>
