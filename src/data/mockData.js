@@ -7,7 +7,6 @@ export const courses = [{
     category: 'Software Development',
     difficulty: 'Beginner',
     duration: '8 weeks',
-    lessons: 24,
     enrollments: 1234,
     rating: 4.8,
     price: 0,
@@ -26,15 +25,6 @@ export const courses = [{
       'Master JavaScript fundamentals including DOM manipulation and APIs',
       'Deploy a live website to a professional hosting environment'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '2',
@@ -45,7 +35,6 @@ export const courses = [{
     category: 'Data Science & AI',
     difficulty: 'Intermediate',
     duration: '10 weeks',
-    lessons: 32,
     enrollments: 892,
     rating: 4.9,
     price: 0,
@@ -63,15 +52,6 @@ export const courses = [{
       'Visualize data with Matplotlib',
       'Build simple machine learning models'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '3',
@@ -82,7 +62,6 @@ export const courses = [{
     category: 'Software Development',
     difficulty: 'Advanced',
     duration: '12 weeks',
-    lessons: 40,
     enrollments: 567,
     rating: 4.7,
     price: 79.99,
@@ -100,15 +79,6 @@ export const courses = [{
       'Integrate APIs',
       'Publish apps to app stores'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '4',
@@ -119,7 +89,6 @@ export const courses = [{
     category: 'Marketing & Sales',
     difficulty: 'Beginner',
     duration: '6 weeks',
-    lessons: 18,
     enrollments: 2105,
     rating: 4.6,
     language: 'English',
@@ -137,15 +106,6 @@ export const courses = [{
       'Create content strategies',
       'Track marketing metrics'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '5',
@@ -156,7 +116,6 @@ export const courses = [{
     category: 'Design & UX',
     difficulty: 'Intermediate',
     duration: '8 weeks',
-    lessons: 28,
     enrollments: 743,
     language: 'English',
     rating: 4.8,
@@ -174,15 +133,6 @@ export const courses = [{
       'Conduct user research',
       'Build design systems'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '6',
@@ -193,7 +143,6 @@ export const courses = [{
     category: 'Cybersecurity',
     difficulty: 'Intermediate',
     duration: '10 weeks',
-    lessons: 30,
     enrollments: 456,
     rating: 4.9,
     price: 89.99,
@@ -211,15 +160,6 @@ export const courses = [{
       'Understand encryption',
       'Perform vulnerability assessments'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '7',
@@ -230,7 +170,6 @@ export const courses = [{
     category: 'Software Development',
     difficulty: 'Advanced',
     duration: '8 weeks',
-    lessons: 26,
     enrollments: 985,
     rating: 4.9,
     language: 'English',
@@ -243,15 +182,6 @@ export const courses = [{
     hasResources: true,
     paymentLink: '',
     learningOutcomes: ['Master closures', 'Understand prototypes', 'Use async/await', 'Apply design patterns'],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '8',
@@ -262,7 +192,6 @@ export const courses = [{
     category: 'Software Development',
     difficulty: 'Intermediate',
     duration: '10 weeks',
-    lessons: 35,
     enrollments: 723,
     language: 'English',
     rating: 4.7,
@@ -280,15 +209,6 @@ export const courses = [{
       'Work with NoSQL databases',
       'Deploy applications to production'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '9',
@@ -299,7 +219,6 @@ export const courses = [{
     category: 'Data Science & AI',
     difficulty: 'Advanced',
     duration: '12 weeks',
-    lessons: 38,
     enrollments: 578,
     language: 'English',
     rating: 4.9,
@@ -317,15 +236,6 @@ export const courses = [{
       'Evaluate and optimize ML models',
       'Handle real-world datasets'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '10',
@@ -336,7 +246,6 @@ export const courses = [{
     category: 'Cloud & IT',
     difficulty: 'Intermediate',
     duration: '10 weeks',
-    lessons: 32,
     enrollments: 634,
     language: 'English',
     rating: 4.8,
@@ -354,15 +263,6 @@ export const courses = [{
       'Deploy applications on AWS',
       'Understand cloud security and cost optimization'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '11',
@@ -374,7 +274,6 @@ export const courses = [{
     difficulty: 'Beginner',
     duration: '6 weeks',
     language: 'English',
-    lessons: 20,
     enrollments: 1456,
     rating: 4.7,
     price: 0,
@@ -391,15 +290,6 @@ export const courses = [{
       'Understand market research and competition',
       'Learn funding strategies for startups'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '12',
@@ -411,7 +301,6 @@ export const courses = [{
     difficulty: 'Intermediate',
     language: 'English',
     duration: '8 weeks',
-    lessons: 28,
     enrollments: 542,
     rating: 4.6,
     price: 0,
@@ -428,15 +317,6 @@ export const courses = [{
       'Calculate and interpret financial ratios',
       'Make data-driven financial decisions'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '13',
@@ -448,7 +328,6 @@ export const courses = [{
     difficulty: 'Beginner',
     language: 'English',
     duration: '10 weeks',
-    lessons: 30,
     enrollments: 867,
     rating: 4.8,
     price: 0,
@@ -465,15 +344,6 @@ export const courses = [{
       'Integrate functions',
       'Solve real-world optimization problems'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '14',
@@ -485,7 +355,6 @@ export const courses = [{
     difficulty: 'Beginner',
     language: 'English',
     duration: '9 weeks',
-    lessons: 27,
     enrollments: 456,
     rating: 4.7,
     price: 0,
@@ -502,15 +371,6 @@ export const courses = [{
       'Solve mechanics problems',
       'Understand rotational dynamics'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '15',
@@ -521,7 +381,6 @@ export const courses = [{
     category: 'Humanities',
     difficulty: 'Beginner',
     duration: '8 weeks',
-    lessons: 24,
     enrollments: 712,
     rating: 4.6,
     language: 'English',
@@ -539,15 +398,6 @@ export const courses = [{
       'Explore cultural and social changes',
       'Connect history to contemporary issues'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '16',
@@ -558,7 +408,6 @@ export const courses = [{
     category: 'Languages',
     difficulty: 'Beginner',
     duration: '10 weeks',
-    lessons: 40,
     enrollments: 1203,
     language: 'English',
     rating: 4.8,
@@ -576,15 +425,6 @@ export const courses = [{
       'Understand Spanish grammar fundamentals',
       'Explore Hispanic culture and customs'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '17',
@@ -595,7 +435,6 @@ export const courses = [{
     category: 'Photography & Video',
     difficulty: 'Beginner',
     duration: '7 weeks',
-    lessons: 22,
     language: 'English',
     enrollments: 534,
     rating: 4.7,
@@ -613,15 +452,6 @@ export const courses = [{
       'Work with natural and artificial lighting',
       'Edit photos professionally with Lightroom and Photoshop'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '18',
@@ -633,7 +463,6 @@ export const courses = [{
     difficulty: 'Beginner',
     duration: '8 weeks',
     language: 'English',
-    lessons: 25,
     enrollments: 623,
     rating: 4.8,
     price: 0,
@@ -650,15 +479,6 @@ export const courses = [{
       'Use DAWs like Ableton or FL Studio',
       'Mix and master your tracks'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '19',
@@ -670,7 +490,6 @@ export const courses = [{
     difficulty: 'Intermediate',
     language: 'English',
     duration: '6 weeks',
-    lessons: 20,
     enrollments: 945,
     rating: 4.7,
     price: 0,
@@ -687,15 +506,6 @@ export const courses = [{
       'Master communication and negotiation',
       'Build and manage high-performing teams'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '20',
@@ -707,7 +517,6 @@ export const courses = [{
     difficulty: 'Beginner',
     duration: '8 weeks',
     language: 'English',
-    lessons: 24,
     enrollments: 1876,
     rating: 4.9,
     price: 0,
@@ -724,15 +533,6 @@ export const courses = [{
       'Learn nutrition principles',
       'Build sustainable healthy habits'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '21',
@@ -743,7 +543,6 @@ export const courses = [{
     category: 'Office Productivity',
     difficulty: 'Intermediate',
     duration: '6 weeks',
-    lessons: 18,
     enrollments: 1543,
     language: 'English',
     rating: 4.8,
@@ -761,15 +560,6 @@ export const courses = [{
       'Visualize data effectively',
       'Perform complex business analysis'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '22',
@@ -780,7 +570,6 @@ export const courses = [{
     category: 'Marketing & Sales',
     difficulty: 'Intermediate',
     duration: '7 weeks',
-    lessons: 21,
     language: 'English',
     enrollments: 834,
     rating: 4.6,
@@ -798,15 +587,6 @@ export const courses = [{
       'Master storytelling techniques',
       'Measure content performance'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '23',
@@ -817,7 +597,6 @@ export const courses = [{
     category: 'Design & UX',
     difficulty: 'Intermediate',
     duration: '10 weeks',
-    lessons: 35,
     enrollments: 678,
     language: 'English',
     rating: 4.8,
@@ -835,15 +614,6 @@ export const courses = [{
       'Design layouts with InDesign',
       'Build a professional design portfolio'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '24',
@@ -854,7 +624,6 @@ export const courses = [{
     category: 'Photography & Video',
     difficulty: 'Intermediate',
     duration: '9 weeks',
-    lessons: 28,
     enrollments: 456,
     rating: 4.7,
     language: 'English',
@@ -872,15 +641,6 @@ export const courses = [{
       'Add effects and animations',
       'Export and optimize for different platforms'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   },
   {
     id: '25',
@@ -891,7 +651,6 @@ export const courses = [{
     category: 'Personal Development',
     difficulty: 'Beginner',
     duration: '4 weeks',
-    lessons: 12,
     enrollments: 2341,
     rating: 4.9,
     language: 'English',
@@ -909,15 +668,6 @@ export const courses = [{
       'Build habits that stick',
       'Achieve work-life balance'
     ],
-    reviews: [
-      {
-        id: "rev_1",
-        userName: "Isaac Hamid",
-        rating: 5,
-        comment: "This course helped me refine the Obscura app logic. Highly recommend!",
-        date: "2026-04-12"
-      }
-    ]
   }
 ];
 
@@ -946,26 +696,6 @@ export const lessons = [
         <li><strong>&lt;div&gt;</strong> - Divisions</li>
       </ul>
     `,
-    resources: [
-      {
-        id: 'r1',
-        title: 'HTML Cheat Sheet',
-        url: 'https://example.com/html-cheatsheet.pdf',
-        type: 'link',
-      },
-      {
-        id: 'r2',
-        title: 'MDN Structure Guide',
-        url: 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html',
-        type: 'link'
-      },
-      {
-        id: 'r3',
-        title: 'Document Flow Diagram',
-        url: '/images/student1.jpg',
-        type: 'image'
-      },
-    ],
     order: 1,
   },
   {
@@ -1004,7 +734,6 @@ export const lessons = [
       <h3>Functions</h3>
       <p>Functions are reusable blocks of code that perform specific tasks.</p>
     `,
-    isCompleted: false,
     order: 3
   },
   {
@@ -1082,40 +811,6 @@ export const quizzes = [
   },
 ]
 
-export const categories = [
-  'All Categories',
-  
-  // --- TECH & DEV ---
-  'Software Development',  // Groups Web, Mobile, Backend
-  'Data Science & AI',
-  'Cybersecurity',
-  'Cloud & IT',
-  
-  // --- BUSINESS & FINANCE ---
-  'Business & Entrepreneurship',
-  'Finance & Accounting',
-  'Marketing & Sales',
-  
-  // --- ACADEMICS ---
-  'Mathematics',          // Algebra, Calculus, Statistics
-  'Science',              // Physics, Biology, Chemistry
-  'Humanities',           // History, Literature, Philosophy
-  'Languages',            // English, Spanish, Japanese, etc.
-  
-  // --- CREATIVE ---
-  'Design & UX',
-  'Photography & Video',
-  'Music & Arts',
-  
-  // --- LIFESTYLE & SOFT SKILLS ---
-  'Personal Development', // Leadership, Time Management
-  'Health & Fitness',
-  'Office Productivity',  // Excel, Google Workspace
-  'Others'
-]
-
-export const difficulties = ['All Levels', 'Beginner', 'Intermediate', 'Advanced']
-
 export const instructorStats = {
   totalCourses: 8,
   totalStudents: 4532,
@@ -1144,6 +839,184 @@ export const instructorStats = {
     { id: '4', name: 'Emeka Obi', course: 'Web Development', joinedDate: '2 days ago', progress: 78 }
   ]
 }
+
+export const instructors = [
+  {
+    id: 'inst-1',
+    name: 'Prof. Kwame Mensah',
+    title: 'Senior Data Scientist & Academic',
+    avatar: '/images/student3.jpg',
+    bio: 'Over 15 years of experience in statistical modeling and machine learning. Kwame has led data teams at global tech firms.',
+    rating: 4.9,
+    totalStudents: 400,
+    coursesCount: 5,
+    portfolio:'https://kwamemensah.com',
+    skills: ['Python', 'R', 'TensorFlow', 'SQL']
+  },
+  {
+    id: 'inst-2',
+    name: 'Fatima Diallo',
+    title: 'Full Stack Engineer & Mobile Expert',
+    avatar: '/images/student1.jpg',
+    bio: 'A passionate developer advocate and cross-platform specialist. Fatima has built apps used by millions in the fintech space.',
+    rating: 4.8,
+    totalStudents: 890,
+    coursesCount: 3,
+    portfolio:'https://kwamemensah.com',
+    skills: ['React Native', 'Node.js', 'TypeScript', 'AWS']
+  }
+]
+
+export const mockUser = {
+  id: 'user-1',
+  name: 'Adaeze Nwankwo',
+  email: 'adaeze@example.com',
+  role: 'student/student/admin',
+  avatar: '/placeholder-user.jpg',
+  joinedDate: '2025-08-15T10:30:00.000Z',
+  role: 'Student',
+  
+  // Profile information (Consolidated smoothly for AuthContext check rules)
+  profile: {
+    bio: 'Full-stack developer passionate about building scalable web applications and teaching others.',
+    location: 'Accra, Ghana',
+    website: 'https://adaeze.dev',
+  },
+  
+  // Stats tracking (Will be live-calculated by getLiveStats(), but great as an initial fallback state structure)
+  stats: {
+    coursesCompletedCount: 0,
+    lessonsCompletedCount: 0,
+    enrolledCoursesCount: 0,
+    perfectQuizzes: 0,
+    fastFinishCount: 0,
+    reviewsCount: 2, // Matches the initial count of reviews array length below
+    isProfileComplete: 1,
+    streak: 12,
+  },
+  
+  // NEW: Your Relational Course Progress Array Middleware Interceptor reads from here
+  courseProgress: [
+    { courseId: '1', progress: 45, enrolledAt: '2025-08-16T12:00:00.000Z' },
+    { courseId: '2', progress: 100, enrolledAt: '2025-09-01T10:30:00.000Z', completedAt: '2025-09-07T18:22:00.000Z' },
+    { courseId: '4', progress: 12, enrolledAt: '2025-10-05T15:45:00.000Z' },
+    { courseId: '7', progress: 0, enrolledAt: '2025-11-12T08:15:00.000Z' },
+    { courseId: '8', progress: 100, enrolledAt: '2025-12-01T11:00:00.000Z', completedAt: '2025-12-15T14:30:00.000Z' }
+  ],
+
+  lessonProgress: [
+    { lessonId: '1', isCompleted: true, quizScore: 100 },
+    { lessonId: '2', isCompleted: true, quizScore: 85 },
+    { lessonId: '14', isCompleted: false, quizScore: null },
+    { lessonId: '17', isCompleted: true, quizScore: 100 }
+  ],
+  
+  // Kept for backward compatibility with your enrollInCourse handler logic array searches
+  // Standardized to string references matching your dynamic path courseId lookups
+  enrolledCourses: ['1', '2', '4', '7', '8'],
+  totalHoursLearned: 42,
+  
+  // Badges earned
+  badges: [
+    { badgeId: '1', key: 'FIRST_STEPS', earnedDate: '2025-09-10' },
+    { badgeId: '2', key: 'COURSE_CHAMPION', earnedDate: '2025-10-20' },
+    { badgeId: '3', key: 'QUIZ_MASTER', earnedDate: '2025-11-15' },
+    { badgeId: '6', key: 'SPEED_LEARNER', earnedDate: '2025-12-05' },
+  ],
+  
+  // Reviews submitted (Directly linked to stats verification loops)
+  reviews: [
+    { courseId: '1', reviewId: 'rev_1' },
+    { courseId: '2', reviewId: 'rev_2' },
+  ],
+  
+  // User preferences and settings
+  settings: {
+    notifications: {
+      email: true,
+      push: false,
+      updates: true,
+    },
+    privacy: {
+      twoFactor: false,
+    },
+    appearance: 'dark', // Fits your structural UI aesthetic standard!
+  },
+}
+
+export const certificates = {
+  // Keyed by courseId for instant O(1) relational lookups
+  '1': {
+    id: 'Cer-1',
+    courseId: '1',
+    grade: 'A+',
+    verificationHash: 'VREF-HTML5-CSS3-JS-9921A'
+  },
+  '2': {
+    id: 'Cer-2',
+    courseId: '2',
+    grade: 'A',
+    verificationHash: 'VREF-PYTHON-DS-8832B'
+  },
+  '4': {
+    id: 'Cer-4',
+    courseId: '4',
+    grade: 'A+',
+    verificationHash: 'VREF-MKTG-DIGI-7721B'
+  }
+};
+
+export const resources = [
+  // Resources for Lesson 1 (Introduction to HTML)
+  {
+    id: 'r1',
+    lessonId: '1', 
+    title: 'HTML Cheat Sheet',
+    url: 'https://example.com/html-cheatsheet.pdf',
+    type: 'link'
+  },
+  {
+    id: 'r2',
+    lessonId: '1',
+    title: 'MDN Structure Guide',
+    url: 'https://developer.mozilla.org/en-US/docs/Web/HTML/Element/html',
+    type: 'link'
+  },
+  {
+    id: 'r3',
+    lessonId: '1',
+    title: 'Document Flow Diagram',
+    url: '/images/resources/html-flow.jpg',
+    type: 'image'
+  },
+]
+
+export const reviews = [
+  {
+    id: "rev_1",
+    courseId: "1",
+    userId: "user-2", // Pointer to user table
+    rating: 5,
+    comment: "This foundational content is incredible. It helped me structure clean HTML/CSS elements for our Snap PDF UI refactor!",
+    date: "2026-04-12T10:30:00.000Z"
+  },
+  {
+    id: "rev_2",
+    courseId: "1",
+    userId: "user-3",
+    rating: 4,
+    comment: "Great breakdown of the JavaScript DOM! Perfect refresher before diving deep into complex state management structures.",
+    date: "2026-04-15T14:22:00.000Z"
+  },
+  {
+    id: "rev_3",
+    courseId: "2",
+    userId: "user-1", // Adaeze Nwankwo (mockUser)
+    rating: 5,
+    comment: "Outstanding! The architectural layout optimization patterns helped me completely future-proof my local password manager application.",
+    date: "2026-05-01T09:15:00.000Z"
+  }
+];
 
 export const testimonials = [
   {
@@ -1302,127 +1175,36 @@ export const getMilestones = (stats, user, unreadCount) => [
   }
 ];
 
-export const instructors = [
-  {
-    id: 'inst-1',
-    name: 'Prof. Kwame Mensah',
-    title: 'Senior Data Scientist & Academic',
-    avatar: '/images/student3.jpg',
-    bio: 'Over 15 years of experience in statistical modeling and machine learning. Kwame has led data teams at global tech firms.',
-    rating: 4.9,
-    totalStudents: 400,
-    coursesCount: 5,
-    portfolio:'https://kwamemensah.com',
-    skills: ['Python', 'R', 'TensorFlow', 'SQL']
-  },
-  {
-    id: 'inst-2',
-    name: 'Fatima Diallo',
-    title: 'Full Stack Engineer & Mobile Expert',
-    avatar: '/images/student1.jpg',
-    bio: 'A passionate developer advocate and cross-platform specialist. Fatima has built apps used by millions in the fintech space.',
-    rating: 4.8,
-    totalStudents: 890,
-    coursesCount: 3,
-    portfolio:'https://kwamemensah.com',
-    skills: ['React Native', 'Node.js', 'TypeScript', 'AWS']
-  }
+export const difficulties = ['All Levels', 'Beginner', 'Intermediate', 'Advanced']
+
+export const categories = [
+  'All Categories',
+  
+  // --- TECH & DEV ---
+  'Software Development',  // Groups Web, Mobile, Backend
+  'Data Science & AI',
+  'Cybersecurity',
+  'Cloud & IT',
+  
+  // --- BUSINESS & FINANCE ---
+  'Business & Entrepreneurship',
+  'Finance & Accounting',
+  'Marketing & Sales',
+  
+  // --- ACADEMICS ---
+  'Mathematics',          // Algebra, Calculus, Statistics
+  'Science',              // Physics, Biology, Chemistry
+  'Humanities',           // History, Literature, Philosophy
+  'Languages',            // English, Spanish, Japanese, etc.
+  
+  // --- CREATIVE ---
+  'Design & UX',
+  'Photography & Video',
+  'Music & Arts',
+  
+  // --- LIFESTYLE & SOFT SKILLS ---
+  'Personal Development', // Leadership, Time Management
+  'Health & Fitness',
+  'Office Productivity',  // Excel, Google Workspace
+  'Others'
 ]
-
-export const mockUser = {
-  id: 'user-1',
-  name: 'Adaeze Nwankwo',
-  email: 'adaeze@example.com',
-  role: 'student',
-  avatar: '/placeholder-user.jpg',
-  joinedDate: '2025-08-15T10:30:00.000Z',
-  
-  // Profile information (Consolidated smoothly for AuthContext check rules)
-  profile: {
-    bio: 'Full-stack developer passionate about building scalable web applications and teaching others.',
-    location: 'Accra, Ghana',
-    website: 'https://adaeze.dev',
-  },
-  
-  // Stats tracking (Will be live-calculated by getLiveStats(), but great as an initial fallback state structure)
-  stats: {
-    coursesCompletedCount: 0,
-    lessonsCompletedCount: 0,
-    enrolledCoursesCount: 0,
-    perfectQuizzes: 0,
-    fastFinishCount: 0,
-    reviewsCount: 2, // Matches the initial count of reviews array length below
-    isProfileComplete: 1,
-    streak: 12,
-  },
-  
-  // NEW: Your Relational Course Progress Array Middleware Interceptor reads from here
-  courseProgress: [
-    { courseId: '1', progress: 45, enrolledAt: '2025-08-16T12:00:00.000Z' },
-    { courseId: '2', progress: 100, enrolledAt: '2025-09-01T10:30:00.000Z', completedAt: '2025-09-07T18:22:00.000Z' },
-    { courseId: '4', progress: 12, enrolledAt: '2025-10-05T15:45:00.000Z' },
-    { courseId: '7', progress: 0, enrolledAt: '2025-11-12T08:15:00.000Z' },
-    { courseId: '8', progress: 100, enrolledAt: '2025-12-01T11:00:00.000Z', completedAt: '2025-12-15T14:30:00.000Z' }
-  ],
-
-  lessonProgress: [
-    { lessonId: '1', isCompleted: true, quizScore: 100 },
-    { lessonId: '2', isCompleted: true, quizScore: 85 },
-    { lessonId: '14', isCompleted: false, quizScore: null },
-    { lessonId: '17', isCompleted: true, quizScore: 100 }
-  ],
-  
-  // Kept for backward compatibility with your enrollInCourse handler logic array searches
-  // Standardized to string references matching your dynamic path courseId lookups
-  enrolledCourses: ['1', '2', '4', '7', '8'],
-  totalHoursLearned: 42,
-  
-  // Badges earned
-  badges: [
-    { badgeId: '1', key: 'FIRST_STEPS', earnedDate: '2025-09-10' },
-    { badgeId: '2', key: 'COURSE_CHAMPION', earnedDate: '2025-10-20' },
-    { badgeId: '3', key: 'QUIZ_MASTER', earnedDate: '2025-11-15' },
-    { badgeId: '6', key: 'SPEED_LEARNER', earnedDate: '2025-12-05' },
-  ],
-  
-  // Reviews submitted (Directly linked to stats verification loops)
-  reviews: [
-    { courseId: '1', reviewId: 'rev_1' },
-    { courseId: '2', reviewId: 'rev_2' },
-  ],
-  
-  // User preferences and settings
-  settings: {
-    notifications: {
-      email: true,
-      push: false,
-      updates: true,
-    },
-    privacy: {
-      twoFactor: false,
-    },
-    appearance: 'dark', // Fits your structural UI aesthetic standard!
-  },
-}
-
-export const certificates = {
-  // Keyed by courseId for instant O(1) relational lookups
-  '1': {
-    id: 'Cer-1',
-    courseId: '1',
-    grade: 'A+',
-    verificationHash: 'VREF-HTML5-CSS3-JS-9921A'
-  },
-  '2': {
-    id: 'Cer-2',
-    courseId: '2',
-    grade: 'A',
-    verificationHash: 'VREF-PYTHON-DS-8832B'
-  },
-  '4': {
-    id: 'Cer-4',
-    courseId: '4',
-    grade: 'A+',
-    verificationHash: 'VREF-MKTG-DIGI-7721B'
-  }
-};

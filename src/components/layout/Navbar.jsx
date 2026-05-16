@@ -43,7 +43,7 @@ export default function Navbar() {
         
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-lg shadow-primary/20">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-sm shadow-primary/20">
             <Book className="h-5 w-5" strokeWidth={2.5} />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">

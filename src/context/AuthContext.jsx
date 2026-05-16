@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { courses as initialCourses, lessons as initialLessons,getMilestones, instructors as initialInstructors,
-  badgeConfig, quizzes, testimonials, categories, difficulties, certificates } from '@/data/mockData';
+  badgeConfig, quizzes, testimonials, categories, difficulties, certificates,reviews as initialReviews,
+  resources as initialResources,
+ } from '@/data/mockData';
 
 const AuthContext = createContext();
 
@@ -12,6 +14,8 @@ export function AuthProvider({ children }) {
   const [coursesState, setCoursesState] = useState(initialCourses);
   const [lessonsState, setLessonsState] = useState(initialLessons);
   const [instructorsState, setInstructorsState] = useState(initialInstructors);
+  const [reviewsState, setReviewsState] = useState(initialReviews);
+  const [resourcesState, setResourcesState] = useState(initialResources);
 
   const processedMilestonesRef = useRef(new Set());
   const sessionWelcomedRef = useRef(false);
@@ -68,50 +72,35 @@ export function AuthProvider({ children }) {
 
   const addReview = useCallback(async (courseId, newReview) => {
     return new Promise((resolve) => {
-      // 1. Update the Courses State
-      // This calculates the new average and adds the review to the course list
-      setCoursesState((prevCourses) => {
-        const updatedCourses = prevCourses.map((course) => {
-          if (String(course.id) === String(courseId)) {
-            const currentReviews = course.reviews || [];
-            const updatedReviews = [newReview, ...currentReviews];
+      // Create a clean flat review row matching a DB schema
+      const reviewRow = {
+        id: newReview.id || `rev_${Date.now()}`,
+        courseId: courseId,
+        userId: user?.id || 'anonymous_learner',
+        userName: user?.name || 'Learner',
+        avatar: user?.avatar || '/placeholder-user.jpg',
+        rating: newReview.rating,
+        comment: newReview.comment,
+        date: new Date().toISOString()
+      };
 
-            // Calculate new average rating
-            const totalRating = updatedReviews.reduce((acc, rev) => acc + rev.rating, 0);
-            const newAverage = parseFloat((totalRating / updatedReviews.length).toFixed(1));
+      // 1. Push directly into the flat review state pool
+      setReviewsState((prevReviews) => [reviewRow, ...prevReviews]);
 
-            return {
-              ...course,
-              reviews: updatedReviews,
-              rating: newAverage,
-            };
-          }
-          return course;
-        });
-
-        // The Persistence Sync useEffect in your AuthContext 
-        // will automatically save updatedCourses to sessionStorage
-        return updatedCourses;
-      });
-
-      // 2. Update the User State
-      // This ensures the student's review count updates for milestones/stats
+      // 2. Sync to user profile so milestone calculations know they reviewed something
       setUser((prevUser) => {
         if (!prevUser) return null;
-
         const updatedUser = {
           ...prevUser,
-          reviews: [...(prevUser.reviews || []), { courseId, reviewId: newReview.id }],
+          reviews: [...(prevUser.reviews || []), { courseId, reviewId: reviewRow.id }],
         };
-
-        // Sync user to sessionStorage immediately
         sessionStorage.setItem('user', JSON.stringify(updatedUser));
         return updatedUser;
       });
 
       resolve(true);
     });
-  }, []);
+  }, [user]);
 
   const markMilestoneAsDismissed = useCallback((internalId) => {
     if (!user?.id || !internalId) return;
@@ -308,9 +297,13 @@ export function AuthProvider({ children }) {
         const uLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
         const uNotifs = sessionStorage.getItem(`u_${uID}_notifications_data`);
         const uInstructors = sessionStorage.getItem(`u_${uID}_instructors_data`);
+        const uReviews = sessionStorage.getItem(`u_${uID}_reviews_data`);
+        const uResources = sessionStorage.getItem(`u_${uID}_resources_data`);
 
         if (uCourses) setCoursesState(JSON.parse(uCourses));
         if (uLessons) setLessonsState(JSON.parse(uLessons));
+        if (uReviews) setReviewsState(JSON.parse(uReviews));
+        if (uResources) setResourcesState(JSON.parse(uResources));
 
         if (uInstructors) {
           setInstructorsState(JSON.parse(uInstructors));
@@ -367,12 +360,22 @@ export function AuthProvider({ children }) {
         `u_${user.id}_instructors_data`,
         JSON.stringify(instructorsState)
       );
+
+      sessionStorage.setItem(
+        `u_${user.id}_reviews_data`,
+        JSON.stringify(reviewsState)
+      );
+
+      sessionStorage.setItem(
+        `u_${user.id}_resources_data`,
+        JSON.stringify(resourcesState)
+      );
       
     } catch (err) {
       console.warn('Persistence sync failed:', err);
     }
     
-  }, [coursesState, lessonsState, instructorsState, user?.id]);
+  }, [coursesState, lessonsState, instructorsState, user?.id, reviewsState, resourcesState]);
 
   // Update stats on data change
   useEffect(() => {
@@ -401,8 +404,9 @@ export function AuthProvider({ children }) {
     
     const savedCourses = sessionStorage.getItem(`u_${uID}_courses_data`);
     const savedLessons = sessionStorage.getItem(`u_${uID}_lessons_data`);
-
     const savedInstructors = sessionStorage.getItem(`u_${uID}_instructors_data`);
+    const savedReviews = sessionStorage.getItem(`u_${uID}_reviews_data`);
+    const savedResources = sessionStorage.getItem(`u_${uID}_resources_data`);
 
     initialNotifs.forEach(n => {
       if (n.internalId) processedMilestonesRef.current.add(n.internalId);
@@ -412,6 +416,8 @@ export function AuthProvider({ children }) {
     setCoursesState(savedCourses ? JSON.parse(savedCourses) : initialCourses);
     setLessonsState(savedLessons ? JSON.parse(savedLessons) : initialLessons);
     setInstructorsState(savedInstructors ? JSON.parse(savedInstructors) : initialInstructors);
+    setReviewsState(savedReviews ? JSON.parse(savedReviews) : initialReviews);
+    setResourcesState(savedResources ? JSON.parse(savedResources) : initialResources);
 
     const newUser = {
       ...credentials,
@@ -434,12 +440,14 @@ export function AuthProvider({ children }) {
     processedMilestonesRef.current.clear();
     sessionWelcomedRef.current = false;
 
-    setUser(null);
-    setNotifications([]); 
-    setCoursesState(initialCourses);
-    setLessonsState(initialLessons);
-    setIsInstructorMode(false);
-    setInstructorsState(initialInstructors);
+  setUser(null);
+  setNotifications([]); 
+  setCoursesState(initialCourses);
+  setLessonsState(initialLessons);
+  setInstructorsState(initialInstructors);
+  setReviewsState(initialReviews);
+  setResourcesState(initialResources);
+  setIsInstructorMode(false);
     
     sessionStorage.removeItem('user');
 
@@ -450,16 +458,22 @@ export function AuthProvider({ children }) {
 
   const updateProgress = useCallback((courseId, lessonId, score = null) => {
     return new Promise((resolve) => {
+      let updatedLessonsGlobal = [];
+
       setLessonsState(prevLessons => {
         const updatedLessons = prevLessons.map(l => 
           String(l.id) === String(lessonId) 
             ? { ...l, isCompleted: true, quizScore: score !== null ? score : l.quizScore } 
             : l
         );
+        updatedLessonsGlobal = updatedLessons; // Capture the reference cleanly
+        return updatedLessons;
+      });
 
-        setCoursesState(prevCourses => prevCourses.map(course => {
+      setCoursesState(prevCourses => {
+        const updated = prevCourses.map(course => {
           if (String(course.id) === String(courseId)) {
-            const courseLessons = updatedLessons.filter(l => String(l.courseId) === String(courseId));
+            const courseLessons = updatedLessonsGlobal.filter(l => String(l.courseId) === String(courseId));
             const completedCount = courseLessons.filter(l => l.isCompleted).length;
             const newProgress = Math.round((completedCount / courseLessons.length) * 100);
             
@@ -470,11 +484,11 @@ export function AuthProvider({ children }) {
             };
           }
           return course;
-        }));
-
-        resolve(updatedLessons);
-        return updatedLessons;
+        });
+        return updated;
       });
+
+      resolve(updatedLessonsGlobal);
     });
   }, []);
 
@@ -566,36 +580,52 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  // --- COMPUTED DATA INJECTOR FOR DB PROGRESS MIGRATION ---
-  // --- COMPUTED DATA INJECTOR FOR DB COURSE & LESSON MIGRATION ---
   const value = useMemo(() => {
     
     // 1. Pull relational records safely from the logged-in user profile
     const activeUserProgressRecords = user?.courseProgress || []; 
-    const activeUserLessonRecords = user?.lessonProgress || []; // <-- NEW: Relational DB array
+    const activeUserLessonRecords = user?.lessonProgress || []; 
 
-    // 2. Compute dynamic courses
+    // 2. Compute dynamic courses (Now auto-injecting dynamic flat reviews & ratings)
     const computedCourses = coursesState.map((course) => {
       const relationalMatch = activeUserProgressRecords.find(
         (p) => String(p.courseId) === String(course.id)
       );
+
+      // Filter reviews that belong to this specific course row
+      const courseReviews = reviewsState.filter(
+        (review) => String(review.courseId) === String(course.id)
+      );
+
+      // Compute average rating math on the fly
+      const totalRating = courseReviews.reduce((acc, rev) => acc + rev.rating, 0);
+      const computedRating = courseReviews.length > 0 
+        ? parseFloat((totalRating / courseReviews.length).toFixed(1)) 
+        : (course.rating || 0);
+
       return {
         ...course,
+        reviews: courseReviews, // Injected back seamlessly for components using course.reviews!
+        rating: computedRating,  // Recalculated dynamically
         progress: relationalMatch ? relationalMatch.progress : (course.progress || 0),
         enrolledAt: relationalMatch ? relationalMatch.enrolledAt : course.enrolledAt,
       };
     });
 
-    // 3. NEW: Compute dynamic lessons on the fly!
+    // 3. Compute dynamic lessons (Now auto-injecting dynamic flat resources)
     const computedLessons = lessonsState.map((lesson) => {
-      // Find if the logged-in user has a progress history for this specific lesson
       const lessonMatch = activeUserLessonRecords.find(
         (l) => String(l.lessonId) === String(lesson.id)
       );
 
+      // Filter resources that belong to this specific lesson row
+      const lessonResources = resourcesState.filter(
+        (resource) => String(resource.lessonId) === String(lesson.id)
+      );
+
       return {
         ...lesson,
-        // If DB match found, use it; otherwise fall back smoothly to the baseline mock state values
+        resources: lessonResources, // Injected back seamlessly for components using lesson.resources!
         isCompleted: lessonMatch ? lessonMatch.isCompleted : (lesson.isCompleted || false),
         quizScore: lessonMatch ? lessonMatch.quizScore : (lesson.quizScore || null),
       };
@@ -604,7 +634,7 @@ export function AuthProvider({ children }) {
     return {
       user,
       courses: computedCourses, 
-      lessons: computedLessons, // <-- SWAPPED: UI files now read your dynamic computed engine!
+      lessons: computedLessons, 
       instructors: instructorsState,
       updateProgress,
       login,
@@ -629,12 +659,15 @@ export function AuthProvider({ children }) {
       categories,
       difficulties,
       testimonials,
+      markMilestoneAsDismissed,
     };
   }, [
     user, 
     coursesState, 
+    lessonsState, 
+    reviewsState,    // <-- ADD DEPENDENCY
+    resourcesState,  // <-- ADD DEPENDENCY
     testimonials, 
-    lessonsState, // Recalculates dynamically if pure mock state modifiers shift
     instructorsState, 
     updateProgress, 
     login, 
@@ -655,7 +688,8 @@ export function AuthProvider({ children }) {
     quizzes,
     categories, 
     difficulties, 
-    certificates
+    certificates,
+    markMilestoneAsDismissed
   ]);
 
   return (
