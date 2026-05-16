@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
-import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowRight, AlertCircle, Loader2, FileCheck } from 'lucide-react'
+import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowLeft, AlertCircle, Loader2, FileCheck } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { useAuth } from '@/context/AuthContext'
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 export function QuizResultsPage() {
   const { courseId, lessonId } = useParams()
   const location = useLocation()
-  const { updateProgress } = useAuth()
+  const { updateProgress, courses } = useAuth()
   
   // State for backend data
   const [resultData, setResultData] = useState(null)
@@ -34,6 +34,11 @@ export function QuizResultsPage() {
       passed: calculatedScore >= 70
     }
   }, [answers, questions])
+
+    const currentCourseHasCertificate = useMemo(() => {
+    const currentCourse = courses?.find(c => c.id === courseId)
+    return !!(currentCourse?.hasCertificate || currentCourse?.certificateId)
+  }, [courses, courseId])
 
   useEffect(() => {
     const loadResults = async () => {
@@ -178,17 +183,13 @@ export function QuizResultsPage() {
               </p>
               <p className="text-sm text-muted-foreground">Incorrect</p>
             </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{questions.length}</p>
-              <p className="text-sm text-muted-foreground">Questions</p>
-            </div>
           </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {passed ? (
+            {passed && currentCourseHasCertificate ? (
               <Link to={`/certificate/${courseId}`}>
-                <Button className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
                   <FileCheck className="h-4 w-4 mr-2" />
                   View Certificate
                 </Button>
@@ -203,9 +204,9 @@ export function QuizResultsPage() {
             )}
             
             <Link to="/dashboard">
-              <Button variant={passed ? "outline" : "default"}>
+              <Button variant= 'outline'>
+                <ArrowLeft className="h-4 w-4 ml-2" />
                 Back to Dashboard
-                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           </div>

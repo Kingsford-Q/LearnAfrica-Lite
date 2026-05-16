@@ -122,8 +122,28 @@
     margin: 0;
   }
 
-  body {
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Selectively unhide only your specific certificate print layout container */
+  .printable-certificate-target,
+  .printable-certificate-target * {
+    visibility: visible;
+  }
+  
+  /* Position the certificate flawlessly at the top-left corner of the printable page */
+  .printable-certificate-target {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
     margin: 0;
+    padding: 0;
+  }
+
+  /* Force browsers to render background colors and gradient images */
+  body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }

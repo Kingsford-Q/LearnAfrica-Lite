@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, lazy, Suspense } from 'react'
 import { Grid3X3, List, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { SearchBar } from '@/components/course/SearchBar'
-import { categories, difficulties, instructors } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
@@ -35,7 +34,12 @@ const useResponsiveItemsPerPage = () => {
 }
 
 export function CoursesPage() {
-  const { courses: liveCourses } = useAuth()
+  const { 
+    courses: liveCourses = [], 
+    categories = [], 
+    difficulties = [], 
+    instructors = [] 
+  } = useAuth()
   const itemsPerPage = useResponsiveItemsPerPage()
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')

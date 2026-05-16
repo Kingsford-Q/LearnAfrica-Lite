@@ -25,8 +25,6 @@ import { Card } from '@/components/common/Card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 
-const DiscussionForum = lazy(() => Promise.resolve({ default: () => <div className="p-12 text-center italic">Forum Loading...</div> }));
-
 const getEmbedUrl = (url) => {
     if (!url) return null;
     
@@ -45,8 +43,94 @@ const getEmbedUrl = (url) => {
     return url; // Return as is if it's already an embed link or other source
   };
 
+const getSafeFileName = (url, type, providedName, title) => {
+  if (providedName) return providedName;
+  const extension = url.split('.').pop().split(/[?#]/)[0];
+  const baseName = title.replace(/\s+/g, '_').toLowerCase();
+  
+  const validExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'zip'];
+  if (validExtensions.includes(extension.toLowerCase())) {
+    return `${baseName}.${extension}`;
+  }
+  
+  const fallbacks = { image: 'jpg', file: 'pdf' };
+  return `${baseName}.${fallbacks[type] || 'dat'}`;
+};
+
+const ResourceItem = ({ resource }) => {
+  const { title, url, type, fileName } = resource;
+  const finalFileName = getSafeFileName(url, type, fileName, title);
+
+  const handleDownload = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Fetch failed');
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = finalFileName;
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', finalFileName);
+      link.setAttribute('target', '_blank');
+      link.click();
+    }
+  };
+
+  const handleOpen = () => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <div
+      onClick={handleOpen}
+      className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-border hover:border-primary/50 hover:bg-card transition-all group cursor-pointer"
+    >
+      <div className="flex items-center gap-4">
+        <div className="p-2 rounded bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          {type === 'image' && <ImageIcon className="h-5 w-5" />}
+          {type === 'link' && <ExternalLink className="h-5 w-5" />}
+          {type === 'file' && <File className="h-5 w-5" />}
+        </div>
+        <div>
+          <p className="text-sm font-bold text-foreground">{title}</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{type}</p>
+        </div>
+      </div>
+      <div className="flex items-center">
+        {type === 'link' ? (
+          <div className="text-muted-foreground group-hover:text-primary transition-colors">
+            <ArrowUpRight className="h-4 w-4" />
+          </div>
+        ) : (
+          <button
+            onClick={handleDownload}
+            title={`Download ${finalFileName}`}
+            className="p-2 -mr-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-all"
+          >
+            <Download className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export function LessonPage() {
-  const { user, courses, lessons, updateProgress } = useAuth() // Pull stateful data
+  const { user, courses, lessons, updateProgress, quizzes } = useAuth() // Pull stateful data
   const { courseId, lessonId } = useParams()
   const navigate = useNavigate()
   const [isCompleted, setIsCompleted] = useState(false)
@@ -192,11 +276,29 @@ export function LessonPage() {
     )
   }
 
+
+  const associatedQuiz = useMemo(() => {
+    return quizzes.find(q => String(q.courseId) === String(courseId)) || null;
+  }, [courseId, quizzes]);
+
   if (!lesson) return null;
 
   const isLastLesson = currentIndex === courseLessons.length - 1
   const currentLessonFinished = lesson.isCompleted || isCompleted
-  const showQuizButton = isLastLesson && currentLessonFinished
+
+  const hasQuizAvailable = !!associatedQuiz || !!course?.hasQuiz;
+  const showQuizButton = isLastLesson && currentLessonFinished && hasQuizAvailable;
+  const showCompletionButton = isLastLesson && currentLessonFinished && !hasQuizAvailable;
+
+  const targetQuizId = associatedQuiz?.id || course?.quizId || 'start';
+
+  // Determine ultimate redirect path based on certificate existence
+  const finalRedirectPath = useMemo(() => {
+    if (course?.hasCertificate || course?.certificateId) {
+      return `/certificate/${courseId}`;
+    }
+    return '/dashboard';
+  }, [course, courseId]);
 
   const handleMarkComplete = async () => {
   try {
@@ -209,101 +311,6 @@ export function LessonPage() {
   } finally {
     setIsSaving(false);
   }
-};
-
- const ResourceItem = ({ resource }) => {
-  const { title, url, type, fileName } = resource;
-  const isDownloadable = type === 'file' || type === 'image' || type === 'downloadable';
-
-  // 1. Move the helper outside or keep it as a memoized value
-  const getSafeFileName = (url, type, providedName) => {
-    if (providedName) return providedName;
-    
-    // Extract extension from URL
-    const extension = url.split('.').pop().split(/[?#]/)[0];
-    const baseName = title.replace(/\s+/g, '_').toLowerCase();
-    
-    const validExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'zip'];
-    if (validExtensions.includes(extension.toLowerCase())) {
-      return `${baseName}.${extension}`;
-    }
-    
-    const fallbacks = { image: 'jpg', file: 'pdf' };
-    return `${baseName}.${fallbacks[type] || 'dat'}`;
-  };
-
-  // 2. Define the variable at the component level scope
-  const finalFileName = getSafeFileName(url, type, fileName);
-
-  const handleDownload = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    try {
-      const response = await fetch(url, { mode: 'cors' });
-      if (!response.ok) throw new Error('Fetch failed');
-
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = finalFileName; // Now defined in scope
-      
-      document.body.appendChild(link);
-      link.click();
-      
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', finalFileName);
-      link.setAttribute('target', '_blank');
-      link.click();
-    }
-  };
-
-  const handleOpen = () => {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-
-  return (
-    <div
-      onClick={handleOpen}
-      className="flex items-center justify-between p-4 rounded-lg bg-card/50 border border-border hover:border-primary/50 hover:bg-card transition-all group cursor-pointer"
-    >
-      <div className="flex items-center gap-4">
-        <div className="p-2 rounded bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-          {type === 'image' && <ImageIcon className="h-5 w-5" />}
-          {type === 'link' && <ExternalLink className="h-5 w-5" />}
-          {type === 'file' && <File className="h-5 w-5" />}
-        </div>
-        
-        <div>
-          <p className="text-sm font-bold text-foreground">{title}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{type}</p>
-        </div>
-      </div>
-      
-      <div className="flex items-center">
-        {type === 'link' ? (
-          <div className="text-muted-foreground group-hover:text-primary transition-colors">
-            <ArrowUpRight className="h-4 w-4" />
-          </div>
-        ) : (
-          <button
-            onClick={handleDownload}
-            title={`Download ${finalFileName}`} // Correctly references scoped variable
-            className="p-2 -mr-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-all"
-          >
-            <Download className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
 };
 
   const navBtnClass = "h-11 px-3 sm:px-4 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 flex items-center justify-center gap-2 shrink-0"
@@ -341,30 +348,30 @@ export function LessonPage() {
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 overflow-y-auto outline-none">
           {/* Only render this entire block if a video source exists */}
-{(lesson.videoUrl || lesson.videoFile) && (
-  <div className="aspect-video w-full bg-slate-950 relative shadow-inner">
-    {lesson.videoUrl ? (
-      <iframe
-        src={getEmbedUrl(lesson.videoUrl)}
-        className="w-full h-full"
-        allowFullScreen
-        title={lesson.title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      />
-    ) : (
-      <video 
-        key={lesson.videoFile} // Crucial: forces player to reload when source changes
-        controls 
-        className="w-full h-full object-cover"
-        preload="metadata"
-      >
-        {/* Explicitly define the type in case the DB URL is a blob or signed link */}
-        <source src={lesson.videoFile} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-    )}
-  </div>
-)}
+          {(lesson.videoUrl || lesson.videoFile) && (
+            <div className="aspect-video w-full bg-slate-950 relative shadow-inner">
+              {lesson.videoUrl ? (
+                <iframe
+                  src={getEmbedUrl(lesson.videoUrl)}
+                  className="w-full h-full"
+                  allowFullScreen
+                  title={lesson.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                />
+              ) : (
+                <video 
+                  key={lesson.videoFile} // Crucial: forces player to reload when source changes
+                  controls 
+                  className="w-full h-full object-cover"
+                  preload="metadata"
+                >
+                  {/* Explicitly define the type in case the DB URL is a blob or signed link */}
+                  <source src={lesson.videoFile} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              )}
+            </div>
+          )}
 
           <div className="container mx-auto max-w-4xl px-4 py-8 sm:py-12">
             <div className="mb-10">
@@ -523,6 +530,8 @@ export function LessonPage() {
 
             <div className="mt-16 pt-8 border-t border-border">
               <div className="flex items-center justify-between gap-4">
+                
+                {/* LEFT COLUMN: PREVIOUS LESSON */}
                 <div className="flex-1 flex justify-start">
                   {prevLesson && (
                     <Link to={`/learn/course/${courseId}/lesson/${prevLesson.id}`}>
@@ -534,6 +543,7 @@ export function LessonPage() {
                   )}
                 </div>
 
+                {/* CENTER COLUMN: CONTEXTUAL ACTIONS */}
                 <div className="flex-1 flex justify-center">
                   {!currentLessonFinished ? (
                     <Button 
@@ -545,10 +555,19 @@ export function LessonPage() {
                       <CheckCircle className="h-4 w-4 shrink-0" />
                       <span>{isSaving ? "Saving..." : "Mark Complete"}</span>
                     </Button>
+                  ) : showCompletionButton ? (
+                    <Button 
+                      variant="primary" 
+                      className={takeQuizClass}
+                      onClick={() => navigate(finalRedirectPath)}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      <span>{course?.hasCertificate ? 'Claim Certificate' : 'Finish Course'}</span>
+                    </Button>
                   ) : (
                     <div className={cn(
-                        "px-4 py-2 rounded-full bg-success/10 border border-success/20 flex items-center gap-2",
-                        isLastLesson && "hidden sm:flex"
+                      "px-4 py-2 rounded-full bg-success/10 border border-success/20 flex items-center gap-2",
+                      isLastLesson && "hidden sm:flex"
                     )}>
                       <CheckCircle className="h-3.5 w-3.5 text-success" />
                       <span className="text-[10px] font-black uppercase tracking-tighter text-success">Finished</span>
@@ -556,19 +575,22 @@ export function LessonPage() {
                   )}
                 </div>
 
+                {/* RIGHT COLUMN: NEXT ACTIONS OR GRID BALANCER */}
                 <div className="flex-1 flex justify-end">
                   {showQuizButton ? (
-                    <Link to={`/learn/course/${courseId}/quiz/${lessonId}`} className="w-full sm:w-auto">
+                    <Link to={`/learn/course/${courseId}/quiz/${targetQuizId || lessonId}`} className="w-full sm:w-auto">
                       <Button className={takeQuizClass}>
                         <span className="text-xs sm:text-sm">Take Quiz</span>
                         <ChevronRight className="h-5 w-5" />
                       </Button>
                     </Link>
+                  ) : showCompletionButton ? (
+                    /* Empty layout element to maintain 1/3 layout symmetry so the center column remains perfectly centered */
+                    <div className="invisible pointer-events-none select-none aria-hidden:true" />
                   ) : (
                     <Button 
                       variant="outline" 
                       className={navBtnClass} 
-                      // Use navigate programmatically for better control
                       onClick={() => nextLesson && navigate(`/learn/course/${courseId}/lesson/${nextLesson.id}`)}
                       disabled={!currentLessonFinished || !nextLesson}
                     >
@@ -577,6 +599,7 @@ export function LessonPage() {
                     </Button>
                   )}
                 </div>
+
               </div>
             </div>
           </div>

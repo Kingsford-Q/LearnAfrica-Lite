@@ -1,11 +1,10 @@
 import { useMemo, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Clock, Award, Trophy, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Book, Award, Trophy, ArrowRight, ChevronDown, ChevronUp, Compass } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Card, CardContent } from '@/components/common/Card';
 import { StatsCardSkeleton, CourseCardSkeleton } from '@/components/common/LoadingSkeleton';
 import { useAuth } from '@/context/AuthContext';
-import { courses, badgeConfig } from '@/data/mockData';
 
 // Lazy loaded components for code splitting
 const StatsCard = lazy(() => import('@/components/dashboard/StatsCard'));
@@ -13,7 +12,7 @@ const ProgressCard = lazy(() => import('@/components/dashboard/ProgressCard'));
 const BadgeCard = lazy(() => import('@/components/dashboard/BadgeCard'));
 
 export default function StudentDashboard() {
-  const { user, courses: coursesState } = useAuth();
+  const { user, courses: coursesState, badgeConfig } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [viewAllActive, setViewAllActive] = useState(false);
 
@@ -33,6 +32,22 @@ export default function StudentDashboard() {
     if (viewAllActive) return activeLearningCourses;
     return activeLearningCourses.slice(0, 3);
   }, [activeLearningCourses, viewAllActive]);
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 135; // Offsets clean headroom below layout header
+      const bodyRect = document.body.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const elementPosition = elementRect.top - bodyRect.top;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
   
 
   // recommended courses logic
@@ -104,16 +119,50 @@ export default function StudentDashboard() {
       if (a.earned !== b.earned) return a.earned ? -1 : 1;
       return (b.currentProgress / b.goal) - (a.currentProgress / a.goal);
     });
-  }, [user]);
+  }, [user, badgeConfig]);
 
   const earnedCount = useMemo(() => 
     liveBadges.filter(b => b.earned).length, 
   [liveBadges]);
 
+  // --- DYNAMIC TREND LOGIC ---
+  const trends = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // 1. Calculate courses started in the last 30 days
+    const startedThisMonthCount = (coursesState || []).filter((c) => {
+      if (!c.startedAt || c.progress === 0) return false;
+      const startedDate = new Date(c.startedAt);
+      return startedDate >= thirtyDaysAgo;
+    }).length;
+
+    // 2. Calculate courses completed in the last 7 days
+    const completedThisWeekCount = (coursesState || []).filter((c) => {
+      if (!c.completedAt || c.progress < 100) return false;
+      const completedDate = new Date(c.completedAt);
+      return completedDate >= sevenDaysAgo;
+    }).length;
+
+    // 3. Contextual formatting handles (Handling singular vs plural syntax beautifully)
+    return {
+      inProgressTrend: startedThisMonthCount > 0 
+        ? `+${startedThisMonthCount} this month` 
+        : 'Active now',
+      completedTrend: completedThisWeekCount > 0 
+        ? `+${completedThisWeekCount} this week` 
+        : `${completedCourses.length} total milestones`,
+      // If there's a positive streak or velocity increase, we show "up", else neutral styling
+      inProgressDirection: startedThisMonthCount > 0 ? 'up' : 'neutral',
+      completedDirection: completedThisWeekCount > 0 ? 'up' : 'neutral'
+    };
+  }, [coursesState, completedCourses.length]);
+
   return (
     <div className="w-full max-w-full overflow-hidden space-y-8 p-6">
       {/* Welcome Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-8 md:mt-0">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             Welcome back, {user?.name?.split(' ')[0] || 'Learner'}!
@@ -132,6 +181,21 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      {/* Fixed Quick-Nav Sub-Header Strip (Bypasses parent layout overflow restrictions) */}
+      <div className="sm:hidden fixed top-[64px] left-0 right-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-6 py-3 flex justify-center gap-2 shadow-sm">
+        <Button variant="secondary" size="sm" onClick={() => scrollToSection('continue-learning')} className="shrink-0 rounded-full text-xs h-8">
+          <Book className="w-3.5 h-3.5 mr-1" /> Progress
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => scrollToSection('badges-section')} className="shrink-0 rounded-full text-xs h-8">
+          <Trophy className="w-3.5 h-3.5 mr-1" /> Badges
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => scrollToSection('recommendations')} className="shrink-0 rounded-full text-xs h-8">
+          <Compass className="w-3.5 h-3.5 mr-1" /> For You
+        </Button>
+      </div>
+
+      
+
       {/* Stats Cards Section */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Suspense fallback={statsSkeletons}>
@@ -139,17 +203,17 @@ export default function StudentDashboard() {
             statsSkeletons
           ) : (
             <>
-              <StatsCard title="In Progress" value={activeLearningCourses.length} icon={Book} trend="up" trendValue="+2 this month" />
-              <StatsCard title="Completed Courses" value={completedCourses.length} icon={Award} trend="up" trendValue="+1 this week" />
+              <StatsCard title="In Progress" value={activeLearningCourses.length} icon={Book} trend={trends.inProgressDirection} trendValue= {trends.inProgressTrend} />
+              <StatsCard title="Completed Courses" value={completedCourses.length} icon={Award} trend={trends.completedDirection} trendValue={trends.completedTrend} />
               <StatsCard title="Perfect Quizzes" value={user?.stats?.perfectQuizzes || 0} icon={Trophy} trend="up" trendValue="100% Score" />
-              <StatsCard title="Badges Earned" value={earnedCount} icon={Trophy} trend="up" trendValue={`${earnedCount}/${badgeConfig.length}`} />
+              <StatsCard title="Badges Earned" value={earnedCount} icon={Trophy} trend="up" trendValue={`${earnedCount}/${badgeConfig?.length || 0}`} />
             </>
           )}
         </Suspense>
       </div>
 
       {/* Enrolled Courses Section */}
-      <div className="space-y-4">
+      <div id="continue-learning" className="space-y-4 scroll-mt-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Continue Learning</h2>
           <Link to="/courses" className="text-sm text-primary hover:underline">View all</Link>
@@ -201,11 +265,11 @@ export default function StudentDashboard() {
       </div>
 
       {/* Badges Section */}
-      <div className="space-y-4">
+      <div id="badges-section" className="space-y-4 scroll-mt-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Badges</h2>
           <span className="text-sm text-primary">
-            {earnedCount} of {badgeConfig.length} badges earned
+            {earnedCount} of {badgeConfig?.length || 0} badges earned
           </span>
         </div>
         <Suspense 
@@ -222,7 +286,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Recommended Courses Section */}
-      <div className="space-y-4 mt-6 md:mt-0">
+      <div id="recommendations" className="space-y-4 mt-6 md:mt-0 scroll-mt-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Recommended For You</h2>
           <Link to="/courses" className="text-sm text-primary hover:underline">View all</Link>

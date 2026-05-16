@@ -4,32 +4,44 @@ import { ChevronLeft, ChevronRight, Clock, AlertCircle, CheckCircle2 } from 'luc
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { QuizQuestion } from '@/components/quiz/QuizQuestion'
-import { quizzes, courses } from '@/data/mockData'
+import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
 export function QuizPage() {
+  // Pull data and state-handling utilities from Context
+  const { quizzes = [], courses = [], isLoading } = useAuth()
   const { courseId, lessonId } = useParams()
   const navigate = useNavigate()
+  
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState({})
   const [isSubmitted, setIsSubmitted] = useState(false)
-  
-  // Timer State
   const [timeLeft, setTimeLeft] = useState(null)
 
-  // Data fetching logic
-  const quiz = useMemo(() => 
-    quizzes.find(q => String(q.courseId) === String(courseId)) || quizzes[0],
-  [courseId])
+  // Dynamic Quiz Retrieval (Accounts for both course and specific lesson context)
+  const quiz = useMemo(() => {
+    if (!quizzes.length) return null;
+    return (
+      quizzes.find(
+        (q) =>
+          String(q.courseId) === String(courseId) &&
+          String(q.lessonId) === String(lessonId)
+      ) || 
+      quizzes.find((q) => String(q.courseId) === String(courseId)) || 
+      quizzes[0]
+    );
+  }, [quizzes, courseId, lessonId]) // Added quizzes to dependencies!
 
-  const course = useMemo(() => 
-    courses.find(c => String(c.id) === String(quiz?.courseId)),
-  [quiz?.courseId])
+  // Dynamic Course Retrieval
+  const course = useMemo(() => {
+    if (!courses.length || !quiz) return null;
+    return courses.find(c => String(c.id) === String(quiz.courseId));
+  }, [courses, quiz])
 
   const questions = quiz?.questions || []
   const exitPath = `/learn/course/${courseId}/lesson/${lessonId}`
 
-  // Initialize Timer based on quiz.duration
+  // Initialize Timer
   useEffect(() => {
     if (quiz?.duration && quiz.duration !== "No limit") {
       const minutes = parseInt(quiz.duration);
@@ -55,7 +67,6 @@ export function QuizPage() {
     return () => clearInterval(timer);
   }, [timeLeft, isSubmitted]);
 
-  // Format time display (MM:SS)
   const formatTime = (seconds) => {
     if (seconds === null || seconds < 0) return "00:00";
     const hrs = Math.floor(seconds / 3600);
@@ -86,17 +97,15 @@ export function QuizPage() {
     }
   }
 
-  // ✅ OPTIMIZED: Backend-ready submit logic
   const handleSubmit = () => {
     if (isSubmitted) return;
     setIsSubmitted(true)
     
-    // Passing full payload to the results page for logic processing
     navigate(`/learn/course/${courseId}/quiz/${lessonId}/results`, {
       state: {
         answers,
         questions,
-        quizTitle: quiz.title,
+        quizTitle: quiz?.title || "Quiz",
         courseId,
         lessonId,
         exitPath,
@@ -109,7 +118,29 @@ export function QuizPage() {
   const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0
   const canSubmit = answeredCount === questions.length
 
-  if (!quiz) return null;
+  // Graceful loading state handling while session storage/auth context hydrates
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-muted-foreground font-medium animate-pulse">Loading Quiz Configuration...</div>
+      </div>
+    )
+  }
+
+  if (!quiz) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full p-6 text-center space-y-4">
+          <AlertCircle className="w-10 h-10 text-destructive mx-auto" />
+          <h3 className="text-lg font-bold">Quiz Dataset Missing</h3>
+          <p className="text-sm text-muted-foreground">We couldn't locate any structural records matching this configuration data.</p>
+          <Button asChild className="w-full">
+            <Link to={exitPath}>Return to Class</Link>
+          </Button>
+        </Card>
+      </div>
+    )
+  }
 
   if (isSubmitted) {
     return (
@@ -141,7 +172,7 @@ export function QuizPage() {
             className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className = "hidden md:block">Exit</span>
+            <span className="hidden md:block">Exit</span>
           </Link>
 
           <div className="text-center px-2">

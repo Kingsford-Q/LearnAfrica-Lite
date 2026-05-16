@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { courses as initialCourses, lessons as initialLessons,getMilestones, instructors as initialInstructors } from '@/data/mockData';
+import { courses as initialCourses, lessons as initialLessons,getMilestones, instructors as initialInstructors,
+  badgeConfig, quizzes, testimonials, categories, difficulties, certificates } from '@/data/mockData';
 
 const AuthContext = createContext();
 
@@ -587,7 +588,17 @@ export function AuthProvider({ children }) {
     toggleInstructorMode,
     isInstructorMode,
     role: user?.role,
-  }), [user, coursesState, lessonsState,instructorsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead,addReview, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse]);
+    badgeConfig,
+    quizzes,
+    certificates,
+    categories,
+    difficulties,
+    testimonials,
+    categories,
+    difficulties,
+  }), [user, coursesState, testimonials, lessonsState,instructorsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead,addReview, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse, badgeConfig, quizzes,
+    categories, difficulties, certificates
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

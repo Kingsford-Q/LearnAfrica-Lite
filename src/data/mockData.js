@@ -19,6 +19,7 @@ export const courses = [{
     hasCertificate: true,
     hasLifetimeAccess: true,
     hasResources: true,
+    certificateId: 'Cer-1',
     paymentLink: '',
     learningOutcomes: [
       'Understand how the web works and the role of HTML, CSS, and JavaScript',
@@ -1060,7 +1061,7 @@ export const lessons = [
     `,
     isCompleted: false,
     order: 5
-  }
+  },
 ]
 
 export const quizzes = [
@@ -1107,7 +1108,7 @@ export const quizzes = [
         correctAnswer: 1
       }
     ]
-  }
+  },
 ]
 
 export const categories = [
@@ -1415,3 +1416,29 @@ export const mockUser = {
     appearance: 'light',
   },
 }
+
+// mockData.js
+
+// ... keep your courses, lessons, quizzes, and mockUser as they are
+
+export const certificates = {
+  // Keyed by courseId for instant O(1) relational lookups
+  '1': {
+    id: 'Cer-1',
+    courseId: '1',
+    grade: 'A+',
+    verificationHash: 'VREF-HTML5-CSS3-JS-9921A'
+  },
+  '2': {
+    id: 'Cer-2',
+    courseId: '2',
+    grade: 'A',
+    verificationHash: 'VREF-PYTHON-DS-8832B'
+  },
+  '4': {
+    id: 'Cer-4',
+    courseId: '4',
+    grade: 'A+',
+    verificationHash: 'VREF-MKTG-DIGI-7721B'
+  }
+};

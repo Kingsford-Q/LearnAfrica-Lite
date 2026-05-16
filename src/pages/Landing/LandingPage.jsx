@@ -13,9 +13,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
-import { testimonials } from '@/data/mockData'
 import { useAuth } from '@/context/AuthContext'
-import { useState, useMemo, lazy, Suspense } from 'react'
+import { useMemo, lazy, Suspense } from 'react'
 import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
 
 // Lazy load the CourseCard component
@@ -75,7 +74,7 @@ const stats = [
 ]
 
 export function LandingPage() {
-  const { user, courses } = useAuth()
+const { user, courses = [], testimonials = [], isLoading } = useAuth()
 
   const displayCourses = useMemo(() => {
     if (!user) return courses.slice(0, 3);
@@ -90,6 +89,10 @@ export function LandingPage() {
       })
       .slice(0, 3);
   }, [user, courses]);
+
+  const displayTestimonials = useMemo(() => {
+    return Array.isArray(testimonials) ? testimonials.slice(0, 3) : [];
+  }, [testimonials]);
 
   return (
     <div className="flex flex-col">
@@ -336,38 +339,70 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {testimonials.map(testimonial => (
-              <Card key={testimonial.id} className="p-6 flex flex-col justify-between h-full">
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
-                  ))}
-                </div>
-
-                <p className="text-muted-foreground mb-6 flex-grow">
-                  {testimonial.content}
-                </p>
-
-                <div className="flex items-center gap-3 mt-auto">
-                  <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                    <img
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
+          {/* Dynamic state checks for async context safety */}
+          {isLoading ? (
+            <div className="grid gap-6 md:grid-cols-3">
+              {[1, 2, 3].map((n) => (
+                <Card key={n} className="p-6 h-48 bg-card border animate-pulse flex flex-col justify-between">
+                  <div className="h-4 w-24 bg-muted rounded" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-full bg-muted rounded" />
+                    <div className="h-3 w-5/6 bg-muted rounded" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{testimonial.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {testimonial.role} at {testimonial.company}
-                    </p>
+                  <div className="flex gap-3 items-center">
+                    <div className="h-10 w-10 rounded-full bg-muted" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-3 w-20 bg-muted rounded" />
+                      <div className="h-2.5 w-32 bg-muted rounded" />
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          ) : displayTestimonials.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-3">
+              {displayTestimonials.map(testimonial => (
+                <Card key={testimonial.id || testimonial.name} className="p-6 flex flex-col justify-between h-full">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(Number(testimonial.rating || 5))].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                    ))}
+                  </div>
+
+                  <p className="text-muted-foreground mb-6 flex-grow text-sm leading-relaxed">
+                    "{testimonial.content}"
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-auto">
+                    <div className="h-10 w-10 rounded-full bg-muted border border-border overflow-hidden shrink-0">
+                      <img
+                        src={testimonial.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${testimonial.name}`}
+                        alt={testimonial.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${testimonial.name}`;
+                        }}
+                      />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="font-medium text-sm truncate">{testimonial.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {testimonial.role} {testimonial.company ? `at ${testimonial.company}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            // Fallback UI State if the remote testimonials dataset returns empty
+            <div className="text-center p-8 bg-card border border-dashed border-border rounded-2xl max-w-md mx-auto">
+              <p className="text-sm text-muted-foreground font-medium">
+                Be among the first to share your experience with LearnAfrica!
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

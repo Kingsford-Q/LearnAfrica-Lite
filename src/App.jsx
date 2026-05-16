@@ -31,6 +31,7 @@ import NotFoundPage from './pages/NotFound/NotFoundPage';
 import InstructorOnboarding from './pages/Auth/InstructorOnboarding';
 import { Loader2 } from "lucide-react";
 
+
 // Protected Route Component
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, isAuthenticated, isLoading } = useAuth();
