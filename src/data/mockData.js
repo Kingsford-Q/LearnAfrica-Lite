@@ -10,7 +10,6 @@ export const courses = [{
     lessons: 24,
     enrollments: 1234,
     rating: 4.8,
-    progress: 40,
     price: 0,
     language: 'English',
     isFree: true,
@@ -49,7 +48,6 @@ export const courses = [{
     lessons: 32,
     enrollments: 892,
     rating: 4.9,
-    progress: 30,
     price: 0,
     isFree: true,
     language: 'English',
@@ -87,7 +85,6 @@ export const courses = [{
     lessons: 40,
     enrollments: 567,
     rating: 4.7,
-    progress: 0,
     price: 79.99,
     language: 'English',
     isFree: false,
@@ -125,7 +122,6 @@ export const courses = [{
     lessons: 18,
     enrollments: 2105,
     rating: 4.6,
-    progress: 100,
     language: 'English',
     price: 0,
     isFree: true,
@@ -164,7 +160,6 @@ export const courses = [{
     enrollments: 743,
     language: 'English',
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Figma', 'UI Design', 'UX Research'],
@@ -201,7 +196,6 @@ export const courses = [{
     lessons: 30,
     enrollments: 456,
     rating: 4.9,
-    progress: 0,
     price: 89.99,
     isFree: false,
     tags: ['Security', 'Networks', 'Ethical Hacking'],
@@ -239,7 +233,6 @@ export const courses = [{
     lessons: 26,
     enrollments: 985,
     rating: 4.9,
-    progress: 0,
     language: 'English',
     price: 59.99,
     isFree: false,
@@ -273,7 +266,6 @@ export const courses = [{
     enrollments: 723,
     language: 'English',
     rating: 4.7,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Node.js', 'Express', 'MongoDB'],
@@ -311,7 +303,6 @@ export const courses = [{
     enrollments: 578,
     language: 'English',
     rating: 4.9,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Machine Learning', 'Scikit-learn', 'TensorFlow'],
@@ -349,7 +340,6 @@ export const courses = [{
     enrollments: 634,
     language: 'English',
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['AWS', 'Cloud', 'EC2', 'S3'],
@@ -387,7 +377,6 @@ export const courses = [{
     lessons: 20,
     enrollments: 1456,
     rating: 4.7,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Business', 'Entrepreneurship', 'Startups'],
@@ -425,7 +414,6 @@ export const courses = [{
     lessons: 28,
     enrollments: 542,
     rating: 4.6,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Accounting', 'Finance', 'Financial Analysis'],
@@ -463,7 +451,6 @@ export const courses = [{
     lessons: 30,
     enrollments: 867,
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Calculus', 'Limits', 'Derivatives', 'Integrals'],
@@ -501,7 +488,6 @@ export const courses = [{
     lessons: 27,
     enrollments: 456,
     rating: 4.7,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Physics', 'Mechanics', 'Forces', 'Energy'],
@@ -538,7 +524,6 @@ export const courses = [{
     lessons: 24,
     enrollments: 712,
     rating: 4.6,
-    progress: 0,
     language: 'English',
     price: 0,
     isFree: true,
@@ -577,7 +562,6 @@ export const courses = [{
     enrollments: 1203,
     language: 'English',
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Spanish', 'Language', 'Conversation'],
@@ -615,7 +599,6 @@ export const courses = [{
     language: 'English',
     enrollments: 534,
     rating: 4.7,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Photography', 'Composition', 'Editing', 'Lighting'],
@@ -653,7 +636,6 @@ export const courses = [{
     lessons: 25,
     enrollments: 623,
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Music Production', 'DAW', 'Beat Making'],
@@ -691,7 +673,6 @@ export const courses = [{
     lessons: 20,
     enrollments: 945,
     rating: 4.7,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Leadership', 'Management', 'Communication'],
@@ -729,7 +710,6 @@ export const courses = [{
     lessons: 24,
     enrollments: 1876,
     rating: 4.9,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Fitness', 'Wellness', 'Nutrition', 'Exercise'],
@@ -767,7 +747,6 @@ export const courses = [{
     enrollments: 1543,
     language: 'English',
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Excel', 'Data Analysis', 'Business'],
@@ -805,7 +784,6 @@ export const courses = [{
     language: 'English',
     enrollments: 834,
     rating: 4.6,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Content Marketing', 'Strategy', 'Writing'],
@@ -843,7 +821,6 @@ export const courses = [{
     enrollments: 678,
     language: 'English',
     rating: 4.8,
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Graphic Design', 'Adobe', 'Photoshop'],
@@ -881,7 +858,6 @@ export const courses = [{
     enrollments: 456,
     rating: 4.7,
     language: 'English',
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Video Production', 'Editing', 'Filmmaking'],
@@ -919,7 +895,6 @@ export const courses = [{
     enrollments: 2341,
     rating: 4.9,
     language: 'English',
-    progress: 0,
     price: 0,
     isFree: true,
     tags: ['Time Management', 'Productivity', 'Habits'],
@@ -991,7 +966,6 @@ export const lessons = [
         type: 'image'
       },
     ],
-    isCompleted: true,
     order: 1,
   },
   {
@@ -1011,7 +985,6 @@ export const lessons = [
       <h3>Box Model</h3>
       <p>Every element in CSS is a box. Understanding the box model is crucial for layout design.</p>
     `,
-    isCompleted: true,
     order: 2
   },
   {
@@ -1045,7 +1018,6 @@ export const lessons = [
       <h2>The Document Object Model</h2>
       <p>The DOM represents the HTML document as a tree structure. JavaScript can access and modify this structure.</p>
     `,
-    isCompleted: false,
     order: 4
   },
   {
@@ -1059,7 +1031,6 @@ export const lessons = [
       <h2>What is Responsive Design?</h2>
       <p>Responsive design ensures your website looks great on all devices, from phones to desktops.</p>
     `,
-    isCompleted: false,
     order: 5
   },
 ]
@@ -1366,27 +1337,44 @@ export const mockUser = {
   avatar: '/placeholder-user.jpg',
   joinedDate: '2025-08-15T10:30:00.000Z',
   
-  // Profile information (consolidated)
+  // Profile information (Consolidated smoothly for AuthContext check rules)
   profile: {
     bio: 'Full-stack developer passionate about building scalable web applications and teaching others.',
     location: 'Accra, Ghana',
     website: 'https://adaeze.dev',
   },
   
-  // Stats tracking
+  // Stats tracking (Will be live-calculated by getLiveStats(), but great as an initial fallback state structure)
   stats: {
-    coursesCompletedCount: 3,
-    lessonsCompletedCount: 42,
-    enrolledCoursesCount: 5,
-    perfectQuizzes: 5,
-    fastFinishCount: 1,
-    reviewsCount: 8,
+    coursesCompletedCount: 0,
+    lessonsCompletedCount: 0,
+    enrolledCoursesCount: 0,
+    perfectQuizzes: 0,
+    fastFinishCount: 0,
+    reviewsCount: 2, // Matches the initial count of reviews array length below
     isProfileComplete: 1,
     streak: 12,
   },
   
-  // Learning data
-  enrolledCourses: [1, 2, 4, 7, 8],
+  // NEW: Your Relational Course Progress Array Middleware Interceptor reads from here
+  courseProgress: [
+    { courseId: '1', progress: 45, enrolledAt: '2025-08-16T12:00:00.000Z' },
+    { courseId: '2', progress: 100, enrolledAt: '2025-09-01T10:30:00.000Z', completedAt: '2025-09-07T18:22:00.000Z' },
+    { courseId: '4', progress: 12, enrolledAt: '2025-10-05T15:45:00.000Z' },
+    { courseId: '7', progress: 0, enrolledAt: '2025-11-12T08:15:00.000Z' },
+    { courseId: '8', progress: 100, enrolledAt: '2025-12-01T11:00:00.000Z', completedAt: '2025-12-15T14:30:00.000Z' }
+  ],
+
+  lessonProgress: [
+    { lessonId: '1', isCompleted: true, quizScore: 100 },
+    { lessonId: '2', isCompleted: true, quizScore: 85 },
+    { lessonId: '14', isCompleted: false, quizScore: null },
+    { lessonId: '17', isCompleted: true, quizScore: 100 }
+  ],
+  
+  // Kept for backward compatibility with your enrollInCourse handler logic array searches
+  // Standardized to string references matching your dynamic path courseId lookups
+  enrolledCourses: ['1', '2', '4', '7', '8'],
   totalHoursLearned: 42,
   
   // Badges earned
@@ -1397,7 +1385,7 @@ export const mockUser = {
     { badgeId: '6', key: 'SPEED_LEARNER', earnedDate: '2025-12-05' },
   ],
   
-  // Reviews submitted
+  // Reviews submitted (Directly linked to stats verification loops)
   reviews: [
     { courseId: '1', reviewId: 'rev_1' },
     { courseId: '2', reviewId: 'rev_2' },
@@ -1413,13 +1401,9 @@ export const mockUser = {
     privacy: {
       twoFactor: false,
     },
-    appearance: 'light',
+    appearance: 'dark', // Fits your structural UI aesthetic standard!
   },
 }
-
-// mockData.js
-
-// ... keep your courses, lessons, quizzes, and mockUser as they are
 
 export const certificates = {
   // Keyed by courseId for instant O(1) relational lookups

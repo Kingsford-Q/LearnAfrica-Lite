@@ -132,7 +132,7 @@ export function QuizResultsPage() {
             )}
           </div>
 
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-xl font-bold mb-2">
             {passed ? 'Congratulations!' : 'Keep Learning!'}
           </h1>
           <p className="text-muted-foreground mb-6">
@@ -166,8 +166,8 @@ export function QuizResultsPage() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-bold">{score}%</span>
-              <span className="text-sm text-muted-foreground">Score</span>
+              <span className="text-3xl font-bold">{score}%</span>
+              <span className="text-md text-muted-foreground">Score</span>
             </div>
           </div>
 

@@ -399,7 +399,7 @@ export default function CertificatePage() {
 
                 <div className="flex shrink-0 items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
                   <div className="text-center">
-                    <div className="text-[10px] sm:text-xs font-semibold text-primary leading-none">LA</div>
+                    <div className="text-[10px] sm:text-xs font-semibold text-primary leading-none">LAF</div>
                     <div className="text-[6px] xs:text-[7px] uppercase font-medium tracking-wide text-muted-foreground scale-90 mt-0.5">
                       Seal
                     </div>

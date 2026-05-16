@@ -566,38 +566,96 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
-  const value = useMemo(() => ({
-    user,
-    courses: coursesState, 
-    lessons: lessonsState,
-    instructors: instructorsState,
-    updateProgress,
-    login,
-    signup,
-    logout,
-    updateUser,
-    notifications,
-    markAsRead,
-    markAllAsRead,
-    addReview,
-    deleteNotification,
-    unreadCount,
-    isAuthenticated: !!user,
-    isLoading,
-    enrollInCourse,
-    toggleInstructorMode,
-    isInstructorMode,
-    role: user?.role,
-    badgeConfig,
+  // --- COMPUTED DATA INJECTOR FOR DB PROGRESS MIGRATION ---
+  // --- COMPUTED DATA INJECTOR FOR DB COURSE & LESSON MIGRATION ---
+  const value = useMemo(() => {
+    
+    // 1. Pull relational records safely from the logged-in user profile
+    const activeUserProgressRecords = user?.courseProgress || []; 
+    const activeUserLessonRecords = user?.lessonProgress || []; // <-- NEW: Relational DB array
+
+    // 2. Compute dynamic courses
+    const computedCourses = coursesState.map((course) => {
+      const relationalMatch = activeUserProgressRecords.find(
+        (p) => String(p.courseId) === String(course.id)
+      );
+      return {
+        ...course,
+        progress: relationalMatch ? relationalMatch.progress : (course.progress || 0),
+        enrolledAt: relationalMatch ? relationalMatch.enrolledAt : course.enrolledAt,
+      };
+    });
+
+    // 3. NEW: Compute dynamic lessons on the fly!
+    const computedLessons = lessonsState.map((lesson) => {
+      // Find if the logged-in user has a progress history for this specific lesson
+      const lessonMatch = activeUserLessonRecords.find(
+        (l) => String(l.lessonId) === String(lesson.id)
+      );
+
+      return {
+        ...lesson,
+        // If DB match found, use it; otherwise fall back smoothly to the baseline mock state values
+        isCompleted: lessonMatch ? lessonMatch.isCompleted : (lesson.isCompleted || false),
+        quizScore: lessonMatch ? lessonMatch.quizScore : (lesson.quizScore || null),
+      };
+    });
+
+    return {
+      user,
+      courses: computedCourses, 
+      lessons: computedLessons, // <-- SWAPPED: UI files now read your dynamic computed engine!
+      instructors: instructorsState,
+      updateProgress,
+      login,
+      signup,
+      logout,
+      updateUser,
+      notifications,
+      markAsRead,
+      markAllAsRead,
+      addReview,
+      deleteNotification,
+      unreadCount,
+      isAuthenticated: !!user,
+      isLoading,
+      enrollInCourse,
+      toggleInstructorMode,
+      isInstructorMode,
+      role: user?.role,
+      badgeConfig,
+      quizzes,
+      certificates,
+      categories,
+      difficulties,
+      testimonials,
+    };
+  }, [
+    user, 
+    coursesState, 
+    testimonials, 
+    lessonsState, // Recalculates dynamically if pure mock state modifiers shift
+    instructorsState, 
+    updateProgress, 
+    login, 
+    signup, 
+    logout, 
+    updateUser, 
+    notifications, 
+    markAsRead, 
+    markAllAsRead, 
+    addReview, 
+    deleteNotification, 
+    unreadCount, 
+    isInstructorMode, 
+    toggleInstructorMode, 
+    isLoading, 
+    enrollInCourse, 
+    badgeConfig, 
     quizzes,
-    certificates,
-    categories,
-    difficulties,
-    testimonials,
-    categories,
-    difficulties,
-  }), [user, coursesState, testimonials, lessonsState,instructorsState, updateProgress, login, signup, logout, updateUser, notifications, markAsRead, markAllAsRead,addReview, deleteNotification, unreadCount, isInstructorMode, toggleInstructorMode, isLoading, enrollInCourse, badgeConfig, quizzes,
-    categories, difficulties, certificates
+    categories, 
+    difficulties, 
+    certificates
   ]);
 
   return (
