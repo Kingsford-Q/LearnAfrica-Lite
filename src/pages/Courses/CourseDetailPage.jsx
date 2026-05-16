@@ -27,59 +27,72 @@ import { cn } from '@/lib/utils'
 export function CourseDetailPage() {
   const { courseId } = useParams()
   const navigate = useNavigate()
-  const [expandedSection, setExpandedSection] = useState(true)
   
-  // --- AUTH-DRIVEN DATA FETCHING ---
-  const { user, courses, lessons, enrollInCourse, addReview } = useAuth() 
+  // --- STATE DECLARATIONS ---
+  const [expandedSection, setExpandedSection] = useState(true)
   const [isLocalLoading, setIsLocalLoading] = useState(true)
+  const [reviewText, setReviewText] = useState('')
+  const [selectedRating, setSelectedRating] = useState(0)
+  const [visibleReviews, setVisibleReviews] = useState(3)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Memoize course and related lessons for performance
+  // --- AUTH-DRIVEN DATA CONTEXT ---
+  const { user, courses, lessons, enrollInCourse, addReview, instructors } = useAuth() 
+
+  // --- UNCONDITIONAL HOOKS (MUST RUN BEFORE ANY RETURN) ---
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [courseId])
+
+  // --- MEMOIZED CHECKS & DATA FETCHING (SAFE WRAPPED WITH ?. ) ---
   const course = useMemo(() => 
     courses.find(c => String(c.id) === String(courseId)), 
-  [courseId, courses]);
+  [courseId, courses])
 
   const courseLessons = useMemo(() => 
     lessons.filter(l => String(l.courseId) === String(courseId)),
-  [courseId, lessons]);
+  [courseId, lessons])
 
   const isEnrolled = useMemo(() => 
-    user?.enrolledCourses?.includes(Number(courseId)) || course.progress > 0,
-  [user, courseId]);
+    user?.enrolledCourses?.includes(Number(courseId)) || (course?.progress > 0),
+  [user, courseId, course])
 
-  const { instructors } = useAuth();
-  const instructor = instructors.find((inst) => inst.id === course.instructorId);
+  const isInstructorOfCourse = useMemo(() => 
+    user && String(user.id) === String(course?.instructorId),
+  [user, course?.instructorId])
 
-  if (!instructor && !isLocalLoading) {
-    console.warn(`Instructor not found for ID: ${course.instructorId}`);
-  }
-  const avatar = instructor?.avatar || '/default-avatar.png';
-  const name = instructor?.name || 'No name available.';
-  const bio = instructor?.bio || 'No biography available.';
-  const title = instructor?.title || 'Instructor';
-  const rating = instructor ? (instructor.rating || 'No ratings yet') : 'No ratings yet'; 
-  const totalStudents = instructor ? (instructor?.totalStudents || 'No students yet') : 'No students yet';
-  const instructorCourses = instructor?.coursesCount;
-  
+  const instructor = useMemo(() => 
+    instructors.find((inst) => inst.id === course?.instructorId),
+  [instructors, course?.instructorId])
 
   useEffect(() => {
-    // Briefly simulate check to align with your loading state UI
     if (course) {
-      const timer = setTimeout(() => setIsLocalLoading(false), 400);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => setIsLocalLoading(false), 400)
+      return () => clearTimeout(timer)
     }
-  }, [course]);
+  }, [course])
 
+  // --- EARLY GUARD EXITS ---
   if (!course) {
     return (
       <div className="container py-20 text-center font-bold">
         Course not found
       </div>
-    );
+    )
   }
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [courseId]);
+  // --- POST-GUARD VARIABLES (SAFE TO REFERENCE COURSE ASSUMED FOUND) ---
+  if (!instructor && !isLocalLoading) {
+    console.warn(`Instructor not found for ID: ${course.instructorId}`)
+  }
+
+  const avatar = instructor?.avatar || '/default-avatar.png'
+  const name = instructor?.name || 'No name available.'
+  const bio = instructor?.bio || 'No biography available.'
+  const title = instructor?.title || 'Instructor'
+  const rating = instructor?.rating || 'No ratings yet'
+  const totalStudents = instructor?.totalStudents || 'No students yet'
+  const instructorCourses = instructor?.coursesCount || 0
 
   const relatedCourses = courses.filter(c => 
     String(c.id) !== String(courseId) && c.category === course.category
@@ -88,27 +101,46 @@ export function CourseDetailPage() {
   // --- PROGRESS & NAVIGATION LOGIC ---
   const completedLessonsCount = courseLessons.filter(l => l.isCompleted).length
   const progress = Math.round((completedLessonsCount / courseLessons.length) * 100) || 0
-
-  const [reviewText, setReviewText] = useState('');
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [visibleReviews, setVisibleReviews] = useState(3);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isCourseCompleted = progress === 100
 
   const averageRating = useMemo(() => {
-    if (!course.reviews || course.reviews.length === 0) return 0;
-    
-    const total = course.reviews.reduce((acc, rev) => acc + rev.rating, 0);
-    return (total / course.reviews.length).toFixed(1); // e.g., 4.8
-  }, [course.reviews]);
+    if (!course.reviews || course.reviews.length === 0) return 0
+    const total = course.reviews.reduce((acc, rev) => acc + rev.rating, 0)
+    return (total / course.reviews.length).toFixed(1)
+  }, [course.reviews])
 
-  // Destructure addReview from your hook
+  const totalResources = useMemo(() => {
+    return courseLessons.reduce((acc, lesson) => acc + (lesson.resources?.length || 0), 0)
+  }, [courseLessons])
 
+  // Find the correct lesson to resume
+  const nextToCompleteLesson = courseLessons.find(l => !l.isCompleted)
+  const resumeLessonId = isCourseCompleted 
+    ? courseLessons[0]?.id 
+    : (nextToCompleteLesson?.id || courseLessons[0]?.id)
+
+  const buttonText = useMemo(() => {
+    if (!user) return "Sign in to Enroll"
+    if (!isEnrolled) return course.isFree ? "Enroll for Free" : "Buy Now"
+    return isCourseCompleted ? "Review Course" : "Continue Learning"
+  }, [user, isEnrolled, isCourseCompleted, course.isFree])
+
+  // Strict linear locking logic
+  const isLessonLocked = (index) => {
+    if (!isEnrolled) return true 
+    if (isCourseCompleted) return false 
+    if (index === 0) return false 
+    return !courseLessons[index - 1]?.isCompleted
+  }
+
+  // --- EVENT HANDLERS ---
   const handleSubmitReview = async () => {
-    if (!user) return alert("You must be logged in to submit a review!");
-    if (selectedRating === 0) return alert("Please select a rating!");
-    if (!reviewText.trim()) return alert("Please add a comment!");
+    if (!user) return alert("You must be logged in to submit a review!")
+    if (isInstructorOfCourse) return alert("Instructors cannot review their own courses.")
+    if (selectedRating === 0) return alert("Please select a rating!")
+    if (!reviewText.trim()) return alert("Please add a comment!")
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     
     const newReview = {
       id: Date.now(),
@@ -120,67 +152,34 @@ export function CourseDetailPage() {
         month: 'short',
         year: 'numeric'
       })
-    };
+    }
 
     try {
-      await addReview(course.id, newReview);
-      setReviewText('');
-      setSelectedRating(0);
+      await addReview(course.id, newReview)
+      setReviewText('')
+      setSelectedRating(0)
     } catch (err) {
-      console.error("Failed to post review", err);
-      alert("Something went wrong. Please try again.");
+      console.error("Failed to post review", err)
+      alert("Something went wrong. Please try again.")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
-
-  const totalResources = useMemo(() => {
-    return courseLessons.reduce((acc, lesson) => acc + (lesson.resources?.length || 0), 0);
-  }, [courseLessons]);
-
-  const isCourseCompleted = progress === 100;
-
-  // Find the correct lesson to resume
-  const nextToCompleteLesson = courseLessons.find(l => !l.isCompleted);
-  const resumeLessonId = isCourseCompleted 
-    ? courseLessons[0]?.id 
-    : (nextToCompleteLesson?.id || courseLessons[0]?.id);
-
-  const buttonText = useMemo(() => {
-    // 1. If not logged in, they are always "Enrolling"
-    if (!user) return "Sign in to Enroll";
-    
-
-    // 2. If logged in but NOT enrolled yet
-    if (!isEnrolled) return course.isFree ? "Enroll for Free" : "Buy Now";
-
-    // 3. If logged in AND enrolled (the progress states)
-    return isCourseCompleted ? "Review Course" : "Continue Learning";
-  }, [user, isEnrolled, isCourseCompleted, course.isFree]);
-
-  // Strict linear locking logic
-  const isLessonLocked = (index) => {
-    if (!isEnrolled) return true; 
-    if (isCourseCompleted) return false; 
-    if (index === 0) return false; 
-    return !courseLessons[index - 1]?.isCompleted;
-  };
+  }
 
   const handleEnroll = async () => {
-    // If no user is logged in, send them to sign in
     if (!user) {
-      navigate('/login'); 
-      return;
+      navigate('/login') 
+      return
     }
 
     try {
       if (course.isFree) {
-        await enrollInCourse(course.id);
+        await enrollInCourse(course.id)
       } else if (course.paymentLink) {
-        window.location.href = course.paymentLink;
+        window.location.href = course.paymentLink
       }
     } catch (error) {
-      console.error("Enrollment failed", error);
+      console.error("Enrollment failed", error)
     }
   }
 
@@ -495,6 +494,19 @@ export function CourseDetailPage() {
       <Button size="sm" onClick={() => window.location.href = '/login'}>
         Sign In to Review
       </Button>
+    </Card>
+  ) : isInstructorOfCourse ? (
+    /* --- INSTRUCTOR BLOCK STATE (Premium Dark Visual Polish) --- */
+    <Card className="p-6 border border-warning/20 bg-warning/5 flex flex-col items-center text-center gap-2">
+      <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center border border-warning/20 text-warning">
+        <AlertCircle className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-sm font-bold text-foreground">Instructor Dashboard View</p>
+        <p className="text-xs text-muted-foreground max-w-md mx-auto">
+          You are viewing this course details page as its primary instructor. Reviews are reserved exclusively for enrolled students.
+        </p>
+      </div>
     </Card>
   ) : isEnrolled && (
     /* --- LOGGED IN & ENROLLED --- */

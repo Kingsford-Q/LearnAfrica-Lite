@@ -1,9 +1,8 @@
 import { useMemo, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Clock, Award, Trophy, ArrowRight } from 'lucide-react';
+import { Book, Clock, Award, Trophy, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Card, CardContent } from '@/components/common/Card';
-// Updated import path based on your folder structure
 import { StatsCardSkeleton, CourseCardSkeleton } from '@/components/common/LoadingSkeleton';
 import { useAuth } from '@/context/AuthContext';
 import { courses, badgeConfig } from '@/data/mockData';
@@ -16,6 +15,7 @@ const BadgeCard = lazy(() => import('@/components/dashboard/BadgeCard'));
 export default function StudentDashboard() {
   const { user, courses: coursesState } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [viewAllActive, setViewAllActive] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -23,8 +23,16 @@ export default function StudentDashboard() {
   }, []);
 
   // Optimized Logic for Backend Readiness
-  const enrolledCourses = useMemo(() => (coursesState || []).filter((c) => c.progress > 0), [coursesState]);
+  const activeLearningCourses = useMemo(() => {
+    return (coursesState || []).filter((c) => c.progress > 0 && c.progress < 100);
+  }, [coursesState]);
+
   const completedCourses = useMemo(() => (coursesState || []).filter((c) => c.progress === 100), [coursesState]);
+
+  const visibleActiveCourses = useMemo(() => {
+    if (viewAllActive) return activeLearningCourses;
+    return activeLearningCourses.slice(0, 3);
+  }, [activeLearningCourses, viewAllActive]);
   
 
   // recommended courses logic
@@ -32,8 +40,8 @@ export default function StudentDashboard() {
     const allAvailable = (coursesState || []).filter((c) => c.progress === 0);
     
     // 1. Get the tags and categories the user is currently engaged with
-    const activeTags = new Set(enrolledCourses.flatMap(c => c.tags || []));
-    const activeCategories = new Set(enrolledCourses.map(c => c.category));
+    const activeTags = new Set(activeLearningCourses.flatMap(c => c.tags || []));
+    const activeCategories = new Set(activeLearningCourses.map(c => c.category));
 
     return allAvailable
       .map(course => {
@@ -53,9 +61,8 @@ export default function StudentDashboard() {
       })
       .sort((a, b) => b.score - a.score) // Highest score first
       .slice(0, 3);
-  }, [coursesState, enrolledCourses]);
+  }, [coursesState, activeLearningCourses]);
   
-  const totalHours = user?.totalHoursLearned || 42;
 
   // Reusable fragment for stats loading
   const statsSkeletons = (
@@ -132,7 +139,7 @@ export default function StudentDashboard() {
             statsSkeletons
           ) : (
             <>
-              <StatsCard title="Enrolled Courses" value={enrolledCourses.length} icon={Book} trend="up" trendValue="+2 this month" />
+              <StatsCard title="In Progress" value={activeLearningCourses.length} icon={Book} trend="up" trendValue="+2 this month" />
               <StatsCard title="Completed Courses" value={completedCourses.length} icon={Award} trend="up" trendValue="+1 this week" />
               <StatsCard title="Perfect Quizzes" value={user?.stats?.perfectQuizzes || 0} icon={Trophy} trend="up" trendValue="100% Score" />
               <StatsCard title="Badges Earned" value={earnedCount} icon={Trophy} trend="up" trendValue={`${earnedCount}/${badgeConfig.length}`} />
@@ -154,19 +161,37 @@ export default function StudentDashboard() {
               <CourseCardSkeleton />
               <CourseCardSkeleton />
             </div>
-          ) : enrolledCourses.length > 0 ? (
+          ) : activeLearningCourses.length > 0 ? (
             <div className="grid gap-4 w-full">
-              {enrolledCourses.slice(0, 3).map((course) => (
+              {visibleActiveCourses.map((course) => (
                 <ProgressCard key={course.id} course={course} buttonVariant="outline" />
               ))}
+
+              {activeLearningCourses.length > 3 && (
+                <div className="flex justify-center pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setViewAllActive(!viewAllActive)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    {viewAllActive ? (
+                      <>Show Less <ChevronUp className="w-4 h-4 ml-1" /></>
+                    ) : (
+                      <>Show More ({activeLearningCourses.length - 3} more) <ChevronDown className="w-4 h-4 ml-1" /></>
+                    )}
+                  </Button>
+                </div>
+              )}
+
             </div>
           ) : (
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <BookIcon />
+                  <Book className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">No courses yet</h3>
+                <h3 className="font-semibold text-foreground mb-2">No active courses yet</h3>
                 <p className="text-sm text-muted-foreground mb-4">Start your learning journey by enrolling in a course</p>
                 <Link to="/courses"><Button>Browse Courses</Button></Link>
               </CardContent>
@@ -184,16 +209,16 @@ export default function StudentDashboard() {
           </span>
         </div>
         <Suspense 
-    fallback={
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
-    }
-  >
-    <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6">
-      {liveBadges.map((badge) => (
-        <BadgeCard key={badge.id} badge={badge} />
-      ))}
-    </div>
-  </Suspense>
+        fallback={
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
+          }
+        >
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6">
+            {liveBadges.map((badge) => (
+              <BadgeCard key={badge.id} badge={badge} />
+            ))}
+          </div>
+        </Suspense>
       </div>
 
       {/* Recommended Courses Section */}
