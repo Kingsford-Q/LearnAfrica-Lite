@@ -40,8 +40,26 @@ def read_courses(db: Session = Depends(get_db)):
 # endpoint to get a course by id
 @app.get("/courses/{course_id}")
 def read_course(course_id: int, db: Session = Depends(get_db)):
+    # 1. Fetch the course from the database using your CRUD tool
     course = crud.get_course(session=db, course_id=course_id)
-    return course
+    
+    # Security Check: If the course doesn't exist, stop immediately
+    if not course:
+        return {"error": "Course not found"}
+        
+    # 2. Build a custom package that nests the lessons inside the course metadata
+    return {
+        "id": course.id,
+        "title": course.title,
+        "description": course.description,
+        "instructor": course.instructor,
+        "price": course.price,
+        "is_free": course.is_free,
+        
+        # MAGIC HAPPENS HERE: SQLModel instantly scans the lesson table 
+        # and grabs everything where lesson.course_id == course.id
+        "lessons": course.lessons 
+    }
 
 # endpoint to update a course
 @app.patch("/courses/{course_id}")

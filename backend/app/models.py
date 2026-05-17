@@ -60,4 +60,4 @@ class Enrollment(SQLModel, table=True):
     enrollment_date: datetime = Field(default_factory=datetime.utcnow) 
     status: str = 'active'
     user_id: int = Field(foreign_key='user.id') 
-    course_id: int = Field(foreign_key='course.id') 
+    course_id: int = Field(foreign_key='course.id') # <-- Securely closed and completed
