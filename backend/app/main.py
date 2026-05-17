@@ -1,15 +1,33 @@
 from . import crud
 from fastapi import FastAPI, Depends
 from .database import create_db_and_tables
-from .models import Course, Lesson, User, Quiz, Enrollment
+from .models import Course, Lesson, User, Quiz, Enrollment, LessonProgress
 from .database import engine
 from sqlmodel import Session, SQLModel
 from .security import verify_password, create_access_token, get_current_user
+from fastapi.middleware.cors import CORSMiddleware # <-- Add this line
 
 
 # creating the App
 app= FastAPI(title='LearnAfrica-lite')
 
+# --- CORS Approved Origins List ---
+# This is the list of frontend addresses allowed to talk to your backend
+origins = [
+    "http://localhost:3000",   # Common React port
+    "http://localhost:5173",   # Common Vite/React port
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+]
+
+# Attach the security gatekeeper to your application
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In development, "*" means "Allow any frontend tool to test me"
+    allow_credentials=True,
+    allow_methods=["*"], # Allows Kingsford to use GET, POST, PUT, and DELETE
+    allow_headers=["*"], # Allows Kingsford to send secure headers (like our JWT tokens!)
+)
 # importing the database session generator
 def get_db():
     with Session(engine) as session:
@@ -172,3 +190,116 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user_name": user.full_name
     }
+
+
+
+
+# --- Course Enrollment Endpoint ---
+@app.post("/enroll/{course_id}")
+def enroll_in_course(
+    course_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
+    # Grab the logged-in user's ID from their digital wristband
+    user_id = current_user.get("user_id")
+    
+    # Create a new registration entry
+    new_enrollment = Enrollment(user_id=user_id, course_id=course_id)
+    db.add(new_enrollment)
+    db.commit()
+    db.refresh(new_enrollment)
+    
+    return {"message": "Successfully enrolled in course!", "enrollment": new_enrollment}
+
+
+# --- Mark Lesson Completed Endpoint ---
+@app.post("/lessons/{lesson_id}/complete")
+def mark_lesson_complete(
+    lesson_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user.get("user_id")
+    
+    # Check if this lesson was already marked complete by this user
+    existing_progress = db.query(LessonProgress).filter(
+        LessonProgress.user_id == user_id, 
+        LessonProgress.lesson_id == lesson_id
+    ).first()
+    
+    if existing_progress:
+        return {"message": "Lesson already completed!", "progress": existing_progress}
+        
+    # If not, create a new completion timestamp record
+    progress_record = LessonProgress(user_id=user_id, lesson_id=lesson_id, is_completed=True)
+    db.add(progress_record)
+    db.commit()
+    db.refresh(progress_record)
+    
+    return {"message": "Lesson progress updated successfully!", "progress": progress_record}
+
+from .models import Course, Lesson
+
+@app.on_event("startup")
+def seed_database():
+    """
+    The Onboarding Script: Automatically populates the database 
+    with Kingsford's real courses if the database is empty.
+    """
+    db = next(get_db())
+    
+    # Check if we already have data
+    course_count = db.query(Course).count()
+    if course_count == 0:
+        print("INFO: Database is empty. Commencing automatic data seeding...")
+        
+        # 1. Seed Course #1
+        web_dev_course = Course(
+            title="Introduction to Web Development",
+            description="Learn the fundamentals of HTML, CSS, and JavaScript to build modern websites from scratch.",
+            instructor_id="inst-1",
+            thumbnail="/images/Book2.jpg",
+            category="Software Development",
+            difficulty="Beginner",
+            duration="8 weeks",
+            language="English",
+            price=0.0,
+            is_free=True,
+            tags="HTML, CSS, JavaScript",
+            learning_outcomes="Understand how the web works, Build responsive layouts, Master JavaScript fundamentals"
+        )
+        db.add(web_dev_course)
+        db.commit() # Saves the course so it gets an ID
+        
+        # Seed Lesson for Course #1
+        html_lesson = Lesson(
+            title="Introduction to HTML",
+            description="Learn the basic structure of HTML documents and common tags.",
+            duration="45 min",
+            video_url="https://youtu.be/Wkn2hqIo0iE",
+            content="HTML is the standard markup language for web pages.",
+            order=1,
+            course_id=web_dev_course.id # Pinned directly to the newly created course ID
+        )
+        db.add(html_lesson)
+        db.commit()
+        # 2. Seed Course #2
+        python_course = Course(
+            title="Python for Data Science",
+            description="Master Python programming with a focus on data analysis, visualization, and machine learning basics.",
+            instructor_id="inst-1",
+            thumbnail="/placeholder.jpg",
+            category="Data Science & AI",
+            difficulty="Intermediate",
+            duration="10 weeks",
+            language="English",
+            price=0.0,
+            is_free=True,
+            tags="Python, Pandas, NumPy",
+            learning_outcomes="Write Python scripts confidently, Analyze datasets, Build simple ML models"
+        )
+        db.add(python_course)
+        
+        db.commit()
+        print("INFO: Database seeding completed successfully! 2 Courses loaded.")

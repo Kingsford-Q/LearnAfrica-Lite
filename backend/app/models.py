@@ -4,13 +4,24 @@ from datetime import datetime
 
 
 # --- 1. THE COURSE BLUEPRINT ---
+# --- 1. THE COURSE BLUEPRINT (UPDATED FOR KINGSFORD'S CONTRACT) ---
 class Course(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     description: str
-    instructor: str
+    instructor_id: str  # Kept as a string ID to match Kingsford's 'inst-1'
+    thumbnail: str = "/placeholder.jpg"
+    category: str
+    difficulty: str
+    duration: str
+    language: str = "English"
     price: float = 0.0
     is_free: bool = True
+    payment_link: Optional[str] = ""
+    
+    # Storing arrays as text lines for our simple MVP database layout
+    tags: Optional[str] = ""  # E.g., "HTML, CSS, JavaScript"
+    learning_outcomes: Optional[str] = ""  # Text block of outcomes
 
     # PYTHON LINK: Automatically bundles all lessons belonging to this course
     lessons: List["Lesson"] = Relationship(back_populates="course")
@@ -61,3 +72,11 @@ class Enrollment(SQLModel, table=True):
     status: str = 'active'
     user_id: int = Field(foreign_key='user.id') 
     course_id: int = Field(foreign_key='course.id') # <-- Securely closed and completed
+
+# --- 6. LESSON PROGRESS TRACKING ---
+class LessonProgress(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key='user.id')
+    lesson_id: int = Field(foreign_key='lesson.id')
+    is_completed: bool = Field(default=False)
+    completed_at: datetime = Field(default_factory=datetime.utcnow)
