@@ -307,7 +307,7 @@ export default function StudentDashboard() {
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground mb-1">{course.category}</p>
                 <h3 className="font-semibold text-foreground line-clamp-2 mb-2">{course.title}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{course.instructor}</p>
+                <p className="text-sm text-muted-foreground mb-3">{course.instructorName}</p>
                 <Link to={`/courses/${course.id}`}>
                   <Button variant="outline" size="sm" className="w-full">Learn More</Button>
                 </Link>

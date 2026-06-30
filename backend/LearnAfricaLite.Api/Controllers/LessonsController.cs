@@ -1,0 +1,137 @@
+using LearnAfricaLite.Api.Data;
+using LearnAfricaLite.Api.DTOs;
+using LearnAfricaLite.Api.Models;
+using LearnAfricaLite.Api.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace LearnAfricaLite.Api.Controllers;
+
+[ApiController]
+public class LessonsController(AppDbContext db) : ControllerBase
+{
+    [HttpPost("api/sections/{sectionId:guid}/lessons")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin},{Roles.SuperAdmin}")]
+    public async Task<ActionResult<LessonDetailDto>> Create(Guid sectionId, CreateLessonRequest request)
+    {
+        var section = await db.Sections.Include(s => s.Course).FirstOrDefaultAsync(s => s.Id == sectionId);
+        if (section?.Course is null) return NotFound();
+        if (!IsOwnerOrStaff(section.Course)) return Forbid();
+
+        var lesson = new Lesson
+        {
+            CourseId = section.CourseId,
+            SectionId = sectionId,
+            Title = request.Title,
+            Description = request.Description ?? string.Empty,
+            Duration = request.Duration ?? string.Empty,
+            VideoUrl = request.VideoUrl,
+            VideoFile = request.VideoFile,
+            Content = request.Content ?? string.Empty,
+            Order = request.Order,
+        };
+
+        db.Lessons.Add(lesson);
+        await db.SaveChangesAsync();
+
+        return lesson.ToDetailDto(false, null);
+    }
+
+    [HttpGet("api/lessons/{id:guid}")]
+    [Authorize]
+    public async Task<ActionResult<LessonDetailDto>> Get(Guid id)
+    {
+        var lesson = await db.Lessons.Include(l => l.Resources).Include(l => l.Course)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (lesson is null) return NotFound();
+
+        var userId = User.GetUserId();
+        var progress = await db.LessonProgresses.FirstOrDefaultAsync(lp => lp.LessonId == id && lp.UserId == userId);
+
+        return lesson.ToDetailDto(progress?.IsCompleted ?? false, progress?.QuizScore);
+    }
+
+    [HttpPut("api/lessons/{id:guid}")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin},{Roles.SuperAdmin}")]
+    public async Task<ActionResult<LessonDetailDto>> Update(Guid id, UpdateLessonRequest request)
+    {
+        var lesson = await db.Lessons.Include(l => l.Course).Include(l => l.Resources)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (lesson?.Course is null) return NotFound();
+        if (!IsOwnerOrStaff(lesson.Course)) return Forbid();
+
+        if (request.Title is not null) lesson.Title = request.Title;
+        if (request.Description is not null) lesson.Description = request.Description;
+        if (request.Duration is not null) lesson.Duration = request.Duration;
+        if (request.VideoUrl is not null) lesson.VideoUrl = request.VideoUrl;
+        if (request.VideoFile is not null) lesson.VideoFile = request.VideoFile;
+        if (request.Content is not null) lesson.Content = request.Content;
+        if (request.Order is not null) lesson.Order = request.Order.Value;
+
+        await db.SaveChangesAsync();
+        return lesson.ToDetailDto(false, null);
+    }
+
+    [HttpDelete("api/lessons/{id:guid}")]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin},{Roles.SuperAdmin}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var lesson = await db.Lessons.Include(l => l.Course).FirstOrDefaultAsync(l => l.Id == id);
+        if (lesson?.Course is null) return NotFound();
+        if (!IsOwnerOrStaff(lesson.Course)) return Forbid();
+
+        db.Lessons.Remove(lesson);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPost("api/lessons/{id:guid}/complete")]
+    [Authorize]
+    public async Task<ActionResult<LessonDetailDto>> Complete(Guid id)
+    {
+        var lesson = await db.Lessons.Include(l => l.Resources).FirstOrDefaultAsync(l => l.Id == id);
+        if (lesson is null) return NotFound();
+
+        var userId = User.GetUserId();
+        var progress = await db.LessonProgresses.FirstOrDefaultAsync(lp => lp.LessonId == id && lp.UserId == userId);
+        if (progress is null)
+        {
+            progress = new LessonProgress { LessonId = id, UserId = userId };
+            db.LessonProgresses.Add(progress);
+        }
+        progress.IsCompleted = true;
+        progress.CompletedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(); // persist before recomputing progress, which re-queries the DB
+
+        await UpdateCourseProgressAsync(db, userId, lesson.CourseId);
+        await db.SaveChangesAsync();
+
+        return lesson.ToDetailDto(true, progress.QuizScore);
+    }
+
+    internal static async Task UpdateCourseProgressAsync(AppDbContext db, Guid userId, Guid courseId)
+    {
+        var enrollment = await db.Enrollments.FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+        if (enrollment is null) return;
+
+        var courseLessonIds = await db.Lessons.Where(l => l.CourseId == courseId).Select(l => l.Id).ToListAsync();
+        if (courseLessonIds.Count == 0) return;
+
+        var completedCount = await db.LessonProgresses
+            .CountAsync(lp => lp.UserId == userId && courseLessonIds.Contains(lp.LessonId) && lp.IsCompleted);
+
+        enrollment.ProgressPercent = (int)Math.Round(completedCount * 100.0 / courseLessonIds.Count);
+        if (enrollment.ProgressPercent >= 100 && enrollment.CompletedAt is null)
+        {
+            enrollment.CompletedAt = DateTime.UtcNow;
+            await CertificateIssuer.IssueIfEligibleAsync(db, userId, courseId);
+        }
+    }
+
+    private bool IsOwnerOrStaff(Course course)
+    {
+        if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.SuperAdmin)) return true;
+        return User.GetUserId() == course.InstructorId;
+    }
+}

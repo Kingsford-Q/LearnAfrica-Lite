@@ -7,6 +7,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import InstructorLayout from './layouts/InstructorLayout';
+import AdminLayout from './layouts/AdminLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 
 // Pages
@@ -22,10 +23,15 @@ import { QuizResultsPage } from './pages/Quiz/QuizResultsPage';
 import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import { InstructorDashboard } from './pages/Instructor/InstructorDashboard';
 import { CreateCoursePage } from './pages/Instructor/CreateCoursePage';
+import { MyCoursesPage } from './pages/Instructor/MyCoursesPage';
+import { CourseStudentsPage } from './pages/Instructor/CourseStudentsPage';
+import { InstructorReviewsPage } from './pages/Instructor/InstructorReviewsPage';
 import { AnalyticsPage } from './pages/Instructor/AnalyticsPage';
+import InstructorApprovalsPage from './pages/Admin/InstructorApprovalsPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CertificatePage from './pages/Certificate/CertificatePage';
+import VerifyCredentialPage from './pages/Verify/VerifyCredentialPage';
 import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
 import NotFoundPage from './pages/NotFound/NotFoundPage';
 import InstructorOnboarding from './pages/Auth/InstructorOnboarding';
@@ -79,6 +85,8 @@ function AppRoutes() {
         <Route index element={<LandingPage />} />
         <Route path="courses" element={<CoursesPage />} />
         <Route path="courses/:courseId" element={<CourseDetailPage />} />
+        <Route path="verify" element={<VerifyCredentialPage />} />
+        <Route path="verify/:code" element={<VerifyCredentialPage />} />
       </Route>
 
       {/* Auth Routes */}
@@ -154,9 +162,8 @@ function AppRoutes() {
         }
       >
         <Route path="course/:courseId/lesson/:lessonId" element={<LessonPage />} />
-        {/* Fixed: Removed leading slash from relative child path */}
-        <Route path="course/:courseId/quiz/:lessonId" element={<QuizPage />} />        
-        <Route path="course/:courseId/quiz/:lessonId/results" element={<QuizResultsPage />} />
+        <Route path="course/:courseId/quiz/:quizId" element={<QuizPage />} />
+        <Route path="course/:courseId/quiz/:quizId/results" element={<QuizResultsPage />} />
       </Route>
 
       {/* Instructor Routes */}
@@ -169,8 +176,24 @@ function AppRoutes() {
         }
       >
         <Route index element={<InstructorDashboard />} />
+        <Route path="courses" element={<MyCoursesPage />} />
         <Route path="courses/create" element={<CreateCoursePage />} />
+        <Route path="courses/:courseId/students" element={<CourseStudentsPage />} />
+        <Route path="reviews" element={<InstructorReviewsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
+      </Route>
+
+      {/* Admin / SuperAdmin Routes */}
+      <Route
+        path="admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="instructors" replace />} />
+        <Route path="instructors" element={<InstructorApprovalsPage />} />
       </Route>
 
       {/* 404 */}

@@ -34,14 +34,13 @@ const useResponsiveItemsPerPage = () => {
 }
 
 export function CoursesPage() {
-  const { 
-    courses: liveCourses = [], 
-    categories = [], 
-    difficulties = [], 
-    instructors = [] 
+  const {
+    courses: liveCourses = [],
+    categories = [],
+    difficulties = [],
+    coursesLoading: isLoading,
   } = useAuth()
   const itemsPerPage = useResponsiveItemsPerPage()
-  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
   const [selectedDifficulty, setSelectedDifficulty] = useState('All Levels')
@@ -49,11 +48,6 @@ export function CoursesPage() {
   const [viewMode, setViewMode] = useState('grid')
   const [showFilters, setShowFilters] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000)
-    return () => clearTimeout(timer)
-  }, [])
 
   const filteredCourses = useMemo(() => {
     let result = [...liveCourses];
@@ -66,8 +60,7 @@ export function CoursesPage() {
         const titleMatch = course.title?.toLowerCase().includes(query) ?? false;
         const descMatch = course.description?.toLowerCase().includes(query) ?? false;
 
-        const instructorObj = instructors.find(ins => ins.id === course.instructorId);
-        const instructorMatch = instructorObj?.name?.toLowerCase().includes(query) ?? false;
+        const instructorMatch = course.instructorName?.toLowerCase().includes(query) ?? false;
 
         const categoryMatch = course.category?.toLowerCase().includes(query) ?? false;
         
@@ -189,7 +182,7 @@ export function CoursesPage() {
             key={i}
             onClick={() => setCurrentPage(i)}
             className={cn(
-              'h-10 min-w-[40px] rounded-lg text-sm font-medium transition-all active:scale-95',
+              'h-10 min-w-10 rounded-lg text-sm font-medium transition-all active:scale-95',
               currentPage === i
                 ? 'bg-primary text-primary-foreground shadow-md'
                 : 'border border-input hover:bg-accent'
@@ -355,7 +348,7 @@ export function CoursesPage() {
                     <CourseCard
                       key={course.id}
                       course={course}
-                      enrolled={course.progress > 0}
+                      enrolled={course.isEnrolled}
                       searchQuery={searchQuery}
                     />
                   ))}

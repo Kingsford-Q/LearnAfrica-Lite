@@ -4,8 +4,7 @@ import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import { Button } from '@/components/common/Button'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/context/AuthContext' // Updated path to your context
-
+import { fileUrl } from '@/lib/apiClient'
 
 const difficultyColors = {
   Beginner: 'success',
@@ -16,10 +15,8 @@ const difficultyColors = {
 
 export default function CourseCard({ course, enrolled = false, searchQuery = '' }) {
 
-  const { instructors } = useAuth();
-  const instructor = instructors.find((inst) => inst.id === course.instructorId);
-  const avatar = instructor?.avatar || '/default-avatar.png';
-  const name = instructor?.name || 'No name available.';
+  const avatar = fileUrl(course.instructorAvatar) || '/default-avatar.png';
+  const name = course.instructorName || 'No name available.';
 
   return (
    <Card className="overflow-hidden transition-all duration-300 group flex flex-col h-full bg-card hover:shadow-xl hover:scale-[1.02] cursor-pointer">

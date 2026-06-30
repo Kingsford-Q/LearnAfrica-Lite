@@ -46,7 +46,7 @@ export default function ProgressCard({ course }) {
               </span>
 
               <span className="truncate text-muted-foreground">
-                {course.instructor}
+                {course.instructorName}
               </span>
             </div>
 

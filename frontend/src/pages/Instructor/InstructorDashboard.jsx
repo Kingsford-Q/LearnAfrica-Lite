@@ -12,7 +12,7 @@ import { Button } from '@/components/common/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
 import StatsCard from '@/components/dashboard/StatsCard';
 import { useAuth } from '@/context/AuthContext';
-import { instructorStats as mockData } from '@/data/mockData';
+import { api } from '@/lib/apiClient';
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 const ITEMS_PER_PAGE = 5;
@@ -26,16 +26,11 @@ export function InstructorDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setStats(mockData);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStats();
+    setIsLoading(true);
+    api.get('/api/courses/mine/stats')
+      .then((data) => setStats(data))
+      .catch(() => setStats(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const getInitials = (name) => {
@@ -91,7 +86,7 @@ export function InstructorDashboard() {
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Monthly Enrollments</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] sm:h-[300px] w-full">
+            <div className="h-62.5 sm:h-75 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={stats.monthlyEnrollments} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <defs>
@@ -116,7 +111,7 @@ export function InstructorDashboard() {
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Course Performance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] sm:h-[300px] w-full">
+            <div className="h-62.5 sm:h-75 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.coursePerformance} layout="vertical" margin={{ left: -10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} strokeOpacity={0.1} />
@@ -176,7 +171,7 @@ export function InstructorDashboard() {
             </thead>
             <tbody className="divide-y divide-border/40">
               {paginatedStudents.map((s) => (
-                <tr key={s.id} className="hover:bg-muted/20 transition-colors">
+                <tr key={s.userId} className="hover:bg-muted/20 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-semibold text-secondary-foreground">
@@ -203,7 +198,7 @@ export function InstructorDashboard() {
         {/* Mobile List View (Hidden on Desktop/Tablet) */}
         <div className="md:hidden space-y-3">
           {paginatedStudents.map((s) => (
-            <Card key={s.id} className="p-4 border-border/50 shadow-sm space-y-4">
+            <Card key={s.userId} className="p-4 border-border/50 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
                   {getInitials(s.name)}

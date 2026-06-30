@@ -19,7 +19,7 @@ export function SignupPage() {
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [acceptTerms, setAcceptTerms] = useState(false)
-  const { login } = useAuth()
+  const { signup } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -48,17 +48,20 @@ export function SignupPage() {
     e.preventDefault()
     if (!validate()) return
 
-    setIsLoading(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
     if (formData.isInstructor) {
       navigate('/signup/instructor-onboarding', { state: { ...formData } })
-    } else {
-      login({ email: formData.email, name: formData.name, role: 'student' })
-      navigate(from, { replace: true })
+      return
     }
-    setIsLoading(false)
+
+    setIsLoading(true)
+    try {
+      await signup({ name: formData.name, email: formData.email, password: formData.password })
+      navigate(from, { replace: true })
+    } catch (err) {
+      setErrors({ submit: err.message || 'Could not create account' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -71,6 +74,11 @@ export function SignupPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.submit && (
+          <div className="p-3 rounded bg-destructive/10 text-destructive text-sm font-medium text-center">
+            {errors.submit}
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <div className="relative">

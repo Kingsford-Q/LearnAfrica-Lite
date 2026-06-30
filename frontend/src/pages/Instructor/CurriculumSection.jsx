@@ -203,13 +203,14 @@ function CurriculumItemEditor({ item, index, onUpdate, onRemove }) {
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Lesson Notes</label>
-                <textarea 
+                <textarea
                   value={item.content || ''}
                   onChange={(e) => onUpdate({ content: e.target.value })}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs outline-none min-h-[100px] resize-none leading-relaxed"
                   placeholder="Provide detailed notes for this lesson..."
                 />
               </div>
+              <ResourcesEditor item={item} onUpdate={onUpdate} />
             </div>
           ) : (
             <QuizEditor item={item} onUpdate={onUpdate} />
@@ -321,9 +322,9 @@ function QuizEditor({ item, onUpdate }) {
         </div>
       ))}
 
-      <Button 
-        variant="outline" 
-        size="sm" 
+      <Button
+        variant="outline"
+        size="sm"
         className="w-full h-10 border-dashed border-primary/30 text-primary hover:bg-primary/5 text-[10px] font-bold uppercase"
         onClick={addQuestion}
       >
@@ -331,6 +332,59 @@ function QuizEditor({ item, onUpdate }) {
       </Button>
     </div>
   )
+}
+
+function ResourcesEditor({ item, onUpdate }) {
+  const resources = item.resources || [];
+
+  const addResource = () => {
+    onUpdate({ resources: [...resources, { id: Date.now(), title: '', url: '', type: 0 }] });
+  };
+
+  const updateResource = (id, data) => {
+    onUpdate({ resources: resources.map(r => r.id === id ? { ...r, ...data } : r) });
+  };
+
+  const removeResource = (id) => {
+    onUpdate({ resources: resources.filter(r => r.id !== id) });
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Resources</label>
+      <div className="space-y-2">
+        {resources.map((r) => (
+          <div key={r.id} className="flex items-center gap-2">
+            <Download className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <input
+              value={r.title}
+              onChange={(e) => updateResource(r.id, { title: e.target.value })}
+              className="w-2/5 bg-background border border-border rounded-lg px-2.5 py-1.5 text-xs outline-none"
+              placeholder="Resource name"
+            />
+            <input
+              value={r.url}
+              onChange={(e) => updateResource(r.id, { url: e.target.value })}
+              className="flex-1 bg-background border border-border rounded-lg px-2.5 py-1.5 text-xs outline-none"
+              placeholder="https://..."
+            />
+            <button type="button" onClick={() => removeResource(r.id)} className="shrink-0 text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full h-9 border-dashed text-[10px] font-bold uppercase mt-1"
+        onClick={addResource}
+      >
+        <Plus className="h-3.5 w-3.5 mr-2" /> Add Resource
+      </Button>
+    </div>
+  );
 }
 
 function StatCard({ icon: Icon, label, value }) {

@@ -1,20 +1,23 @@
-import { Link } from 'react-router-dom'
-import { 
-  BookOpen, 
-  Users, 
-  Award, 
-  Play, 
-  CheckCircle, 
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  BookOpen,
+  Users,
+  Award,
+  Play,
+  CheckCircle,
   ArrowRight,
   Star,
   Zap,
   Target,
-  TrendingUp
+  TrendingUp,
+  ShieldCheck,
+  Search
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
+import { Input } from '@/components/common/Input'
 import { useAuth } from '@/context/AuthContext'
-import { useMemo, lazy, Suspense } from 'react'
+import { useMemo, useState, lazy, Suspense } from 'react'
 import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
 
 // Lazy load the CourseCard component
@@ -75,6 +78,14 @@ const stats = [
 
 export function LandingPage() {
 const { user, courses = [], testimonials = [], isLoading } = useAuth()
+  const navigate = useNavigate()
+  const [verifyCode, setVerifyCode] = useState('')
+
+  const handleVerifySubmit = (e) => {
+    e.preventDefault()
+    if (!verifyCode.trim()) return
+    navigate(`/verify/${encodeURIComponent(verifyCode.trim())}`)
+  }
 
   const displayCourses = useMemo(() => {
     if (!user) return courses.slice(0, 3);
@@ -403,6 +414,33 @@ const { user, courses = [], testimonials = [], isLoading } = useAuth()
               </p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Verify Credential Section */}
+      <section className="py-20 lg:py-32">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-xl text-center">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-3xl font-bold sm:text-4xl mb-4">Verify a Credential</h2>
+            <p className="text-muted-foreground text-lg mb-8">
+              Enter an official certificate or badge ID below to verify its regulatory authenticity.
+            </p>
+            <form onSubmit={handleVerifySubmit} className="space-y-4">
+              <Input
+                value={verifyCode}
+                onChange={(e) => setVerifyCode(e.target.value)}
+                placeholder="e.g. LA-CERT-ABCD-1A2B"
+                className="h-14 text-center text-base rounded-2xl shadow-sm"
+              />
+              <Button type="submit" size="lg" disabled={!verifyCode.trim()} className="w-full sm:w-auto gap-2 px-10 h-12 rounded-xl font-semibold">
+                <Search className="h-4 w-4" />
+                Verify Credential
+              </Button>
+            </form>
+          </div>
         </div>
       </section>
 

@@ -43,22 +43,20 @@ export default function InstructorOnboarding() {
     setIsLoading(true)
 
     try {
-      // Simulate API call - In production, this hits your Node/Express endpoint
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
       // Combine Step 1 (Auth) and Step 2 (Professional) data
       const completeInstructorData = {
         ...locationState, // contains name, email, password
-        ...formData,      // contains bio, location, website
-        role: 'instructor'
+        ...formData,      // contains bio, title, location, website
+        isInstructor: true,
       }
 
       await signup(completeInstructorData)
-      
-      // Navigate to the instructor's specific view
+
+      // Instructor capabilities only unlock once a SuperAdmin approves the
+      // application; the instructor dashboard itself shows the pending state.
       navigate('/instructor')
     } catch (err) {
-      setErrors({ submit: 'Failed to create instructor profile. Please try again.' })
+      setErrors({ submit: err.message || 'Failed to create instructor profile. Please try again.' })
     } finally {
       setIsLoading(false)
     }

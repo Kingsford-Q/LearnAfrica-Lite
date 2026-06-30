@@ -1,20 +1,20 @@
-import { 
-  BookOpen, 
-  Users, 
-  DollarSign, 
+import { useState, useEffect } from 'react'
+import {
+  BookOpen,
+  Users,
+  DollarSign,
   TrendingUp,
   Star,
   Clock,
   Target,
-  Award
 } from 'lucide-react'
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -23,25 +23,26 @@ import {
   Cell,
   LineChart,
   Line,
-  Legend
+  Legend,
 } from 'recharts'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card'
-import  StatsCard  from '@/components/dashboard/StatsCard'
-import { instructorStats } from '@/data/mockData'
+import StatsCard from '@/components/dashboard/StatsCard'
+import { api } from '@/lib/apiClient'
 
+// Local placeholder data for charts that don't have a dedicated endpoint yet
 const revenueData = [
   { month: 'Jan', revenue: 2400 },
   { month: 'Feb', revenue: 2800 },
   { month: 'Mar', revenue: 3200 },
   { month: 'Apr', revenue: 2900 },
   { month: 'May', revenue: 3600 },
-  { month: 'Jun', revenue: 4100 }
+  { month: 'Jun', revenue: 4100 },
 ]
 
 const completionData = [
   { name: 'Completed', value: 65, color: 'hsl(var(--success))' },
   { name: 'In Progress', value: 25, color: 'hsl(var(--primary))' },
-  { name: 'Not Started', value: 10, color: 'hsl(var(--muted))' }
+  { name: 'Not Started', value: 10, color: 'hsl(var(--muted))' },
 ]
 
 const engagementData = [
@@ -51,10 +52,21 @@ const engagementData = [
   { day: 'Thu', views: 200, enrollments: 22 },
   { day: 'Fri', views: 170, enrollments: 17 },
   { day: 'Sat', views: 90, enrollments: 8 },
-  { day: 'Sun', views: 70, enrollments: 6 }
+  { day: 'Sun', views: 70, enrollments: 6 },
 ]
 
 export function AnalyticsPage() {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    api.get('/api/courses/mine/stats')
+      .then((data) => setStats(data))
+      .catch(() => {})
+  }, [])
+
+  const monthlyEnrollments = stats?.monthlyEnrollments ?? []
+  const coursePerformance = stats?.coursePerformance ?? []
+
   return (
     <div className="space-y-8">
       <div>
@@ -68,34 +80,34 @@ export function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Revenue"
-          value={`$${instructorStats.totalEarnings.toLocaleString()}`}
+          value={stats ? `$${stats.totalEarnings.toLocaleString()}` : '—'}
           icon={DollarSign}
           trend="up"
           trendValue="12%"
         />
         <StatsCard
           title="Total Students"
-          value={instructorStats.totalStudents.toLocaleString()}
+          value={stats ? stats.totalStudents.toLocaleString() : '—'}
           icon={Users}
           trend="up"
           trendValue="8%"
         />
         <StatsCard
           title="Completion Rate"
-          value={`${instructorStats.completionRate}%`}
+          value={stats ? `${stats.completionRate}%` : '—'}
           icon={Target}
           trend="up"
           trendValue="5%"
         />
         <StatsCard
           title="Average Rating"
-          value={instructorStats.averageRating}
+          value={stats ? stats.averageRating : '—'}
           icon={Star}
         />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Revenue Chart */}
+        {/* Revenue Chart (static placeholder until revenue endpoint exists) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -109,46 +121,25 @@ export function AnalyticsPage() {
                 <AreaChart data={revenueData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="month" 
-                    className="text-xs fill-muted-foreground"
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    className="text-xs fill-muted-foreground"
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
-                  />
+                  <XAxis dataKey="month" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
+                  <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
                   <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value) => [`$${value}`, 'Revenue']}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    formatter={(v) => [`$${v}`, 'Revenue']}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="hsl(var(--chart-1))" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorRevenue)" 
-                  />
+                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Enrollment Trends */}
+        {/* Enrollment Trends (real backend data) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -159,38 +150,21 @@ export function AnalyticsPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={instructorStats.monthlyEnrollments}>
+                <BarChart data={monthlyEnrollments}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="month" 
-                    className="text-xs fill-muted-foreground"
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    className="text-xs fill-muted-foreground"
-                    tickLine={false}
-                    axisLine={false}
-                  />
+                  <XAxis dataKey="month" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
+                  <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                   />
-                  <Bar 
-                    dataKey="enrollments" 
-                    fill="hsl(var(--chart-2))" 
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="enrollments" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Completion Rate Pie */}
+        {/* Course Completion (static placeholder) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -218,12 +192,8 @@ export function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value) => `${value}%`}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    formatter={(v) => `${v}%`}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -231,10 +201,7 @@ export function AnalyticsPage() {
             <div className="flex justify-center gap-6 mt-4">
               {completionData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
-                  <div 
-                    className="h-3 w-3 rounded-full" 
-                    style={{ backgroundColor: item.color }}
-                  />
+                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-sm text-muted-foreground">{item.name}</span>
                 </div>
               ))}
@@ -242,7 +209,7 @@ export function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Weekly Engagement */}
+        {/* Weekly Engagement (static placeholder) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -255,39 +222,14 @@ export function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={engagementData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="day" 
-                    className="text-xs fill-muted-foreground"
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    className="text-xs fill-muted-foreground"
-                    tickLine={false}
-                    axisLine={false}
-                  />
+                  <XAxis dataKey="day" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
+                  <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="views" 
-                    stroke="hsl(var(--chart-3))" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="enrollments" 
-                    stroke="hsl(var(--chart-4))" 
-                    strokeWidth={2}
-                    dot={false}
-                  />
+                  <Line type="monotone" dataKey="views" stroke="hsl(var(--chart-3))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="enrollments" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -295,7 +237,7 @@ export function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Course Performance Table */}
+      {/* Course Performance Table (real backend data) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -316,17 +258,14 @@ export function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {instructorStats.coursePerformance.map((course, index) => (
-                  <tr key={index} className="border-b border-border last:border-b-0 hover:bg-muted/50">
+                {coursePerformance.map((course, index) => (
+                  <tr key={course.name} className="border-b border-border last:border-b-0 hover:bg-muted/50">
                     <td className="p-4 font-medium">{course.name}</td>
                     <td className="p-4 text-muted-foreground">{course.students.toLocaleString()}</td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <div className="h-2 w-20 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full"
-                            style={{ width: `${course.completion}%` }}
-                          />
+                          <div className="h-full bg-primary rounded-full" style={{ width: `${course.completion}%` }} />
                         </div>
                         <span className="text-sm text-muted-foreground">{course.completion}%</span>
                       </div>
@@ -338,10 +277,17 @@ export function AnalyticsPage() {
                       </div>
                     </td>
                     <td className="p-4 text-muted-foreground">
-                      ${((course.students * 0.8 * (49 + index * 10))).toFixed(0)}
+                      ${(course.students * 0.8 * (49 + index * 10)).toFixed(0)}
                     </td>
                   </tr>
                 ))}
+                {coursePerformance.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground text-sm">
+                      No course data yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

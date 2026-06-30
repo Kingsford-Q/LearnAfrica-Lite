@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { 
-  Clock, 
-  Users, 
-  Star, 
+import {
+  Clock,
+  Users,
+  Star,
   BookOpen,
-  Play, 
+  Play,
   CheckCircle,
   ChevronDown,
   ChevronUp,
@@ -15,65 +15,114 @@ import {
   AlertCircle,
   XCircle,
   Lock,
-  Loader2 
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import  CourseCard  from '@/components/course/CourseCard'
 import { useAuth } from '@/context/AuthContext' // Updated path to your context
+import { api, fileUrl } from '@/lib/apiClient'
 import { cn } from '@/lib/utils'
 
 export function CourseDetailPage() {
   const { courseId } = useParams()
   const navigate = useNavigate()
-  
+
   // --- STATE DECLARATIONS ---
   const [expandedSection, setExpandedSection] = useState(true)
-  const [isLocalLoading, setIsLocalLoading] = useState(true)
   const [reviewText, setReviewText] = useState('')
   const [selectedRating, setSelectedRating] = useState(0)
   const [visibleReviews, setVisibleReviews] = useState(3)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isEnrolling, setIsEnrolling] = useState(false)
+
+  const [courseDetail, setCourseDetail] = useState(null)
+  const [reviews, setReviews] = useState([])
+  const [instructorProfile, setInstructorProfile] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   // --- AUTH-DRIVEN DATA CONTEXT ---
-  const { user, courses, lessons, enrollInCourse, addReview, instructors } = useAuth() 
+  const { user, courses, refreshCourses, refreshEnrollments } = useAuth()
 
-  // --- UNCONDITIONAL HOOKS (MUST RUN BEFORE ANY RETURN) ---
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const fetchReviews = useCallback(async () => {
+    try {
+      setReviews(await api.get(`/api/courses/${courseId}/reviews`))
+    } catch {
+      setReviews([])
+    }
   }, [courseId])
 
-  // --- MEMOIZED CHECKS & DATA FETCHING (SAFE WRAPPED WITH ?. ) ---
-  const course = useMemo(() => 
-    courses.find(c => String(c.id) === String(courseId)), 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(false)
+
+    api.get(`/api/courses/${courseId}`)
+      .then(async (data) => {
+        if (cancelled) return
+        setCourseDetail(data)
+        api.get(`/api/instructors/${data.instructorId}`).then((inst) => {
+          if (!cancelled) setInstructorProfile(inst)
+        }).catch(() => {})
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    fetchReviews()
+
+    return () => { cancelled = true }
+  }, [courseId, fetchReviews])
+
+  // --- MEMOIZED DERIVED DATA ---
+  const liveCourse = useMemo(() =>
+    courses.find(c => String(c.id) === String(courseId)),
   [courseId, courses])
 
-  const courseLessons = useMemo(() => 
-    lessons.filter(l => String(l.courseId) === String(courseId)),
-  [courseId, lessons])
+  const courseLessons = useMemo(() =>
+    courseDetail ? courseDetail.sections.flatMap(s => s.lessons) : [],
+  [courseDetail])
 
-  const isEnrolled = useMemo(() => 
-    user?.enrolledCourses?.includes(Number(courseId)) || (course?.progress > 0),
-  [user, courseId, course])
+  const isEnrolled = !!liveCourse?.isEnrolled
+  const progress = liveCourse?.progress ?? 0
+  const isCourseCompleted = progress === 100
 
-  const isInstructorOfCourse = useMemo(() => 
-    user && String(user.id) === String(course?.instructorId),
-  [user, course?.instructorId])
+  const isInstructorOfCourse = useMemo(() =>
+    user && courseDetail && String(user.id) === String(courseDetail.instructorId),
+  [user, courseDetail])
 
-  const instructor = useMemo(() => 
-    instructors.find((inst) => inst.id === course?.instructorId),
-  [instructors, course?.instructorId])
+  const avatar = fileUrl(instructorProfile?.avatar || courseDetail?.instructorAvatar) || '/default-avatar.png'
+  const name = instructorProfile?.name || courseDetail?.instructorName || 'No name available.'
+  const bio = instructorProfile?.bio || 'No biography available.'
+  const title = instructorProfile?.title || 'Instructor'
+  const rating = instructorProfile?.rating || 'No ratings yet'
+  const totalStudents = instructorProfile?.totalStudents ?? 'No students yet'
+  const instructorCourses = instructorProfile?.coursesCount || 0
 
-  useEffect(() => {
-    if (course) {
-      const timer = setTimeout(() => setIsLocalLoading(false), 400)
-      return () => clearTimeout(timer)
-    }
-  }, [course])
+  const relatedCourses = useMemo(() => {
+    if (!courseDetail) return []
+    return courses.filter(c =>
+      String(c.id) !== String(courseId) && c.category === courseDetail.category
+    ).slice(0, 3)
+  }, [courses, courseDetail, courseId])
 
-  // --- EARLY GUARD EXITS ---
-  if (!course) {
+  // --- LOADING / ERROR GUARDS ---
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (loadError || !courseDetail) {
     return (
       <div className="container py-20 text-center font-bold">
         Course not found
@@ -81,55 +130,25 @@ export function CourseDetailPage() {
     )
   }
 
-  // --- POST-GUARD VARIABLES (SAFE TO REFERENCE COURSE ASSUMED FOUND) ---
-  if (!instructor && !isLocalLoading) {
-    console.warn(`Instructor not found for ID: ${course.instructorId}`)
-  }
-
-  const avatar = instructor?.avatar || '/default-avatar.png'
-  const name = instructor?.name || 'No name available.'
-  const bio = instructor?.bio || 'No biography available.'
-  const title = instructor?.title || 'Instructor'
-  const rating = instructor?.rating || 'No ratings yet'
-  const totalStudents = instructor?.totalStudents || 'No students yet'
-  const instructorCourses = instructor?.coursesCount || 0
-
-  const relatedCourses = courses.filter(c => 
-    String(c.id) !== String(courseId) && c.category === course.category
-  ).slice(0, 3)
-
-  // --- PROGRESS & NAVIGATION LOGIC ---
-  const completedLessonsCount = courseLessons.filter(l => l.isCompleted).length
-  const progress = Math.round((completedLessonsCount / courseLessons.length) * 100) || 0
-  const isCourseCompleted = progress === 100
-
-  const averageRating = useMemo(() => {
-    if (!course.reviews || course.reviews.length === 0) return 0
-    const total = course.reviews.reduce((acc, rev) => acc + rev.rating, 0)
-    return (total / course.reviews.length).toFixed(1)
-  }, [course.reviews])
-
-  const totalResources = useMemo(() => {
-    return courseLessons.reduce((acc, lesson) => acc + (lesson.resources?.length || 0), 0)
-  }, [courseLessons])
+  const course = courseDetail
 
   // Find the correct lesson to resume
   const nextToCompleteLesson = courseLessons.find(l => !l.isCompleted)
-  const resumeLessonId = isCourseCompleted 
-    ? courseLessons[0]?.id 
+  const resumeLessonId = isCourseCompleted
+    ? courseLessons[0]?.id
     : (nextToCompleteLesson?.id || courseLessons[0]?.id)
 
-  const buttonText = useMemo(() => {
+  const buttonText = (() => {
     if (!user) return "Sign in to Enroll"
     if (!isEnrolled) return course.isFree ? "Enroll for Free" : "Buy Now"
     return isCourseCompleted ? "Review Course" : "Continue Learning"
-  }, [user, isEnrolled, isCourseCompleted, course.isFree])
+  })()
 
   // Strict linear locking logic
   const isLessonLocked = (index) => {
-    if (!isEnrolled) return true 
-    if (isCourseCompleted) return false 
-    if (index === 0) return false 
+    if (!isEnrolled) return true
+    if (isCourseCompleted) return false
+    if (index === 0) return false
     return !courseLessons[index - 1]?.isCompleted
   }
 
@@ -141,23 +160,15 @@ export function CourseDetailPage() {
     if (!reviewText.trim()) return alert("Please add a comment!")
 
     setIsSubmitting(true)
-    
-    const newReview = {
-      id: Date.now(),
-      userName: user.name, 
-      rating: selectedRating,
-      comment: reviewText.trim(),
-      date: new Date().toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      })
-    }
 
     try {
-      await addReview(course.id, newReview)
+      await api.post(`/api/courses/${course.id}/reviews`, {
+        rating: selectedRating,
+        comment: reviewText.trim(),
+      })
       setReviewText('')
       setSelectedRating(0)
+      await Promise.all([fetchReviews(), refreshCourses()])
     } catch (err) {
       console.error("Failed to post review", err)
       alert("Something went wrong. Please try again.")
@@ -168,18 +179,22 @@ export function CourseDetailPage() {
 
   const handleEnroll = async () => {
     if (!user) {
-      navigate('/login') 
+      navigate('/login')
       return
     }
 
+    setIsEnrolling(true)
     try {
       if (course.isFree) {
-        await enrollInCourse(course.id)
+        await api.post(`/api/courses/${course.id}/enroll`)
+        await Promise.all([refreshCourses(), refreshEnrollments()])
       } else if (course.paymentLink) {
         window.location.href = course.paymentLink
       }
     } catch (error) {
       console.error("Enrollment failed", error)
+    } finally {
+      setIsEnrolling(false)
     }
   }
 
@@ -239,7 +254,7 @@ export function CourseDetailPage() {
             <div className="lg:row-start-1">
               <Card className="sticky top-24 overflow-hidden border-2">
                 <div className="aspect-video bg-muted relative">
-                  <img src={course.thumbnail} alt={course.title} loading="lazy" className="h-full w-full object-cover" />
+                  <img src={fileUrl(course.thumbnail)} alt={course.title} loading="lazy" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-background/50">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Play className="h-7 w-7 ml-1" />
@@ -247,20 +262,15 @@ export function CourseDetailPage() {
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  {isLocalLoading ? (
-                    <div className="flex flex-col items-center justify-center py-4 space-y-2">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <p className="text-xs text-muted-foreground">Checking enrollment...</p>
-                    </div>
-                  ) : isEnrolled ? (
+                  {isEnrolled ? (
                     <>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm font-semibold">
                           <span>Your Progress</span>
-                          <span>{course.progress}%</span>
+                          <span>{progress}%</span>
                         </div>
                         <div className="h-2 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${course.progress}%` }} />
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
                         </div>
                       </div>
                       <Link to={`/learn/course/${course.id}/lesson/${resumeLessonId}`}>
@@ -293,8 +303,10 @@ export function CourseDetailPage() {
                           </Button>
                         </div>
                       ) : (
-                        <Button className="w-full" size="lg" onClick={handleEnroll}>
-                          {!user ? 'Sign in to Enroll' : (course.isFree ? 'Enroll for Free' : 'Buy Now')}
+                        <Button className="w-full" size="lg" onClick={handleEnroll} disabled={isEnrolling}>
+                          {isEnrolling ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : !user ? 'Sign in to Enroll' : (course.isFree ? 'Enroll for Free' : 'Buy Now')}
                         </Button>
                       )}
                     </>
@@ -303,16 +315,15 @@ export function CourseDetailPage() {
                   <div className="space-y-3 pt-4 border-t">
                     <h4 className="font-semibold">This course includes:</h4>
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                      
+
                       <li className={cn("flex items-center gap-2", courseLessons.length === 0 && "opacity-50")}>
                         <Play className="h-4 w-4 text-primary" />
                         {courseLessons.length > 0 ? `${courseLessons.length} lessons` : 'No lessons available'}
                       </li>
 
-
                       <li className={cn("flex items-center gap-2", !course.hasResources && "opacity-50")}>
                         <BookOpen className="h-4 w-4 text-primary" />
-                        {totalResources > 0 ? (totalResources === 1 ? `${totalResources} resource` : `${totalResources} resources`) : 'No additional resources'}
+                        {course.hasResources ? 'Downloadable resources' : 'No additional resources'}
                       </li>
 
                       <li className={cn("flex items-center gap-2", !course.hasCertificate && "opacity-50")}>
@@ -339,8 +350,7 @@ export function CourseDetailPage() {
             <Card className="p-6 border-muted/20 bg-card/50">
               <h2 className="text-lg md:text-xl font-bold mb-4">What you&apos;ll learn</h2>
               {course.learningOutcomes?.length > 0 ? (
-                /* Changed grid-cols-2 to a simple flex-col or a single-column grid */
-                <div className="grid gap-4"> 
+                <div className="grid gap-4">
                   {course.learningOutcomes.map((item, index) => (
                     <div key={index} className="flex items-start gap-3 group">
                       <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5 transition-transform group-hover:scale-110" />
@@ -364,7 +374,7 @@ export function CourseDetailPage() {
                 <div className="flex items-center gap-1.5 text-xs md:text-sm font-medium text-muted-foreground">
                   <span>{courseLessons.length} lessons</span>
                   <span className="text-muted-foreground/30">•</span>
-                  <span>{completedLessonsCount} completed</span>
+                  <span>{courseLessons.filter(l => l.isCompleted).length} completed</span>
                 </div>
               </div>
 
@@ -389,7 +399,7 @@ export function CourseDetailPage() {
                   <div className="border-t">
                     {courseLessons.map((lesson, index) => {
                       const locked = isLessonLocked(index);
-                      
+
                       return (
                         <Link
                           key={lesson.id}
@@ -471,10 +481,10 @@ export function CourseDetailPage() {
     <h2 className="text-lg md:text-xl font-bold tracking-tight">Student Reviews</h2>
     <div className="flex items-center gap-2">
       <Star className="h-5 w-5 fill-warning text-warning" />
-      <span className="font-bold text-md">{averageRating}</span>
+      <span className="font-bold text-md">{course.rating}</span>
       <span className="text-muted-foreground text-sm">
-        ({course.reviews?.length > 0 
-          ? (course.reviews.length === 1 ? `1 review` : `${course.reviews.length} reviews`) 
+        ({reviews.length > 0
+          ? (reviews.length === 1 ? `1 review` : `${reviews.length} reviews`)
           : 'No reviews yet'})
       </span>
     </div>
@@ -515,32 +525,32 @@ export function CourseDetailPage() {
       <div className="flex flex-col gap-4">
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <button 
-              key={star} 
+            <button
+              key={star}
               type="button"
               onClick={() => setSelectedRating(star)}
               disabled={isSubmitting}
               className="hover:scale-110 transition-transform disabled:opacity-50"
             >
-              <Star 
+              <Star
                 className={cn(
                   "h-6 w-6 transition-colors",
                   star <= selectedRating ? "fill-warning text-warning" : "text-muted-foreground"
-                )} 
+                )}
               />
             </button>
           ))}
         </div>
-        <textarea 
+        <textarea
           value={reviewText}
           onChange={(e) => setReviewText(e.target.value)}
           disabled={isSubmitting}
           placeholder="Share your experience with this course..."
           className="w-full p-3 rounded-md bg-background border border-border text-sm focus:ring-1 focus:ring-primary outline-none min-h-[100px] disabled:opacity-50"
         />
-        <Button 
+        <Button
           className="w-full md:w-fit mx-auto md:mx-0"
-          size="sm" 
+          size="sm"
           onClick={handleSubmitReview}
           disabled={isSubmitting || !selectedRating || !reviewText.trim()}
         >
@@ -552,47 +562,49 @@ export function CourseDetailPage() {
 
   {/* Reviews List */}
   <div className="space-y-4">
-    {course.reviews && course.reviews.length > 0 ? (
+    {reviews.length > 0 ? (
       <>
-        {course.reviews.slice(0, visibleReviews).map((review) => (
+        {reviews.slice(0, visibleReviews).map((review) => (
           <div key={review.id} className="p-4 rounded-xl border border-border/50 bg-card/30">
             <div className="flex justify-between items-start mb-2">
               <div>
                 <p className="font-bold text-sm">{review.userName}</p>
                 <div className="flex gap-0.5 mt-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
+                    <Star
+                      key={i}
                       className={cn(
-                        "h-3 w-3", 
+                        "h-3 w-3",
                         i < review.rating ? "fill-warning text-warning" : "text-muted"
-                      )} 
+                      )}
                     />
                   ))}
                 </div>
               </div>
-              <span className="text-[10px] text-muted-foreground">{review.date}</span>
+              <span className="text-[10px] text-muted-foreground">
+                {new Date(review.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
           </div>
         ))}
 
         {/* Only show the button if there are more than the initial count of reviews */}
-        {course.reviews.length > 3 && (
+        {reviews.length > 3 && (
           <div className="flex justify-center pt-4 gap-3">
-            {course.reviews.length > visibleReviews ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
+            {reviews.length > visibleReviews ? (
+              <Button
+                variant="outline"
+                size="sm"
                 className="group"
                 onClick={() => setVisibleReviews(prev => prev + 3)}
               >
                 Load More Reviews
               </Button>
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="group"
                 onClick={() => setVisibleReviews(3)}
               >
@@ -623,25 +635,19 @@ export function CourseDetailPage() {
                 <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                   Related Courses
                 </h2>
-                <Link 
-                  to="/courses" 
+                <Link
+                  to="/courses"
                   className="text-sm font-medium text-primary hover:underline underline-offset-4"
                 >
                   View all
                 </Link>
               </div>
 
-              {/* GRID LOGIC:
-                  grid-cols-1: Single column on small mobile
-                  sm:grid-cols-2: Two columns for tablets/large phones
-                  lg:grid-cols-3: Three columns for desktops
-              */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedCourses.map((relatedCourse) => (
                   <div key={relatedCourse.id} className="flex">
-                    <CourseCard 
-                      course={relatedCourse} 
-                      // Pass searchQuery if needed, otherwise omit
+                    <CourseCard
+                      course={relatedCourse}
                     />
                   </div>
                 ))}

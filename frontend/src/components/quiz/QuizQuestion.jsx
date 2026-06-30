@@ -1,21 +1,26 @@
 import { cn } from '@/lib/utils'
 
+// question shape: { id, text, imageUrl, options: [{ id, text }] }
+// selectedAnswer: optionId string | undefined
+// onSelectAnswer: (optionId) => void
 export function QuizQuestion({
   question,
   questionNumber,
   totalQuestions,
   selectedAnswer,
   onSelectAnswer,
-  showResult = false,
-  correctAnswer
 }) {
   return (
     <div className="space-y-6">
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Question {questionNumber} of {totalQuestions}</span>
-          <span className="font-medium">{Math.round((questionNumber / totalQuestions) * 100)}%</span>
+          <span className="text-muted-foreground">
+            Question {questionNumber} of {totalQuestions}
+          </span>
+          <span className="font-medium">
+            {Math.round((questionNumber / totalQuestions) * 100)}%
+          </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
@@ -27,51 +32,43 @@ export function QuizQuestion({
 
       {/* Question */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">{question.question}</h2>
+        {question.imageUrl && (
+          <img
+            src={question.imageUrl}
+            alt="Question illustration"
+            className="rounded-lg max-h-64 object-contain mx-auto"
+          />
+        )}
+        <h2 className="text-xl font-semibold">{question.text}</h2>
 
         {/* Options */}
         <div className="space-y-3">
           {question.options.map((option, index) => {
-            const isSelected = selectedAnswer === index
-            const isCorrect = correctAnswer === index
-            const showCorrectness = showResult
+            const isSelected = selectedAnswer === option.id
 
             return (
               <button
-                key={index}
-                onClick={() => !showResult && onSelectAnswer(index)}
-                disabled={showResult}
+                key={option.id}
+                onClick={() => onSelectAnswer(option.id)}
                 className={cn(
                   'w-full rounded-xl border-2 p-4 text-left transition-all',
-                  !showCorrectness && isSelected
+                  isSelected
                     ? 'border-primary bg-primary/5'
-                    : !showCorrectness
-                    ? 'border-border hover:border-primary/50'
-                    : isCorrect
-                    ? 'border-success bg-success/10'
-                    : isSelected && !isCorrect
-                    ? 'border-destructive bg-destructive/10'
-                    : 'border-border opacity-50'
+                    : 'border-border hover:border-primary/50',
                 )}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium',
-                      !showCorrectness && isSelected
+                      isSelected
                         ? 'border-primary bg-primary text-primary-foreground'
-                        : !showCorrectness
-                        ? 'border-muted-foreground/30'
-                        : isCorrect
-                        ? 'border-success bg-success text-primary-foreground'
-                        : isSelected && !isCorrect
-                        ? 'border-destructive bg-destructive text-destructive-foreground'
-                        : 'border-muted-foreground/30'
+                        : 'border-muted-foreground/30',
                     )}
                   >
                     {String.fromCharCode(65 + index)}
                   </div>
-                  <span className="flex-1">{option}</span>
+                  <span className="flex-1">{option.text}</span>
                 </div>
               </button>
             )

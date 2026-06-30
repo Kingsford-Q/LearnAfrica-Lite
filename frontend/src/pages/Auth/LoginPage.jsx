@@ -32,14 +32,14 @@ export function LoginPage() {
     if (!validate()) return
 
     setIsLoading(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    login({ email, name: email.split('@')[0] })
-    setIsLoading(false)
-    
-    // Redirect to the original destination
-    navigate(from, { replace: true }) 
+    try {
+      await login(email, password)
+      navigate(from, { replace: true })
+    } catch (err) {
+      setErrors({ submit: err.message || 'Invalid email or password' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   
@@ -53,6 +53,11 @@ export function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.submit && (
+          <div className="p-3 rounded bg-destructive/10 text-destructive text-sm font-medium text-center">
+            {errors.submit}
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">

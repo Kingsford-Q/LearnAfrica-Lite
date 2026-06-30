@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
 import { CheckCircle, XCircle, Trophy, RotateCcw, ArrowLeft, AlertCircle, Loader2, FileCheck } from 'lucide-react'
 import { Button } from '@/components/common/Button'
@@ -6,89 +6,23 @@ import { Card } from '@/components/common/Card'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
 
+// quizResult shape (QuizResultDto from backend):
+//   { score, correctCount, totalQuestions, answers: [{ questionId, selectedOptionId, correctOptionId, isCorrect }] }
+// questions shape (QuizQuestionDto[] passed from QuizPage):
+//   [{ id, text, imageUrl, options: [{ id, text }] }]
+
 export function QuizResultsPage() {
-  const { courseId, lessonId } = useParams()
+  const { courseId, quizId } = useParams()
   const location = useLocation()
-  const { updateProgress, courses } = useAuth()
-  
-  // State for backend data
-  const [resultData, setResultData] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { courses, refreshStats } = useAuth()
 
-  // Calculation Logic using resultData
-  const answers = resultData?.answers || {}
-  const questions = resultData?.questions || []
-  
-  const { correctCount, score, passed } = useMemo(() => {
-    let correct = 0
-    questions.forEach((q, index) => {
-      if (answers[index] === q.correctAnswer) {
-        correct++
-      }
-    })
-    const calculatedScore = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0
-    return {
-      correctCount: correct,
-      score: calculatedScore,
-      passed: calculatedScore >= 70
-    }
-  }, [answers, questions])
+  const { quizResult, questions = [], quizTitle } = location.state ?? {}
 
-    const currentCourseHasCertificate = useMemo(() => {
-    const currentCourse = courses?.find(c => c.id === courseId)
-    return !!(currentCourse?.hasCertificate || currentCourse?.certificateId)
-  }, [courses, courseId])
+  // Refresh user stats once so "Perfect Quiz" badge progress updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { refreshStats() }, [])
 
-  useEffect(() => {
-    const loadResults = async () => {
-      // 1. Check if we already have the data from navigation (state)
-      if (location.state?.answers && location.state?.questions) {
-        setResultData(location.state)
-        
-        // NEW LOGIC: Sync progress and quiz score to AuthContext
-        // This triggers the Badge update for "Quiz Master" if score is 100
-        const currentAnswers = location.state.answers
-        const currentQuestions = location.state.questions
-        let correct = 0
-        currentQuestions.forEach((q, index) => {
-          if (currentAnswers[index] === q.correctAnswer) {
-            correct++
-          }
-        })
-        const finalScore = currentQuestions.length > 0 ? Math.round((correct / currentQuestions.length) * 100) : 0
-        
-        await updateProgress(courseId, lessonId, finalScore)
-        
-        setIsLoading(false)
-        return
-      }
-
-      // 2. If no state (user refreshed), fetch from the backend
-      try {
-        setIsLoading(true)
-        throw new Error("No active session found") 
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadResults()
-  }, [location.state, lessonId, courseId, updateProgress])
-
-  // Loading State
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  // Error/No Data State
-  if (error || !resultData) {
+  if (!quizResult) {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
         <Card className="max-w-md w-full p-8 text-center space-y-6">
@@ -98,7 +32,7 @@ export function QuizResultsPage() {
           <div className="space-y-2">
             <h2 className="text-2xl font-bold">No Results Found</h2>
             <p className="text-muted-foreground text-sm">
-              We couldn't find your quiz results. This happens if you refresh the page without saving.
+              Results aren't available after a page refresh. Try the quiz again.
             </p>
           </div>
           <div className="flex flex-col gap-3">
@@ -106,13 +40,19 @@ export function QuizResultsPage() {
               <Link to="/dashboard">Go to Dashboard</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>Try Quiz Again</Link>
+              <Link to={`/learn/course/${courseId}/quiz/${quizId}`}>Try Quiz Again</Link>
             </Button>
           </div>
         </Card>
       </div>
     )
   }
+
+  const { score, correctCount, totalQuestions, answers: resultAnswers = [] } = quizResult
+  const passed = score >= 70
+
+  const currentCourse = courses?.find((c) => c.id === courseId)
+  const hasCertificate = !!(currentCourse?.hasCertificate)
 
   return (
     <div className="min-h-screen bg-muted/30 py-8">
@@ -122,7 +62,7 @@ export function QuizResultsPage() {
           <div
             className={cn(
               'mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full',
-              passed ? 'bg-success/10' : 'bg-destructive/10'
+              passed ? 'bg-success/10' : 'bg-destructive/10',
             )}
           >
             {passed ? (
@@ -137,7 +77,7 @@ export function QuizResultsPage() {
           </h1>
           <p className="text-muted-foreground mb-6">
             {passed
-              ? 'You have successfully passed the quiz and earned your certificate!'
+              ? 'You passed the quiz!'
               : 'You need 70% to pass. Review the lessons and try again.'}
           </p>
 
@@ -145,21 +85,13 @@ export function QuizResultsPage() {
           <div className="relative mx-auto mb-6 h-40 w-40">
             <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
               <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="10"
+                cx="50" cy="50" r="45"
+                fill="none" stroke="currentColor" strokeWidth="10"
                 className="text-muted"
               />
               <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="10"
+                cx="50" cy="50" r="45"
+                fill="none" stroke="currentColor" strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${score * 2.83} 283`}
                 className={passed ? 'text-success' : 'text-destructive'}
@@ -178,16 +110,14 @@ export function QuizResultsPage() {
               <p className="text-sm text-muted-foreground">Correct</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-destructive">
-                {questions.length - correctCount}
-              </p>
+              <p className="text-2xl font-bold text-destructive">{totalQuestions - correctCount}</p>
               <p className="text-sm text-muted-foreground">Incorrect</p>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {passed && currentCourseHasCertificate ? (
+            {passed && hasCertificate ? (
               <Link to={`/certificate/${courseId}`}>
                 <Button className="bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
                   <FileCheck className="h-4 w-4 mr-2" />
@@ -195,17 +125,16 @@ export function QuizResultsPage() {
                 </Button>
               </Link>
             ) : (
-              <Link to={`/learn/course/${courseId}/quiz/${lessonId}`}>
+              <Link to={`/learn/course/${courseId}/quiz/${quizId}`}>
                 <Button variant="outline">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Retry Quiz
                 </Button>
               </Link>
             )}
-            
             <Link to="/dashboard">
-              <Button variant= 'outline'>
-                <ArrowLeft className="h-4 w-4 ml-2" />
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
             </Link>
@@ -213,70 +142,75 @@ export function QuizResultsPage() {
         </Card>
 
         {/* Question Review */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">Review Answers</h2>
-          
-          {questions.map((question, index) => {
-            const isCorrect = answers[index] === question.correctAnswer
-            
-            return (
-              <Card key={index} className="p-6">
-                <div className="flex items-start gap-4">
-                  <div
-                    className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-full shrink-0 mt-0.5',
-                      isCorrect ? 'bg-success/10' : 'bg-destructive/10'
-                    )}
-                  >
-                    {isCorrect ? (
-                      <CheckCircle className="h-5 w-5 text-success" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-destructive" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 w-full">
-                    <p className="font-semibold mb-4 leading-tight">
-                      Question {index + 1}: {question.question}
-                    </p>
-                    
-                    <div className="grid gap-3">
-                      {question.options.map((option, optIndex) => (
-                        <div
-                          key={optIndex}
-                          className={cn(
-                            'rounded-lg p-3.5 text-sm transition-all flex items-center justify-between gap-4',
-                            optIndex === question.correctAnswer
-                              ? 'bg-success/10 border border-success'
-                              : optIndex === answers[index] && !isCorrect
-                              ? 'bg-destructive/10 border border-destructive'
-                              : 'bg-muted border border-transparent'
-                          )}
-                        >
-                          <div className="flex items-start gap-3">
-                            <span className="font-bold opacity-70 shrink-0">
-                              {String.fromCharCode(65 + optIndex)}.
-                            </span>
-                            <span className="leading-relaxed">{option}</span>
-                          </div>
+        {questions.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Review Answers</h2>
 
-                          <div className="shrink-0">
-                            {optIndex === question.correctAnswer && (
-                              <CheckCircle className="h-5 w-5 text-success" />
-                            )}
-                            {optIndex === answers[index] && optIndex !== question.correctAnswer && (
-                              <XCircle className="h-5 w-5 text-destructive" />
-                            )}
-                          </div>
-                        </div>
-                      ))}
+            {questions.map((question, index) => {
+              const answerResult = resultAnswers.find((a) => a.questionId === question.id)
+              const isCorrect = answerResult?.isCorrect ?? false
+
+              return (
+                <Card key={question.id} className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={cn(
+                        'flex h-8 w-8 items-center justify-center rounded-full shrink-0 mt-0.5',
+                        isCorrect ? 'bg-success/10' : 'bg-destructive/10',
+                      )}
+                    >
+                      {isCorrect ? (
+                        <CheckCircle className="h-5 w-5 text-success" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-destructive" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 w-full">
+                      <p className="font-semibold mb-4 leading-tight">
+                        Question {index + 1}: {question.text}
+                      </p>
+
+                      <div className="grid gap-3">
+                        {question.options.map((option, optIndex) => {
+                          const isThisCorrect = option.id === answerResult?.correctOptionId
+                          const isThisSelected = option.id === answerResult?.selectedOptionId
+
+                          return (
+                            <div
+                              key={option.id}
+                              className={cn(
+                                'rounded-lg p-3.5 text-sm flex items-center justify-between gap-4',
+                                isThisCorrect
+                                  ? 'bg-success/10 border border-success'
+                                  : isThisSelected && !isThisCorrect
+                                  ? 'bg-destructive/10 border border-destructive'
+                                  : 'bg-muted border border-transparent',
+                              )}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className="font-bold opacity-70 shrink-0">
+                                  {String.fromCharCode(65 + optIndex)}.
+                                </span>
+                                <span className="leading-relaxed">{option.text}</span>
+                              </div>
+                              <div className="shrink-0">
+                                {isThisCorrect && <CheckCircle className="h-5 w-5 text-success" />}
+                                {isThisSelected && !isThisCorrect && (
+                                  <XCircle className="h-5 w-5 text-destructive" />
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
