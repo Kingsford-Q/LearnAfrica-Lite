@@ -52,8 +52,8 @@ export default function InstructorOnboarding() {
 
       await signup(completeInstructorData)
 
-      // Instructor capabilities only unlock once a SuperAdmin approves the
-      // application; the instructor dashboard itself shows the pending state.
+      // Instructor capabilities only unlock once an Admin or SuperAdmin approves
+      // the application; the instructor dashboard itself shows the pending state.
       navigate('/instructor')
     } catch (err) {
       setErrors({ submit: err.message || 'Failed to create instructor profile. Please try again.' })

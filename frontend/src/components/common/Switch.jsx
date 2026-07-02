@@ -1,12 +1,15 @@
 import { cn } from '@/lib/utils'
 
-export function Switch({ checked, onChange, className }) {
+export function Switch({ checked, onChange, disabled, className }) {
   return (
     <button
       type="button"
-      onClick={() => onChange(!checked)}
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange && onChange(!checked)}
       className={cn(
-        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 outline-none",
+        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         checked ? "bg-primary" : "bg-muted border border-border",
         className
       )}

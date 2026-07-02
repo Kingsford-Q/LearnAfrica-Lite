@@ -55,11 +55,15 @@ export default function CertificatePage() {
 
   const handleDownload = () => window.print();
 
+  const verifyUrl = certificate
+    ? `${window.location.origin}/verify/${certificate.verificationCode}`
+    : '';
+
   const handleShare = async () => {
     const shareData = {
       title: `My ${certificate?.courseTitle} Certificate`,
       text: `I just completed ${certificate?.courseTitle} on LearnAfrica!`,
-      url: window.location.href,
+      url: verifyUrl,
     };
 
     if (navigator.share) {
@@ -69,10 +73,26 @@ export default function CertificatePage() {
         // User cancelled native share sheet
       }
     } else {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(verifyUrl);
       alert('Certificate link copied to clipboard!');
     }
   };
+
+  const openShareWindow = (url) => window.open(url, '_blank', 'noopener,noreferrer');
+
+  const handleShareLinkedIn = () => openShareWindow(
+    `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(verifyUrl)}`
+  );
+
+  const handleShareTwitter = () => openShareWindow(
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      `I just completed ${certificate?.courseTitle} on LearnAfrica Lite!`
+    )}&url=${encodeURIComponent(verifyUrl)}`
+  );
+
+  const handleShareFacebook = () => openShareWindow(
+    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(verifyUrl)}`
+  );
 
   if (isLoading) {
     return (
@@ -168,7 +188,7 @@ export default function CertificatePage() {
                 className="rounded-lg shadow-sm text-xs h-8 px-2.5 sm:px-3"
               >
                 <Download className="w-3.5 h-3.5 md:mr-1" />
-                <span className="hidden md:block"> Download PDF</span>
+                <span className="hidden md:block"> Print / Save PDF</span>
               </Button>
             </div>
           </div>
@@ -305,7 +325,7 @@ export default function CertificatePage() {
                   </span>
                 </p>
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground/80 hidden xs:block">
-                  Verify credential at: learnafrica.com/verify/{certificate.verificationCode}
+                  Verify credential at: {window.location.host}/verify/{certificate.verificationCode}
                 </p>
               </div>
             </div>
@@ -320,13 +340,25 @@ export default function CertificatePage() {
             </p>
 
             <div className="flex justify-center gap-2.5">
-              <button className="p-2 bg-card border border-border/80 rounded-xl hover:bg-muted transition-colors text-foreground/80 group shadow-sm">
+              <button
+                onClick={handleShareLinkedIn}
+                aria-label="Share on LinkedIn"
+                className="p-2 bg-card border border-border/80 rounded-xl hover:bg-muted transition-colors text-foreground/80 group shadow-sm"
+              >
                 <Linkedin className="w-4 h-4 group-hover:text-[#0A66C2]" />
               </button>
-              <button className="p-2 bg-card border border-border/80 rounded-xl hover:bg-muted transition-colors text-foreground/80 group shadow-sm">
+              <button
+                onClick={handleShareTwitter}
+                aria-label="Share on X"
+                className="p-2 bg-card border border-border/80 rounded-xl hover:bg-muted transition-colors text-foreground/80 group shadow-sm"
+              >
                 <Twitter className="w-4 h-4 group-hover:text-[#1DA1F2]" />
               </button>
-              <button className="p-2 bg-card border border-border/80 rounded-xl hover:bg-muted transition-colors text-foreground/80 group shadow-sm">
+              <button
+                onClick={handleShareFacebook}
+                aria-label="Share on Facebook"
+                className="p-2 bg-card border border-border/80 rounded-xl hover:bg-muted transition-colors text-foreground/80 group shadow-sm"
+              >
                 <Facebook className="w-4 h-4 group-hover:text-[#1877F2]" />
               </button>
             </div>

@@ -64,10 +64,11 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay — sits below the navbar's z-40 so its hamburger toggle
+          (which closes this same menu) stays tappable while the overlay is open. */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}

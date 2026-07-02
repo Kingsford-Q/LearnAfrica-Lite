@@ -42,6 +42,11 @@ async function refreshAccessToken() {
       .then(async (res) => {
         if (!res.ok) {
           setAccessToken(null);
+          // Lets AuthContext know the session is definitively gone (refresh-token
+          // cookie missing/expired) so it can clear stale "logged in" UI state.
+          // Harmless no-op for visitors who were never authenticated in the first
+          // place — AuthContext only acts on this if it currently has a user.
+          window.dispatchEvent(new Event('auth:session-expired'));
           return null;
         }
         const data = await res.json();
@@ -58,7 +63,7 @@ async function refreshAccessToken() {
 async function request(path, options = {}) {
   let res = await doFetch(path, options);
 
-  if (res.status === 401 && path !== '/api/auth/refresh' && path !== '/api/auth/login') {
+  if (res.status === 401 && path !== '/api/auth/refresh' && path !== '/api/auth/login' && path !== '/api/auth/login/2fa') {
     const newToken = await refreshAccessToken();
     if (newToken) {
       res = await doFetch(path, options);
@@ -92,6 +97,9 @@ export const api = {
 
 export function fileUrl(relativeUrl) {
   if (!relativeUrl) return relativeUrl;
-  if (relativeUrl.startsWith('http')) return relativeUrl;
+  // Already-absolute URLs (http/https) and inline data/blob URIs (e.g. avatars
+  // uploaded as base64) must be returned as-is — prefixing them with BASE_URL
+  // would produce an invalid, unloadable src.
+  if (/^(https?:|data:|blob:)/.test(relativeUrl)) return relativeUrl;
   return `${BASE_URL}${relativeUrl}`;
 }

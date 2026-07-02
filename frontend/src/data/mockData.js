@@ -68,6 +68,56 @@ export const badgeConfig = [
     requirementType: 'profile_completed',
     goal: 1,
     color: 'emerald'
+  },
+  {
+    id: '8',
+    key: 'DEDICATED_LEARNER',
+    title: 'Dedicated Learner',
+    description: 'Complete 25 lessons across your courses.',
+    iconName: 'BookOpenCheck',
+    requirementType: 'lessons_completed',
+    goal: 25,
+    color: 'teal'
+  },
+  {
+    id: '9',
+    key: 'PERFECTIONIST',
+    title: 'Perfectionist',
+    description: 'Score a perfect 100% on 10 different quizzes.',
+    iconName: 'Award',
+    requirementType: 'perfect_quizzes',
+    goal: 10,
+    color: 'violet'
+  },
+  {
+    id: '10',
+    key: 'BOOKWORM',
+    title: 'Bookworm',
+    description: 'Enroll in 5 or more courses.',
+    iconName: 'Library',
+    requirementType: 'courses_enrolled',
+    goal: 5,
+    color: 'cyan'
+  },
+  {
+    id: '11',
+    key: 'SCHOLAR',
+    title: 'Scholar',
+    description: 'Complete 3 full courses.',
+    iconName: 'GraduationCap',
+    requirementType: 'courses_completed',
+    goal: 3,
+    color: 'indigo'
+  },
+  {
+    id: '12',
+    key: 'DISCUSSION_STARTER',
+    title: 'Discussion Starter',
+    description: 'Contribute 5 posts or replies to course discussions.',
+    iconName: 'MessagesSquare',
+    requirementType: 'forum_contributions',
+    goal: 5,
+    color: 'pink'
   }
 ]
 

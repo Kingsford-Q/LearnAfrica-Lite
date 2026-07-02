@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Star, Loader2, MessageSquare } from 'lucide-react'
 import { Card } from '@/components/common/Card'
 import { EmptyState } from '@/components/common/EmptyState'
-import { api } from '@/lib/apiClient'
+import { api, fileUrl } from '@/lib/apiClient'
 import { cn } from '@/lib/utils'
 
 export function InstructorReviewsPage() {
@@ -60,7 +60,7 @@ export function InstructorReviewsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center text-[10px] font-semibold shrink-0 overflow-hidden">
-                    {review.userAvatar ? <img src={review.userAvatar} alt={review.userName} className="h-full w-full object-cover" /> : getInitials(review.userName)}
+                    {review.userAvatar ? <img src={fileUrl(review.userAvatar)} alt={review.userName} className="h-full w-full object-cover" /> : getInitials(review.userName)}
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-sm truncate">{review.userName}</p>

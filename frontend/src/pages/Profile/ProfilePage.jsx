@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Camera, Book, Clock, Trophy, Flame, Globe, MapPin, CheckCircle2, Mail } from 'lucide-react';
+import { Camera, Book, Clock, Trophy, Flame, Globe, MapPin, CheckCircle2, Mail, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/common/Card';
 import { cn } from '@/lib/utils';
+import { api, ApiError, fileUrl } from '@/lib/apiClient';
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
@@ -13,7 +14,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,46 +26,75 @@ export default function ProfilePage() {
     website: '',
   });
 
+  const syncFormFromUser = useCallback(() => {
+    if (!user) return;
+    setFormData({
+      name: user.name || '',
+      email: user.email || '',
+      // Look inside user.profile if it exists, otherwise fall back to top-level
+      bio: user.profile?.bio || user.bio || '',
+      location: user.profile?.location || user.location || '',
+      website: user.profile?.website || user.website || '',
+    });
+  }, [user]);
+
   // Sync form data whenever the global user object changes
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        // Look inside user.profile if it exists, otherwise fall back to top-level
-        bio: user.profile?.bio || user.bio || '',
-        location: user.profile?.location || user.location || '',
-        website: user.profile?.website || user.website || '',
-      });
-    }
-  }, [user]);
+    syncFormFromUser();
+  }, [syncFormFromUser]);
+
+  // Local object URL preview must be released once it's no longer shown.
+  useEffect(() => {
+    return () => {
+      if (previewImage) URL.revokeObjectURL(previewImage);
+    };
+  }, [previewImage]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImage(reader.result);
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setPreviewImage(URL.createObjectURL(file));
+    setAvatarError('');
+    setIsUploadingAvatar(true);
+    try {
+      const uploadForm = new FormData();
+      uploadForm.append('file', file);
+      const { url } = await api.upload('/api/uploads', uploadForm);
+      setAvatarUrl(url);
+    } catch (err) {
+      setAvatarError(err instanceof ApiError ? err.message : 'Failed to upload image.');
+      setPreviewImage(null);
+    } finally {
+      setIsUploadingAvatar(false);
     }
+  };
+
+  const handleDiscard = () => {
+    setIsEditing(false);
+    setPreviewImage(null);
+    setAvatarUrl(null);
+    setAvatarError('');
+    syncFormFromUser();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSaving) return;
-    
+    if (isSaving || isUploadingAvatar) return;
+
     setIsSaving(true);
     try {
       // Construct payload based on role
       const isInstructor = user?.role === 'instructor';
-      
+
       const payload = {
         name: formData.name,
-        avatar: previewImage || user?.avatar,
+        avatar: avatarUrl || user?.avatar,
         // If instructor, keep the nested structure
         profile: isInstructor ? {
           ...user.profile, // keep rating, coursesCount, etc.
@@ -70,15 +103,17 @@ export default function ProfilePage() {
           website: formData.website,
         } : null,
         // Fallback for students who might just have a top-level bio
-        ...( !isInstructor && { 
-          bio: formData.bio, 
-          location: formData.location 
+        ...( !isInstructor && {
+          bio: formData.bio,
+          location: formData.location
         }),
         updatedAt: new Date().toISOString()
       };
 
-      await updateUser(payload); 
+      await updateUser(payload);
       setIsEditing(false);
+      setPreviewImage(null);
+      setAvatarUrl(null);
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
@@ -157,14 +192,19 @@ export default function ProfilePage() {
                 >
                   <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
                     {previewImage || user?.avatar ? (
-                      <img src={previewImage || user.avatar} alt="User" loading="lazy" className="w-full h-full object-cover" />
+                      <img src={previewImage || fileUrl(user.avatar)} alt="User" loading="lazy" className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-5xl font-bold text-primary">{user?.name?.charAt(0) || 'U'}</span>
+                    )}
+                    {isUploadingAvatar && (
+                      <div className="absolute inset-0 rounded-full bg-background/70 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      </div>
                     )}
                   </div>
                 </div>
                 {isEditing && (
-                  <button 
+                  <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-1 right-1 p-2.5 bg-primary text-primary-foreground rounded-full shadow-lg border-2 border-background hover:scale-110 transition-transform"
@@ -173,6 +213,7 @@ export default function ProfilePage() {
                   </button>
                 )}
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                {avatarError && <p className="text-xs text-destructive mt-2">{avatarError}</p>}
               </div>
 
               <div className="space-y-3">
@@ -297,10 +338,10 @@ export default function ProfilePage() {
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Save Changes
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setIsEditing(false)} 
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleDiscard}
                       className="w-full sm:flex-1 h-11 rounded-xl text-xs font-bold uppercase tracking-widest"
                     >
                       Discard

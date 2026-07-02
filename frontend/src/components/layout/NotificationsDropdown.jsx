@@ -3,17 +3,18 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils'
 import MobileNotificationsDrawer from './MobileNotificationsDrawer';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  BookOpen, 
-  Trophy, 
-  Clock, 
-  Settings, 
-  UserPlus, 
-  MessageSquare, 
-  ShieldCheck, 
+import {
+  BookOpen,
+  Trophy,
+  Clock,
+  Settings,
+  UserPlus,
+  MessageSquare,
+  ShieldCheck,
   Info,
   Bell,
   ChevronDown,
+  Megaphone,
 } from 'lucide-react';
 
 const notificationIcons = {
@@ -25,6 +26,7 @@ const notificationIcons = {
   community: <MessageSquare className="w-5 h-5" />,
   security: <ShieldCheck className="w-5 h-5" />,
   info: <Info className="w-5 h-5" />,
+  announcement: <Megaphone className="w-5 h-5" />,
 };
 
 const notificationColors = {
@@ -36,6 +38,7 @@ const notificationColors = {
   community: 'bg-blue-500/10 text-blue-600',
   security: 'bg-red-500/10 text-red-600',
   info: 'bg-cyan-500/10 text-cyan-600',
+  announcement: 'bg-purple-500/10 text-purple-600',
 };
 
 const NotificationIconHelper = ({ type }) => {

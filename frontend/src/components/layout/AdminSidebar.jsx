@@ -1,10 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShieldCheck, Users } from 'lucide-react';
+import { ShieldCheck, Megaphone } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const sidebarLinks = [
   { href: '/admin/instructors', label: 'Instructor Approvals', icon: <ShieldCheck className="h-5 w-5" /> },
-  { href: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
+  { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone className="h-5 w-5" /> },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }) {
@@ -12,9 +12,11 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
   return (
     <>
+      {/* Sits below the navbar's z-40 so its hamburger toggle (which closes this
+          same menu) stays tappable while the overlay is open. */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}

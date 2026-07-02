@@ -473,7 +473,7 @@ export function LessonPage() {
                     >
                       <CheckCircle className="h-3.5 w-3.5 text-success" />
                       <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-tight text-success whitespace-nowrap">
-                        Saved to Cloud
+                        Saved on This Device
                       </span>
                     </div>
                   </div>

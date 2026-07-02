@@ -43,7 +43,8 @@ public class AdminInstructorsController(AppDbContext db) : ControllerBase
         user.InstructorRejectionReason = null;
 
         await AuthController.NotifyAsync(db, userId, NotificationType.System,
-            "Instructor application approved", "You're approved! You can now create and publish courses.");
+            "Instructor application approved", "You're approved! You can now create and publish courses.",
+            actionUrl: "/instructor/courses/create");
 
         await db.SaveChangesAsync();
         return ToDto(user);
@@ -52,6 +53,9 @@ public class AdminInstructorsController(AppDbContext db) : ControllerBase
     [HttpPost("{userId:guid}/reject")]
     public async Task<ActionResult<InstructorApplicationDto>> Reject(Guid userId, RejectInstructorRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return BadRequest(new { message = "A rejection reason is required." });
+
         var user = await db.Users.FindAsync(userId);
         if (user is null) return NotFound();
 
@@ -61,9 +65,7 @@ public class AdminInstructorsController(AppDbContext db) : ControllerBase
         user.InstructorRejectionReason = request.Reason;
 
         await AuthController.NotifyAsync(db, userId, NotificationType.System,
-            "Instructor application rejected", string.IsNullOrWhiteSpace(request.Reason)
-                ? "Your instructor application was not approved."
-                : $"Your instructor application was not approved: {request.Reason}");
+            "Instructor application rejected", $"Your instructor application was not approved: {request.Reason}");
 
         await db.SaveChangesAsync();
         return ToDto(user);

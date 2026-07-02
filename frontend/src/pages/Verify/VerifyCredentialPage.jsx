@@ -48,7 +48,7 @@ export default function VerifyCredentialPage() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">Verify a Credential</h1>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Enter an official certificate or badge ID below to verify its regulatory authenticity.
+              Enter an official certificate or badge ID below to verify its authenticity.
             </p>
           </div>
         </div>

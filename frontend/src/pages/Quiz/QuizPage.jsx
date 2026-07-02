@@ -37,9 +37,12 @@ export function QuizPage() {
     setIsSubmitting(true)
     try {
       const requestBody = {
+        // Unanswered questions (e.g. the timer ran out before every question was
+        // answered) submit as an empty selection so they're graded as incorrect
+        // rather than silently guessing an option on the student's behalf.
         answers: quiz.questions.map((q, i) => ({
           questionId: q.id,
-          selectedOptionId: answers[i] ?? q.options[0].id, // fallback shouldn't be hit since canSubmit guards
+          selectedOptionId: answers[i] ?? '00000000-0000-0000-0000-000000000000',
         })),
       }
       const quizResult = await api.post(`/api/quizzes/${quizId}/submit`, requestBody)
@@ -57,10 +60,10 @@ export function QuizPage() {
     }
   }, [quiz, answers, courseId, quizId, navigate, isSubmitting])
 
-  // Timer countdown
+  // Timer countdown — auto-submits whatever's answered so far once time runs out.
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || isSubmitting) return
-    if (timeLeft === 0) {
+    if (timeLeft === null || isSubmitting) return
+    if (timeLeft <= 0) {
       handleSubmit()
       return
     }

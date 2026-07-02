@@ -14,4 +14,9 @@ public class Notification
 
     // Prevents duplicate milestone/system notifications (e.g. "badge_QUIZ_MASTER")
     public string? DedupeKey { get; set; }
+
+    // Relative frontend route (e.g. "/certificate/{courseId}") the "Open Activity"
+    // button in the notification detail view navigates to. Null means the
+    // notification is informational only and has no associated destination.
+    public string? ActionUrl { get; set; }
 }

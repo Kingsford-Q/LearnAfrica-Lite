@@ -33,6 +33,22 @@ const useResponsiveItemsPerPage = () => {
   return itemsPerPage
 }
 
+// Hook for a resize-aware "is this a narrow screen" check, so values derived
+// from it (like how many pagination buttons to show) update on resize instead
+// of only reflecting the window width at the moment a render happened to run.
+const useIsNarrowScreen = (breakpoint = 640) => {
+  const [isNarrow, setIsNarrow] = useState(window.innerWidth < breakpoint)
+
+  useEffect(() => {
+    const handleResize = () => setIsNarrow(window.innerWidth < breakpoint)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [breakpoint])
+
+  return isNarrow
+}
+
 export function CoursesPage() {
   const {
     courses: liveCourses = [],
@@ -41,6 +57,7 @@ export function CoursesPage() {
     coursesLoading: isLoading,
   } = useAuth()
   const itemsPerPage = useResponsiveItemsPerPage()
+  const isNarrowScreen = useIsNarrowScreen(640)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
   const [selectedDifficulty, setSelectedDifficulty] = useState('All Levels')
@@ -173,7 +190,7 @@ export function CoursesPage() {
   // Helper to render page numbers with ellipsis
   const renderPageNumbers = () => {
     const pages = []
-    const showMax = window.innerWidth < 640 ? 3 : 5
+    const showMax = isNarrowScreen ? 3 : 5
 
     for (let i = 1; i <= totalPages; i++) {
       if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {

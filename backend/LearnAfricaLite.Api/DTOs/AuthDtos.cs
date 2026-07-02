@@ -17,6 +17,25 @@ public record LoginRequest(
     [Required] string Password
 );
 
+public record ForgotPasswordRequest(
+    [Required, EmailAddress] string Email
+);
+
+public record ResetPasswordRequest(
+    [Required, EmailAddress] string Email,
+    [Required] string Token,
+    [Required, MinLength(8)] string NewPassword
+);
+
+public record ChangePasswordRequest(
+    [Required] string CurrentPassword,
+    [Required, MinLength(8)] string NewPassword
+);
+
+public record TwoFactorSetupDto(string Secret, string OtpAuthUri);
+public record VerifyTwoFactorSetupRequest([Required] string Code);
+public record VerifyTwoFactorLoginRequest([Required] string TwoFactorToken, [Required] string Code);
+
 public record UserDto(
     Guid Id,
     string Name,
@@ -33,7 +52,9 @@ public record UserDto(
     bool NotificationsPush,
     bool NotificationsUpdates,
     bool TwoFactorAppEnabled,
-    string Appearance
+    string Appearance,
+    bool InstructorPayoutAlerts,
+    bool InstructorMessagesEnabled
 );
 
 public record AuthResponse(string AccessToken, DateTime ExpiresAt, UserDto User);
@@ -46,12 +67,16 @@ public record UpdateProfileRequest(
     string? Avatar
 );
 
+// Two-factor is deliberately not settable here — it can only be turned on via
+// the setup+verify flow (which proves the user actually holds the secret) or
+// off via the disable flow (which requires a valid code), never by a blind toggle.
 public record UpdateSettingsRequest(
     bool? NotificationsEmail,
     bool? NotificationsPush,
     bool? NotificationsUpdates,
-    bool? TwoFactorAppEnabled,
-    string? Appearance
+    string? Appearance,
+    bool? InstructorPayoutAlerts,
+    bool? InstructorMessagesEnabled
 );
 
 public record UserStatsDto(
@@ -61,5 +86,6 @@ public record UserStatsDto(
     int PerfectQuizzesCount,
     int FastFinishCount,
     int ReviewsCount,
-    bool IsProfileComplete
+    bool IsProfileComplete,
+    int ForumContributionsCount
 );

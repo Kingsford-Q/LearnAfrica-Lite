@@ -15,7 +15,9 @@ public class LocalFileStorageService(IWebHostEnvironment env) : IFileStorageServ
     {
         Directory.CreateDirectory(_uploadsRoot);
 
-        var ext = Path.GetExtension(fileName);
+        // The saved extension is derived from the verified content-type, never from the
+        // client-supplied filename — see FileSignatureValidator for why that matters.
+        var ext = FileSignatureValidator.ExtensionFor(contentType);
         var safeName = $"{Guid.NewGuid():N}{ext}";
         var fullPath = Path.Combine(_uploadsRoot, safeName);
 

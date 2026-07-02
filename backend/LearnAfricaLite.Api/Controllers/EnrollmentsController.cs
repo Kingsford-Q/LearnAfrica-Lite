@@ -29,10 +29,12 @@ public class EnrollmentsController(AppDbContext db) : ControllerBase
         if (course.InstructorId != userId)
         {
             await AuthController.NotifyAsync(db, course.InstructorId, NotificationType.Enrollment,
-                "New student enrolled", $"Someone just enrolled in \"{course.Title}\".");
+                "New student enrolled", $"Someone just enrolled in \"{course.Title}\".",
+                actionUrl: $"/instructor/courses/{courseId}/students");
         }
 
         await db.SaveChangesAsync();
+        await BadgeService.EvaluateAndAwardAsync(db, userId);
 
         return new EnrollmentDto(enrollment.CourseId, enrollment.ProgressPercent, enrollment.EnrolledAt, enrollment.CompletedAt);
     }

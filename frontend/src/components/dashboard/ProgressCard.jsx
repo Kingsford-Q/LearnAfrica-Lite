@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { cn } from '../../lib/utils';
+import { fileUrl } from '../../lib/apiClient';
 import {
   CheckCircle2,
   PlayCircle,
@@ -20,7 +21,7 @@ export default function ProgressCard({ course }) {
           {/* Thumbnail */}
           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border/50 sm:h-20 sm:w-20">
             <img
-              src={course.thumbnail}
+              src={fileUrl(course.thumbnail)}
               alt={course.title}
               loading="lazy"
               className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105 group-hover:brightness-105"

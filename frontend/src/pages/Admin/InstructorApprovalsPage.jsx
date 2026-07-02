@@ -9,7 +9,7 @@ import { Badge } from '@/components/common/Badge'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Modal } from '@/components/common/Modal'
 import { Textarea, Label } from '@/components/common/Input'
-import { api } from '@/lib/apiClient'
+import { api, fileUrl } from '@/lib/apiClient'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -116,7 +116,7 @@ export default function InstructorApprovalsPage() {
         <EmptyState
           icon={activeTab === 'Pending' ? Clock : activeTab === 'Approved' ? CheckCircle2 : XCircle}
           title={`No ${activeTab.toLowerCase()} applications`}
-          description={activeTab === 'Pending' ? "You're all caught up — no instructor applications waiting for review." : `No instructors are currently ${activeTab.toLowerCase()}.`}
+          description={activeTab === 'Pending' ? "You're all caught up. No instructor applications waiting for review." : `No instructors are currently ${activeTab.toLowerCase()}.`}
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -127,7 +127,7 @@ export default function InstructorApprovalsPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 overflow-hidden">
                       {app.avatar ? (
-                        <img src={app.avatar} alt={app.name} className="h-full w-full object-cover" />
+                        <img src={fileUrl(app.avatar)} alt={app.name} className="h-full w-full object-cover" />
                       ) : (
                         app.name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
                       )}
@@ -216,7 +216,11 @@ export default function InstructorApprovalsPage() {
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" onClick={() => setRejectTarget(null)}>Cancel</Button>
-            <Button variant="destructive" disabled={busyId === rejectTarget?.userId} onClick={handleReject}>
+            <Button
+              variant="destructive"
+              disabled={busyId === rejectTarget?.userId || !rejectReason.trim()}
+              onClick={handleReject}
+            >
               Confirm Rejection
             </Button>
           </div>

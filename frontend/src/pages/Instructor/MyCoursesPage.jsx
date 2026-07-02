@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Loader2, Plus, Users, Star, Eye, EyeOff, Trash2, BookOpen, MoreVertical
+  Loader2, Plus, Users, Star, Eye, EyeOff, Trash2, BookOpen, MoreVertical, Pencil
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
@@ -80,7 +80,7 @@ export function MyCoursesPage() {
         <EmptyState
           icon={BookOpen}
           title="No courses yet"
-          description="Start building your first course — add lessons, quizzes, and resources for your students."
+          description="Start building your first course: add lessons, quizzes, and resources for your students."
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -110,6 +110,13 @@ export function MyCoursesPage() {
                   </button>
                   {menuOpenId === course.id && (
                     <div className="absolute right-0 mt-2 w-44 rounded-xl border border-border bg-card shadow-lg overflow-hidden z-10">
+                      <Link
+                        to={`/instructor/courses/${course.id}/edit`}
+                        onClick={() => setMenuOpenId(null)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-muted text-left"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Edit Course
+                      </Link>
                       <button
                         disabled={busyId === course.id}
                         onClick={() => togglePublish(course)}
@@ -133,7 +140,7 @@ export function MyCoursesPage() {
                 <h3 className="font-semibold text-sm line-clamp-2 leading-snug">{course.title}</h3>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {course.enrollments}</span>
-                  <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> {course.rating || '—'}</span>
+                  <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> {course.rating || 'N/A'}</span>
                   <span>{course.isFree ? 'Free' : `$${course.price}`}</span>
                 </div>
                 <Link to={`/instructor/courses/${course.id}/students`}>

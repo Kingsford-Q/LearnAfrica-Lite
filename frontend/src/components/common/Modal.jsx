@@ -17,14 +17,14 @@ export function Modal({ isOpen, onClose, children, className }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         className="fixed inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in-0"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative z-50 w-full max-w-lg rounded-xl border bg-card p-6 shadow-lg animate-in fade-in-0 zoom-in-95',
+          'relative z-50 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl border bg-card p-6 shadow-lg animate-in fade-in-0 zoom-in-95',
           className
         )}
       >

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Loader2, Users } from 'lucide-react'
 import { Card } from '@/components/common/Card'
 import { EmptyState } from '@/components/common/EmptyState'
-import { api } from '@/lib/apiClient'
+import { api, fileUrl } from '@/lib/apiClient'
 
 export function CourseStudentsPage() {
   const { courseId } = useParams()
@@ -64,7 +64,7 @@ export function CourseStudentsPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-semibold text-secondary-foreground shrink-0 overflow-hidden">
-                        {s.avatar ? <img src={s.avatar} alt={s.name} className="h-full w-full object-cover" /> : getInitials(s.name)}
+                        {s.avatar ? <img src={fileUrl(s.avatar)} alt={s.name} className="h-full w-full object-cover" /> : getInitials(s.name)}
                       </div>
                       <div>
                         <p className="font-medium">{s.name}</p>

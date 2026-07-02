@@ -57,6 +57,11 @@ export function useCurriculum(initialData = []) {
     ))
   }
 
+  // 7. Replace the whole curriculum (used to restore a saved draft or reset the form)
+  const resetSections = (newSections = []) => {
+    setSections(newSections)
+  }
+
   return {
     sections,
     addSection,
@@ -64,6 +69,7 @@ export function useCurriculum(initialData = []) {
     updateLesson,
     removeLesson,
     removeSection,
-    updateSectionTitle
+    updateSectionTitle,
+    resetSections
   }
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, GraduationCap, Settings, LogOut, ChevronDown, User, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
+import { fileUrl } from '@/lib/apiClient'
 import MobileProfileDrawer from './MobileProfileDrawer' // Our new drawer component
 
 export default function ProfileDropdown({ hideChevron = false, closeMainMenu }) {
@@ -55,7 +56,10 @@ export default function ProfileDropdown({ hideChevron = false, closeMainMenu }) 
 
   // Helper to check for elevated privileges
   const canAccessInstructorMode = ['instructor', 'admin', 'superadmin'].includes(user?.role)
-  const isSuperAdmin = user?.role === 'superadmin'
+  // Named isSuperAdmin for historical reasons, but gates the "System Admin"
+  // nav item, which both Admin and SuperAdmin can actually use (matches the
+  // /admin/* route guard and the backend's [Authorize(Roles=Admin,SuperAdmin)]).
+  const isSuperAdmin = user?.role === 'admin' || user?.role === 'superadmin'
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -71,7 +75,7 @@ export default function ProfileDropdown({ hideChevron = false, closeMainMenu }) 
           <div className="relative inline-flex h-7 w-7 items-center justify-center rounded-full border-none bg-transparent overflow-hidden">
             {!imgError && user?.avatar && user.avatar !== '/placeholder-user.jpg' ? (
               <img
-                src={user.avatar}
+                src={fileUrl(user.avatar)}
                 alt=""
                 loading="lazy"
                 className="h-full w-full object-cover"

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2, BookOpen, Trophy, Settings, UserPlus, MessageSquare, ShieldCheck, Info} from "lucide-react";
+import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2, BookOpen, Trophy, Settings, UserPlus, MessageSquare, ShieldCheck, Info, Megaphone } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from "lucide-react";
 
@@ -14,6 +15,7 @@ const notificationIcons = {
   community: <MessageSquare className="w-5 h-5" />,
   security: <ShieldCheck className="w-5 h-5" />,
   info: <Info className="w-5 h-5" />,
+  announcement: <Megaphone className="w-5 h-5" />,
 };
 
 const notificationColors = {
@@ -25,6 +27,7 @@ const notificationColors = {
   community: 'bg-blue-500/10 text-blue-600',
   security: 'bg-red-500/10 text-red-600',
   info: 'bg-cyan-500/10 text-cyan-600',
+  announcement: 'bg-purple-500/10 text-purple-600',
 };
 
 export default function MobileNotificationsDrawer({ 
@@ -41,8 +44,16 @@ export default function MobileNotificationsDrawer({
 }) {
   const [isMarkingLoading, setIsMarkingLoading] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
+
+  const handleOpenActivity = () => {
+    if (!selectedNotification?.link) return;
+    navigate(selectedNotification.link);
+    setSelectedNotification(null);
+    onClose?.();
+  };
 
   const handleMarkAll = async () => {
     if (unreadCount === 0 || isMarkingLoading) return;
@@ -251,8 +262,9 @@ export default function MobileNotificationsDrawer({
               )}
             </button>
           ) : (
-            <button 
+            <button
               disabled={!hasLink}
+              onClick={handleOpenActivity}
               className={cn(
                 "group w-full h-12 rounded-xl flex items-center justify-center gap-3 px-6 font-black transition-all active:scale-[0.98]",
                 hasLink 

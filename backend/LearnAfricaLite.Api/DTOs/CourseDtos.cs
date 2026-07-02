@@ -163,6 +163,13 @@ public record CreateQuizQuestionRequest(
 );
 public record CreateQuizOptionRequest([Required] string Text, bool IsCorrect, int Order);
 
+public record UpdateQuizRequest(
+    [Required] string Title,
+    int DurationSeconds,
+    int Order,
+    List<CreateQuizQuestionRequest> Questions
+);
+
 public record SubmitQuizAttemptRequest(List<QuizAnswerRequest> Answers);
 public record QuizAnswerRequest(Guid QuestionId, Guid SelectedOptionId);
 
@@ -176,9 +183,15 @@ public record InstructorStatsDto(
     double AverageRating,
     int CompletionRate,
     List<MonthlyEnrollmentDto> MonthlyEnrollments,
+    List<MonthlyRevenueDto> MonthlyRevenue,
     List<CoursePerformanceDto> CoursePerformance,
-    List<RecentStudentDto> RecentStudents
+    List<RecentStudentDto> RecentStudents,
+    CompletionBreakdownDto CompletionBreakdown,
+    List<WeeklyActivityDto> WeeklyActivity
 );
 public record MonthlyEnrollmentDto(string Month, int Enrollments);
-public record CoursePerformanceDto(string Name, int Students, int Completion);
+public record MonthlyRevenueDto(string Month, decimal Revenue);
+public record CoursePerformanceDto(string Name, int Students, int Completion, double Rating, decimal Revenue);
 public record RecentStudentDto(Guid UserId, string Name, string Course, DateTime EnrolledAt, int Progress);
+public record CompletionBreakdownDto(int Completed, int InProgress, int NotStarted);
+public record WeeklyActivityDto(string Day, int Enrollments, int LessonCompletions);

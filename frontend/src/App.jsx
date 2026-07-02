@@ -15,6 +15,7 @@ import { LandingPage } from './pages/Landing/LandingPage';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { SignupPage } from './pages/Auth/SignupPage';
 import { ForgotPasswordPage } from './pages/Auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/Auth/ResetPasswordPage';
 import { CoursesPage } from './pages/Courses/CoursesPage';
 import { CourseDetailPage } from './pages/Courses/CourseDetailPage';
 import { LessonPage } from './pages/Lessons/LessonPage';
@@ -28,11 +29,19 @@ import { CourseStudentsPage } from './pages/Instructor/CourseStudentsPage';
 import { InstructorReviewsPage } from './pages/Instructor/InstructorReviewsPage';
 import { AnalyticsPage } from './pages/Instructor/AnalyticsPage';
 import InstructorApprovalsPage from './pages/Admin/InstructorApprovalsPage';
+import AnnouncementsPage from './pages/Admin/AnnouncementsPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CertificatePage from './pages/Certificate/CertificatePage';
 import VerifyCredentialPage from './pages/Verify/VerifyCredentialPage';
-import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
+import ComingSoonPage from './pages/ComingSoon/ComingSoonPage';
+import AboutUsPage from './pages/Company/AboutUsPage';
+import ContactPage from './pages/Company/ContactPage';
+import HelpCenterPage from './pages/Support/HelpCenterPage';
+import TermsOfServicePage from './pages/Legal/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/Legal/PrivacyPolicyPage';
+import CookiePolicyPage from './pages/Legal/CookiePolicyPage';
+import AccessibilityPage from './pages/Legal/AccessibilityPage';
 import NotFoundPage from './pages/NotFound/NotFoundPage';
 import InstructorOnboarding from './pages/Auth/InstructorOnboarding';
 import { Loader2 } from "lucide-react";
@@ -87,6 +96,14 @@ function AppRoutes() {
         <Route path="courses/:courseId" element={<CourseDetailPage />} />
         <Route path="verify" element={<VerifyCredentialPage />} />
         <Route path="verify/:code" element={<VerifyCredentialPage />} />
+        <Route path="coming-soon" element={<ComingSoonPage />} />
+        <Route path="about" element={<AboutUsPage />} />
+        <Route path="contact" element={<ContactPage />} />
+        <Route path="help-center" element={<HelpCenterPage />} />
+        <Route path="terms" element={<TermsOfServicePage />} />
+        <Route path="privacy" element={<PrivacyPolicyPage />} />
+        <Route path="cookies" element={<CookiePolicyPage />} />
+        <Route path="accessibility" element={<AccessibilityPage />} />
       </Route>
 
       {/* Auth Routes */}
@@ -112,6 +129,14 @@ function AppRoutes() {
           element={
             <PublicOnlyRoute>
               <ForgotPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="reset-password"
+          element={
+            <PublicOnlyRoute>
+              <ResetPasswordPage />
             </PublicOnlyRoute>
           }
         />
@@ -147,7 +172,6 @@ function AppRoutes() {
         }
       >
         <Route index element={<StudentDashboard />} />
-        <Route path="leaderboard" element={<LeaderboardPage />} />
       </Route>
 
       <Route path="/certificate/:courseId" element={<CertificatePage />} />
@@ -178,6 +202,7 @@ function AppRoutes() {
         <Route index element={<InstructorDashboard />} />
         <Route path="courses" element={<MyCoursesPage />} />
         <Route path="courses/create" element={<CreateCoursePage />} />
+        <Route path="courses/:courseId/edit" element={<CreateCoursePage />} />
         <Route path="courses/:courseId/students" element={<CourseStudentsPage />} />
         <Route path="reviews" element={<InstructorReviewsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
@@ -194,6 +219,7 @@ function AppRoutes() {
       >
         <Route index element={<Navigate to="instructors" replace />} />
         <Route path="instructors" element={<InstructorApprovalsPage />} />
+        <Route path="announcements" element={<AnnouncementsPage />} />
       </Route>
 
       {/* 404 */}

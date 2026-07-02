@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { X, LayoutDashboard, GraduationCap, Settings, LogOut, ShieldCheck, User, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { fileUrl } from '@/lib/apiClient';
 
 export default function MobileProfileDrawer({
   isOpen,
@@ -71,7 +72,7 @@ export default function MobileProfileDrawer({
             >
               <div className="h-12 w-12 overflow-hidden rounded-xl bg-background shrink-0 border border-border shadow-sm">
                 {!imgError && user?.avatar ? (
-                  <img src={user.avatar} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  <img src={fileUrl(user.avatar)} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/5 text-primary">
                     <User className="h-6 w-6" strokeWidth={2.5} />
@@ -121,10 +122,10 @@ export default function MobileProfileDrawer({
             )}
 
             {isSuperAdmin && (
-              <MenuLink 
-                to="/admin/system-overview" 
-                icon={<ShieldCheck className="h-4 w-4" />} 
-                label="System Admin" 
+              <MenuLink
+                to="/admin/instructors"
+                icon={<ShieldCheck className="h-4 w-4" />}
+                label="System Admin"
                 onClick={onClose} 
                 variant="primary"
               />

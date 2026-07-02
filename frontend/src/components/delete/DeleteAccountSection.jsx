@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Button } from '../../components/common/Button';
 import { Loader2, AlertTriangle, Trash2, X } from 'lucide-react';
+import { api, ApiError } from '../../lib/apiClient';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DeleteAccountSection({ userEmail, onCancel }) {
   const [confirmEmail, setConfirmEmail] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
+  const { logout } = useAuth();
 
   const handleDelete = async () => {
     if (confirmEmail !== userEmail) {
@@ -15,12 +18,13 @@ export default function DeleteAccountSection({ userEmail, onCancel }) {
 
     setIsDeleting(true);
     setError('');
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await api.delete('/api/users/me');
+      logout();
       window.location.href = '/';
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError(err instanceof ApiError ? err.message : 'An error occurred. Please try again.');
       setIsDeleting(false);
     }
   };
@@ -37,8 +41,8 @@ export default function DeleteAccountSection({ userEmail, onCancel }) {
                 Danger Zone
               </h3>
               <p className="text-sm text-muted-foreground max-w-lg">
-                This will permanently delete all data associated with **{userEmail}**. 
-                You will lose access to your projects across BudgetFlow and Marked.
+                This will permanently delete all data associated with <strong>{userEmail}</strong>,
+                including your enrollments, progress, certificates, and forum activity. This cannot be undone.
               </p>
             </div>
             <button 

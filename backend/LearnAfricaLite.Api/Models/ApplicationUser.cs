@@ -26,8 +26,15 @@ public class ApplicationUser : IdentityUser<Guid>
     public bool NotificationsEmail { get; set; } = true;
     public bool NotificationsPush { get; set; } = false;
     public bool NotificationsUpdates { get; set; } = true;
+    // True only once 2FA setup has been confirmed with a valid code — a secret
+    // can exist (mid-setup) without this being true yet.
     public bool TwoFactorAppEnabled { get; set; } = false;
+    public string? TwoFactorSecret { get; set; }
     public string Appearance { get; set; } = "system";
+
+    // Instructor preferences
+    public bool InstructorPayoutAlerts { get; set; } = true;
+    public bool InstructorMessagesEnabled { get; set; } = true;
 
     public ICollection<Course> Courses { get; set; } = new List<Course>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();

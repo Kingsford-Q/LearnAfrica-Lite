@@ -17,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<QuizOption> QuizOptions => Set<QuizOption>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
+    public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -32,6 +33,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         builder.Entity<Course>(e =>
         {
+            // Restrict (not Cascade): deleting an instructor must not silently delete
+            // their published courses out from under enrolled students. UsersController's
+            // account-deletion endpoint checks for and blocks this case with a clear
+            // error before it can ever reach the database constraint.
             e.HasOne(c => c.Instructor)
                 .WithMany(u => u.Courses)
                 .HasForeignKey(c => c.InstructorId)
@@ -52,10 +57,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(l => l.SectionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Cascade (not Restrict): Lessons are also reachable from Course via
+            // Section's cascade, so Restrict here would conflict with that path
+            // and block course deletion entirely.
             e.HasOne(l => l.Course)
                 .WithMany()
                 .HasForeignKey(l => l.CourseId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<Resource>(e =>
@@ -73,10 +81,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(q => q.SectionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Cascade for the same reason as Lesson.Course above: Quizzes are also
+            // reachable from Course via Section's cascade.
             e.HasOne(q => q.Course)
                 .WithMany()
                 .HasForeignKey(q => q.CourseId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             e.HasOne(q => q.Lesson)
                 .WithMany(l => l.Quizzes)
@@ -130,6 +140,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        builder.Entity<QuizAttempt>(e =>
+        {
+            e.HasIndex(qa => new { qa.UserId, qa.QuizId }).IsUnique();
+
+            e.HasOne(qa => qa.User)
+                .WithMany()
+                .HasForeignKey(qa => qa.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(qa => qa.Quiz)
+                .WithMany()
+                .HasForeignKey(qa => qa.QuizId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<Review>(e =>
         {
             e.HasOne(r => r.Course)
@@ -174,10 +199,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 .HasForeignKey(t => t.LessonId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Cascade: account deletion promises to remove all of the user's data,
+            // including their forum contributions.
             e.HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<ForumReply>(e =>
@@ -190,7 +217,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<UserBadge>(e =>

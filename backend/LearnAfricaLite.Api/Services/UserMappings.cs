@@ -32,6 +32,8 @@ public static class UserMappings
         user.NotificationsPush,
         user.NotificationsUpdates,
         user.TwoFactorAppEnabled,
-        user.Appearance
+        user.Appearance,
+        user.InstructorPayoutAlerts,
+        user.InstructorMessagesEnabled
     );
 }

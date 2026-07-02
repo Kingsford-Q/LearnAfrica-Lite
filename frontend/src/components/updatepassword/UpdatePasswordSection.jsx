@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../components/common/Button';
 import { Loader2, ShieldCheck, Eye, EyeOff, Lock, X } from 'lucide-react';
+import { api, ApiError } from '../../lib/apiClient';
 
 export default function UpdatePasswordSection({ onCancel, onSuccess }) {
   const [showPasswords, setShowPasswords] = useState(false);
@@ -26,15 +27,17 @@ export default function UpdatePasswordSection({ onCancel, onSuccess }) {
     }
     setIsUpdating(true);
     try {
-      // Logic for password update would go here (e.g., Firebase or API call)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
+      await api.put('/api/users/me/password', {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
       // SUCCESS: Call onSuccess to trigger the feedback alert in SettingsPage
       if (onSuccess) {
         onSuccess("Your password has been updated securely.");
       }
     } catch (err) {
-      setError("Update failed. Please check your current password and try again.");
+      setError(err instanceof ApiError ? err.message : "Update failed. Please check your current password and try again.");
     } finally {
       setIsUpdating(false);
     }

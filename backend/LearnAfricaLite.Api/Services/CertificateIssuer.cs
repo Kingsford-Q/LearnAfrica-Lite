@@ -19,12 +19,34 @@ public static class CertificateIssuer
         {
             CourseId = courseId,
             UserId = userId,
-            Grade = "Passed",
+            Grade = await ComputeGradeAsync(db, userId, courseId),
             VerificationCode = GenerateCode(),
         });
 
         await AuthController.NotifyAsync(db, userId, NotificationType.Achievement,
-            "Certificate issued", $"Your certificate for \"{course.Title}\" is ready.", $"certificate_{userId}_{courseId}");
+            "Certificate issued", $"Your certificate for \"{course.Title}\" is ready.", $"certificate_{userId}_{courseId}",
+            $"/certificate/{courseId}");
+    }
+
+    private static async Task<string> ComputeGradeAsync(AppDbContext db, Guid userId, Guid courseId)
+    {
+        var quizIds = await db.Quizzes.Where(q => q.CourseId == courseId).Select(q => q.Id).ToListAsync();
+        if (quizIds.Count == 0) return "Completed";
+
+        var scores = await db.QuizAttempts
+            .Where(a => a.UserId == userId && quizIds.Contains(a.QuizId))
+            .Select(a => a.Score)
+            .ToListAsync();
+        if (scores.Count == 0) return "Completed";
+
+        var average = scores.Average();
+        return average switch
+        {
+            >= 90 => "Distinction",
+            >= 80 => "Merit",
+            >= 70 => "Passed",
+            _ => "Completed",
+        };
     }
 
     private static string GenerateCode()

@@ -106,9 +106,14 @@ public class LessonsController(AppDbContext db) : ControllerBase
 
         await UpdateCourseProgressAsync(db, userId, lesson.CourseId);
         await db.SaveChangesAsync();
+        await BadgeService.EvaluateAndAwardAsync(db, userId);
 
         return lesson.ToDetailDto(true, progress.QuizScore);
     }
+
+    // A quiz score at or above this counts as "passed" for progress/certificate purposes.
+    // Matches the pass threshold shown to students on the quiz results page.
+    internal const int PassingQuizScore = 70;
 
     internal static async Task UpdateCourseProgressAsync(AppDbContext db, Guid userId, Guid courseId)
     {
@@ -116,13 +121,35 @@ public class LessonsController(AppDbContext db) : ControllerBase
         if (enrollment is null) return;
 
         var courseLessonIds = await db.Lessons.Where(l => l.CourseId == courseId).Select(l => l.Id).ToListAsync();
-        if (courseLessonIds.Count == 0) return;
+        // Standalone quizzes (not embedded in a lesson) are their own gradeable curriculum
+        // items — the course builder creates all quizzes this way, so without counting
+        // them here, progress (and certificate eligibility) would ignore quizzes entirely.
+        var standaloneQuizIds = await db.Quizzes
+            .Where(q => q.CourseId == courseId && q.LessonId == null)
+            .Select(q => q.Id)
+            .ToListAsync();
 
-        var completedCount = await db.LessonProgresses
+        var totalItems = courseLessonIds.Count + standaloneQuizIds.Count;
+        if (totalItems == 0) return;
+
+        var completedLessons = await db.LessonProgresses
             .CountAsync(lp => lp.UserId == userId && courseLessonIds.Contains(lp.LessonId) && lp.IsCompleted);
+        var passedQuizzes = await db.QuizAttempts
+            .CountAsync(a => a.UserId == userId && standaloneQuizIds.Contains(a.QuizId) && a.Score >= PassingQuizScore);
 
-        enrollment.ProgressPercent = (int)Math.Round(completedCount * 100.0 / courseLessonIds.Count);
-        if (enrollment.ProgressPercent >= 100 && enrollment.CompletedAt is null)
+        var completedCount = completedLessons + passedQuizzes;
+
+        enrollment.ProgressPercent = (int)Math.Round(completedCount * 100.0 / totalItems);
+
+        if (enrollment.CompletedAt is not null)
+        {
+            // The course was already completed and certified. A later quiz retake
+            // that scores lower must not regress progress back below 100 or leave
+            // "certified but <100% progress" showing in the UI — the certificate
+            // isn't revoked just because a passed quiz was retaken.
+            enrollment.ProgressPercent = Math.Max(enrollment.ProgressPercent, 100);
+        }
+        else if (enrollment.ProgressPercent >= 100)
         {
             enrollment.CompletedAt = DateTime.UtcNow;
             await CertificateIssuer.IssueIfEligibleAsync(db, userId, courseId);

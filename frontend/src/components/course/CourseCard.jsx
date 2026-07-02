@@ -23,7 +23,7 @@ export default function CourseCard({ course, enrolled = false, searchQuery = '' 
   {/* Thumbnail Area */}
   <div className="relative aspect-video overflow-hidden bg-muted shrink-0">
     <img
-      src={course.thumbnail}
+      src={fileUrl(course.thumbnail)}
       alt={course.title}
       loading="lazy"
       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"

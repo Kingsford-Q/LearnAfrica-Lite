@@ -21,6 +21,8 @@ public interface ITokenService
     (string token, DateTime expiresAt) GenerateAccessToken(ApplicationUser user, IList<string> roles);
     (string rawToken, string hash, DateTime expiresAt) GenerateRefreshToken();
     string HashToken(string rawToken);
+    string GenerateTwoFactorPendingToken(Guid userId);
+    Guid? ValidateTwoFactorPendingToken(string token);
 }
 
 public class TokenService(IOptions<JwtOptions> options) : ITokenService
@@ -65,5 +67,59 @@ public class TokenService(IOptions<JwtOptions> options) : ITokenService
     {
         var bytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawToken));
         return Convert.ToBase64String(bytes);
+    }
+
+    // A short-lived, stateless token proving "this caller just supplied the
+    // correct password for this account" — issued after step 1 of a 2FA login
+    // and required (along with a valid TOTP code) to complete step 2. The
+    // distinct "purpose" claim stops it being reused as a normal access token.
+    public string GenerateTwoFactorPendingToken(Guid userId)
+    {
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new("purpose", "2fa-pending"),
+        };
+
+        var key = new SymmetricSecurityKey(Convert.FromBase64String(_options.Secret));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _options.Issuer,
+            audience: _options.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(5),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public Guid? ValidateTwoFactorPendingToken(string token)
+    {
+        var key = new SymmetricSecurityKey(Convert.FromBase64String(_options.Secret));
+        var handler = new JwtSecurityTokenHandler();
+
+        try
+        {
+            var principal = handler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = _options.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _options.Audience,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ClockSkew = TimeSpan.FromSeconds(30),
+            }, out _);
+
+            if (principal.FindFirstValue("purpose") != "2fa-pending") return null;
+            var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            return Guid.TryParse(sub, out var userId) ? userId : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

@@ -19,7 +19,7 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
 
 var frontendOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-    ?? ["http://localhost:5173"];
+    ?? ["http://localhost:5173", "http://localhost:5174"];
 
 // --- Database ---
 // Render (and most hosts) provide the DB connection via a DATABASE_URL env var.
@@ -65,6 +65,7 @@ builder.Services.AddAuthorization();
 // --- App services ---
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddCors(options =>
 {

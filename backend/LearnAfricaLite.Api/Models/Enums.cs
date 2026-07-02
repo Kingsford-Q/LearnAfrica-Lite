@@ -40,5 +40,6 @@ public enum NotificationType
     Enrollment = 4,
     Community = 5,
     Security = 6,
-    Info = 7
+    Info = 7,
+    Announcement = 8
 }

@@ -29,32 +29,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Ca
 import StatsCard from '@/components/dashboard/StatsCard'
 import { api } from '@/lib/apiClient'
 
-// Local placeholder data for charts that don't have a dedicated endpoint yet
-const revenueData = [
-  { month: 'Jan', revenue: 2400 },
-  { month: 'Feb', revenue: 2800 },
-  { month: 'Mar', revenue: 3200 },
-  { month: 'Apr', revenue: 2900 },
-  { month: 'May', revenue: 3600 },
-  { month: 'Jun', revenue: 4100 },
-]
-
-const completionData = [
-  { name: 'Completed', value: 65, color: 'hsl(var(--success))' },
-  { name: 'In Progress', value: 25, color: 'hsl(var(--primary))' },
-  { name: 'Not Started', value: 10, color: 'hsl(var(--muted))' },
-]
-
-const engagementData = [
-  { day: 'Mon', views: 120, enrollments: 12 },
-  { day: 'Tue', views: 180, enrollments: 18 },
-  { day: 'Wed', views: 150, enrollments: 15 },
-  { day: 'Thu', views: 200, enrollments: 22 },
-  { day: 'Fri', views: 170, enrollments: 17 },
-  { day: 'Sat', views: 90, enrollments: 8 },
-  { day: 'Sun', views: 70, enrollments: 6 },
-]
-
 export function AnalyticsPage() {
   const [stats, setStats] = useState(null)
 
@@ -65,7 +39,17 @@ export function AnalyticsPage() {
   }, [])
 
   const monthlyEnrollments = stats?.monthlyEnrollments ?? []
+  const monthlyRevenue = stats?.monthlyRevenue ?? []
   const coursePerformance = stats?.coursePerformance ?? []
+  const weeklyActivity = stats?.weeklyActivity ?? []
+  const completionData = stats?.completionBreakdown
+    ? [
+        { name: 'Completed', value: stats.completionBreakdown.completed, color: 'var(--success)' },
+        { name: 'In Progress', value: stats.completionBreakdown.inProgress, color: 'var(--chart-3)' },
+        { name: 'Not Started', value: stats.completionBreakdown.notStarted, color: 'var(--chart-4)' },
+      ]
+    : []
+  const hasCompletionData = completionData.some((d) => d.value > 0)
 
   return (
     <div className="space-y-8">
@@ -80,34 +64,34 @@ export function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Revenue"
-          value={stats ? `$${stats.totalEarnings.toLocaleString()}` : '—'}
+          value={stats ? `$${stats.totalEarnings.toLocaleString()}` : 'N/A'}
           icon={DollarSign}
           trend="up"
           trendValue="12%"
         />
         <StatsCard
           title="Total Students"
-          value={stats ? stats.totalStudents.toLocaleString() : '—'}
+          value={stats ? stats.totalStudents.toLocaleString() : 'N/A'}
           icon={Users}
           trend="up"
           trendValue="8%"
         />
         <StatsCard
           title="Completion Rate"
-          value={stats ? `${stats.completionRate}%` : '—'}
+          value={stats ? `${stats.completionRate}%` : 'N/A'}
           icon={Target}
           trend="up"
           trendValue="5%"
         />
         <StatsCard
           title="Average Rating"
-          value={stats ? stats.averageRating : '—'}
+          value={stats ? stats.averageRating : 'N/A'}
           icon={Star}
         />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Revenue Chart (static placeholder until revenue endpoint exists) */}
+        {/* Revenue Chart (real backend data) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -118,21 +102,21 @@ export function AnalyticsPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
+                <AreaChart data={monthlyRevenue}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                     formatter={(v) => [`$${v}`, 'Revenue']}
                   />
-                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
+                  <Area type="monotone" dataKey="revenue" stroke="var(--chart-1)" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -155,16 +139,16 @@ export function AnalyticsPage() {
                   <XAxis dataKey="month" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                   />
-                  <Bar dataKey="enrollments" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="enrollments" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Course Completion (static placeholder) */}
+        {/* Course Completion (real backend data) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -174,29 +158,34 @@ export function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={completionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}%`}
-                    labelLine={false}
-                  >
-                    {completionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                    formatter={(v) => `${v}%`}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {hasCompletionData ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={completionData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                      labelLine={false}
+                    >
+                      {completionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                  No enrollment data yet.
+                </div>
+              )}
             </div>
             <div className="flex justify-center gap-6 mt-4">
               {completionData.map((item) => (
@@ -209,27 +198,27 @@ export function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Weekly Engagement (static placeholder) */}
+        {/* Weekly Activity (real backend data) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
-              Weekly Engagement
+              Weekly Activity
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={engagementData}>
+                <LineChart data={weeklyActivity}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="day" className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <YAxis className="text-xs fill-muted-foreground" tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="views" stroke="hsl(var(--chart-3))" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="enrollments" stroke="hsl(var(--chart-4))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="lessonCompletions" name="Lesson Completions" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="enrollments" name="Enrollments" stroke="var(--chart-5)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -258,7 +247,7 @@ export function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {coursePerformance.map((course, index) => (
+                {coursePerformance.map((course) => (
                   <tr key={course.name} className="border-b border-border last:border-b-0 hover:bg-muted/50">
                     <td className="p-4 font-medium">{course.name}</td>
                     <td className="p-4 text-muted-foreground">{course.students.toLocaleString()}</td>
@@ -273,11 +262,11 @@ export function AnalyticsPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-warning text-warning" />
-                        <span>4.{7 + (index % 3)}</span>
+                        <span>{course.rating > 0 ? course.rating.toFixed(1) : 'N/A'}</span>
                       </div>
                     </td>
                     <td className="p-4 text-muted-foreground">
-                      ${(course.students * 0.8 * (49 + index * 10)).toFixed(0)}
+                      ${course.revenue.toLocaleString()}
                     </td>
                   </tr>
                 ))}

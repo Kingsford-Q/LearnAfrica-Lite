@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/common/Card';
-import { Loader2, Save, AlertTriangle, CheckCircle2, XCircle, Bell, Shield, Palette, GraduationCap, Trash2, X } from 'lucide-react';
+import { Switch } from '../../components/common/Switch';
+import { Loader2, Save, AlertTriangle, CheckCircle2, XCircle, Bell, Shield, Palette, GraduationCap, Trash2, X, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 // Import your sub-components
 import DeleteAccountSection from '../../components/delete/DeleteAccountSection';
 import UpdatePasswordSection from '../../components/updatepassword/UpdatePasswordSection';
+import TwoFactorSection from '../../components/twofactor/TwoFactorSection';
 
 /**
  * Reusable Setting Row for consistent UI
@@ -25,34 +28,26 @@ const SettingRow = ({ label, desc, children, icon: Icon }) => (
   </div>
 );
 
-/**
- * Clean Switch Toggle
- */
-const Switch = ({ checked, onChange, disabled }) => (
-  <button
-    onClick={onChange}
-    disabled={disabled}
-    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 ${
-      checked ? 'bg-primary' : 'bg-input'
-    }`}
-  >
-    <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
-  </button>
-);
-
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  const { isInstructorMode, user, updateUser} = useAuth();
-  
+  const { isInstructorMode, user, updateUser, refreshUser } = useAuth();
+  const navigate = useNavigate();
+
+  const backHref = isInstructorMode
+    ? '/instructor'
+    : (user?.role === 'admin' || user?.role === 'superadmin')
+      ? '/admin/instructors'
+      : '/dashboard';
+
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showDeleteVerification, setShowDeleteVerification] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false); // New state for password form
+  const [showTwoFactorForm, setShowTwoFactorForm] = useState(false);
   const [status, setStatus] = useState({ type: null, message: '' });
-  
+
   const [settings, setSettings] = useState({
     notifications: { email: true, push: false, updates: true },
-    privacy: { twoFactor: false },
     instructor: { payout: true, messages: true }
   });
 
@@ -65,20 +60,23 @@ export default function SettingsPage() {
     setHasChanges(true);
   };
 
+  const handleThemeToggle = () => {
+    if (status.type) setStatus({ type: null, message: '' });
+    toggleTheme();
+    setHasChanges(true);
+  };
+
   useEffect(() => {
-    if (user?.settings) {
-      // Hydrating local state from the persistent user object
+    // Skip re-hydration while the user has unsaved edits — the 30s notification
+    // poll refreshes `user` in the background, and without this guard that would
+    // silently overwrite in-progress toggle changes before the user saves them.
+    if (user?.settings && !hasChanges) {
       setSettings({
         notifications: user.settings.notifications || { email: true, push: false, updates: true },
-        privacy: user.settings.privacy || { twoFactor: false },
         instructor: user.settings.instructor || { payout: true, messages: true }
       });
-      
-      // We reset hasChanges to false because these values 
-      // are now identical to what's in the database/context.
-      setHasChanges(false); 
     }
-  }, [user]);
+  }, [user, hasChanges]);
 
   const saveSettings = async () => {
     setIsSaving(true);
@@ -119,13 +117,20 @@ export default function SettingsPage() {
     <div className="max-w-3xl mx-auto py-10 px-4 sm:px-6">
       {/* Header */}
       <header className="flex flex-col sm:flex-row justify-between items-start md:items-center gap-4 mb-10">
-        <div className="space-y-1">
+        <div className="space-y-2">
+          <button
+            onClick={() => navigate(backHref)}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Settings</h1>
           <p className="text-muted-foreground text-sm">
             Personalize your experience as a {isInstructorMode ? 'Instructor' : 'Student'}.
           </p>
         </div>
-        
+
         {hasChanges && (
           <Button onClick={saveSettings} disabled={isSaving} className="w-full sm:w-auto shadow-sm">
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -156,11 +161,11 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <SettingRow 
-              label="Dark Mode" 
+            <SettingRow
+              label="Dark Mode"
               desc={`Switch to ${theme === 'dark' ? 'light' : 'dark'} interface`}
             >
-              <Switch checked={theme === 'dark'} onChange={toggleTheme} />
+              <Switch checked={theme === 'dark'} onChange={handleThemeToggle} />
             </SettingRow>
           </CardContent>
         </Card>
@@ -200,6 +205,9 @@ export default function SettingsPage() {
             <SettingRow label="Push Notifications" desc="Real-time alerts via browser" >
               <Switch checked={settings.notifications.push} onChange={() => handleToggle('notifications', 'push')} />
             </SettingRow>
+            <SettingRow label="Product Updates" desc="New features and announcements" >
+              <Switch checked={settings.notifications.updates} onChange={() => handleToggle('notifications', 'updates')} />
+            </SettingRow>
           </CardContent>
         </Card>
 
@@ -213,7 +221,7 @@ export default function SettingsPage() {
       1. Hide the parent header ONLY on mobile when the form is open. 
       This prevents the "double-layered" look in image_1ef0ad.png.
   */}
-  <CardHeader className={`${showPasswordForm ? 'hidden sm:block' : 'block'} border-b border-border/40`}>
+  <CardHeader className={`${showPasswordForm || showTwoFactorForm ? 'hidden sm:block' : 'block'} border-b border-border/40`}>
     <div className="flex items-center gap-2">
       <Shield className="h-5 w-5 text-primary" />
       <CardTitle className="text-lg">Privacy & Security</CardTitle>
@@ -224,33 +232,63 @@ export default function SettingsPage() {
       2. The Fix: We use p-0 (all sides) on mobile when the form is open. 
       This ensures the internal component is perfectly flush with the Card borders.
   */}
-  <CardContent className={`w-full transition-all duration-300 ${showPasswordForm ? 'p-0 sm:p-6' : 'p-6'}`}>
-    {!showPasswordForm ? (
-      <div className="flex md:flex-row flex-col md:items-start md:justify-between gap-5 animate-in fade-in duration-300">
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Account Password</p>
-          <p className="text-sm text-muted-foreground">Change your password to keep your account secure</p>
-        </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setShowPasswordForm(true)}
-        >
-          Update Password
-        </Button>
-      </div>
-    ) : (
+  <CardContent className={`w-full transition-all duration-300 ${showPasswordForm || showTwoFactorForm ? 'p-0 sm:p-6' : 'p-6'}`}>
+    {showTwoFactorForm ? (
       <div className="w-full animate-in slide-in-from-top-2 duration-300">
-        {/* 
-            3
-        */}
-        <UpdatePasswordSection 
-          onCancel={() => setShowPasswordForm(false)} 
+        <TwoFactorSection
+          isEnabled={!!user?.settings?.privacy?.twoFactor}
+          onCancel={() => setShowTwoFactorForm(false)}
+          onChanged={async (message) => {
+            setShowTwoFactorForm(false);
+            await refreshUser();
+            setStatus({ type: 'success', message });
+          }}
+        />
+      </div>
+    ) : showPasswordForm ? (
+      <div className="w-full animate-in slide-in-from-top-2 duration-300">
+        <UpdatePasswordSection
+          onCancel={() => setShowPasswordForm(false)}
           onSuccess={(message) => {
             setShowPasswordForm(false);
             setStatus({ type: 'success', message: message });
           }}
         />
+      </div>
+    ) : (
+      <div className="divide-y divide-border/40 animate-in fade-in duration-300">
+        <div className="flex md:flex-row flex-col md:items-start md:justify-between gap-5 py-4">
+          <div className="space-y-1 flex items-start gap-2">
+            <ShieldCheck className={`h-4 w-4 mt-0.5 shrink-0 ${user?.settings?.privacy?.twoFactor ? 'text-green-600' : 'text-muted-foreground'}`} />
+            <div>
+              <p className="text-sm font-medium">
+                Two-Factor Authentication
+                {user?.settings?.privacy?.twoFactor && <span className="ml-2 text-xs font-semibold text-green-600">Enabled</span>}
+              </p>
+              <p className="text-sm text-muted-foreground">Require an authenticator app code when signing in</p>
+            </div>
+          </div>
+          <Button
+            variant={user?.settings?.privacy?.twoFactor ? 'outline' : 'default'}
+            size="sm"
+            onClick={() => setShowTwoFactorForm(true)}
+          >
+            {user?.settings?.privacy?.twoFactor ? 'Manage' : 'Enable'}
+          </Button>
+        </div>
+        <div className="flex md:flex-row flex-col md:items-start md:justify-between gap-5 py-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Account Password</p>
+            <p className="text-sm text-muted-foreground">Change your password to keep your account secure</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPasswordForm(true)}
+          >
+            Update Password
+          </Button>
+        </div>
       </div>
     )}
   </CardContent>

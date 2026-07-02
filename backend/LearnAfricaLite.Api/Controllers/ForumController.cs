@@ -45,6 +45,7 @@ public class ForumController(AppDbContext db) : ControllerBase
         };
         db.ForumThreads.Add(thread);
         await db.SaveChangesAsync();
+        await BadgeService.EvaluateAndAwardAsync(db, thread.UserId);
 
         var dto = await GetThreadDetailAsync(thread.Id);
         return dto is null ? NotFound() : dto;
@@ -75,11 +76,14 @@ public class ForumController(AppDbContext db) : ControllerBase
         };
         db.ForumReplies.Add(reply);
         await db.SaveChangesAsync();
+        await BadgeService.EvaluateAndAwardAsync(db, userId);
 
         if (thread.UserId != userId)
         {
+            var courseId = await db.Lessons.Where(l => l.Id == thread.LessonId).Select(l => l.CourseId).FirstOrDefaultAsync();
+            var actionUrl = courseId != Guid.Empty ? $"/learn/course/{courseId}/lesson/{thread.LessonId}" : null;
             await AuthController.NotifyAsync(db, thread.UserId, NotificationType.Community,
-                "New reply to your discussion", $"Someone replied to \"{thread.Title}\".");
+                "New reply to your discussion", $"Someone replied to \"{thread.Title}\".", actionUrl: actionUrl);
         }
 
         var user = await db.Users.FirstAsync(u => u.Id == userId);

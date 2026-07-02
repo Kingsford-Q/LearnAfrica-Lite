@@ -45,7 +45,7 @@ public class ReviewsController(AppDbContext db) : ControllerBase
             if (course.InstructorId != userId)
             {
                 await AuthController.NotifyAsync(db, course.InstructorId, NotificationType.Community,
-                    "New review", $"Your course \"{course.Title}\" received a new review.");
+                    "New review", $"Your course \"{course.Title}\" received a new review.", actionUrl: "/instructor/reviews");
             }
         }
         else
@@ -56,6 +56,7 @@ public class ReviewsController(AppDbContext db) : ControllerBase
 
         var user = await db.Users.FindAsync(userId);
         await db.SaveChangesAsync();
+        await BadgeService.EvaluateAndAwardAsync(db, userId);
 
         return new ReviewDto(review.Id, review.CourseId, review.UserId, user?.Name ?? string.Empty, user?.Avatar, review.Rating, review.Comment, review.CreatedAt);
     }

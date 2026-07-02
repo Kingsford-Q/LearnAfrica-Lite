@@ -58,6 +58,12 @@ namespace LearnAfricaLite.Api.Migrations
                     b.Property<int>("InstructorApprovalStatus")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("InstructorMessagesEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("InstructorPayoutAlerts")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("InstructorPortfolio")
                         .HasColumnType("text");
 
@@ -188,7 +194,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("BadgeDefinitions", (string)null);
+                    b.ToTable("BadgeDefinitions");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Certificate", b =>
@@ -224,7 +230,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasIndex("UserId", "CourseId")
                         .IsUnique();
 
-                    b.ToTable("Certificates", (string)null);
+                    b.ToTable("Certificates");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Course", b =>
@@ -303,7 +309,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("InstructorId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Enrollment", b =>
@@ -334,7 +340,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasIndex("UserId", "CourseId")
                         .IsUnique();
 
-                    b.ToTable("Enrollments", (string)null);
+                    b.ToTable("Enrollments");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.ForumReply", b =>
@@ -362,7 +368,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ForumReplies", (string)null);
+                    b.ToTable("ForumReplies");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.ForumThread", b =>
@@ -394,7 +400,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ForumThreads", (string)null);
+                    b.ToTable("ForumThreads");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Lesson", b =>
@@ -440,7 +446,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("SectionId");
 
-                    b.ToTable("Lessons", (string)null);
+                    b.ToTable("Lessons");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.LessonProgress", b =>
@@ -474,7 +480,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasIndex("UserId", "LessonId")
                         .IsUnique();
 
-                    b.ToTable("LessonProgresses", (string)null);
+                    b.ToTable("LessonProgresses");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Notification", b =>
@@ -510,7 +516,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Quiz", b =>
@@ -546,7 +552,35 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("SectionId");
 
-                    b.ToTable("Quizzes", (string)null);
+                    b.ToTable("Quizzes");
+                });
+
+            modelBuilder.Entity("LearnAfricaLite.Api.Models.QuizAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("QuizId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex("UserId", "QuizId")
+                        .IsUnique();
+
+                    b.ToTable("QuizAttempts");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.QuizOption", b =>
@@ -572,7 +606,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("QuizOptions", (string)null);
+                    b.ToTable("QuizOptions");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.QuizQuestion", b =>
@@ -598,7 +632,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.ToTable("QuizQuestions", (string)null);
+                    b.ToTable("QuizQuestions");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.RefreshToken", b =>
@@ -633,7 +667,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Resource", b =>
@@ -660,7 +694,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("Resources", (string)null);
+                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Review", b =>
@@ -691,7 +725,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reviews", (string)null);
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.Section", b =>
@@ -714,7 +748,7 @@ namespace LearnAfricaLite.Api.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Sections", (string)null);
+                    b.ToTable("Sections");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.UserBadge", b =>
@@ -739,7 +773,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasIndex("UserId", "BadgeDefinitionId")
                         .IsUnique();
 
-                    b.ToTable("UserBadges", (string)null);
+                    b.ToTable("UserBadges");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -932,7 +966,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasOne("LearnAfricaLite.Api.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Thread");
@@ -951,7 +985,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasOne("LearnAfricaLite.Api.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Lesson");
@@ -964,7 +998,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasOne("LearnAfricaLite.Api.Models.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("LearnAfricaLite.Api.Models.Section", "Section")
@@ -1013,7 +1047,7 @@ namespace LearnAfricaLite.Api.Migrations
                     b.HasOne("LearnAfricaLite.Api.Models.Course", "Course")
                         .WithMany()
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("LearnAfricaLite.Api.Models.Lesson", "Lesson")
@@ -1032,6 +1066,25 @@ namespace LearnAfricaLite.Api.Migrations
                     b.Navigation("Lesson");
 
                     b.Navigation("Section");
+                });
+
+            modelBuilder.Entity("LearnAfricaLite.Api.Models.QuizAttempt", b =>
+                {
+                    b.HasOne("LearnAfricaLite.Api.Models.Quiz", "Quiz")
+                        .WithMany()
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LearnAfricaLite.Api.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LearnAfricaLite.Api.Models.QuizOption", b =>

@@ -1,30 +1,32 @@
 import { Link } from 'react-router-dom';
 import { Book, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 
+const comingSoon = (label) => `/coming-soon?feature=${encodeURIComponent(label)}`;
+
 const footerLinks = {
   platform: [
     { label: 'Courses', href: '/courses' },
-    { label: 'Become an Instructor', href: '/instructor' },
-    { label: 'Pricing', href: '#' },
-    { label: 'Enterprise', href: '#' },
+    { label: 'Become an Instructor', href: '/signup' },
+    { label: 'Pricing', href: comingSoon('Pricing') },
+    { label: 'Enterprise', href: comingSoon('Enterprise') },
   ],
   resources: [
-    { label: 'Blog', href: '#' },
-    { label: 'Help Center', href: '#' },
-    { label: 'Community', href: '#' },
-    { label: 'Webinars', href: '#' },
+    { label: 'Blog', href: comingSoon('Blog') },
+    { label: 'Help Center', href: '/help-center' },
+    { label: 'Community', href: comingSoon('Community') },
+    { label: 'Webinars', href: comingSoon('Webinars') },
   ],
   company: [
-    { label: 'About Us', href: '#' },
-    { label: 'Careers', href: '#' },
-    { label: 'Contact', href: '#' },
-    { label: 'Partners', href: '#' },
+    { label: 'About Us', href: '/about' },
+    { label: 'Careers', href: comingSoon('Careers') },
+    { label: 'Contact', href: '/contact' },
+    { label: 'Partners', href: comingSoon('Partners') },
   ],
   legal: [
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Cookie Policy', href: '#' },
-    { label: 'Accessibility', href: '#' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Cookie Policy', href: '/cookies' },
+    { label: 'Accessibility', href: '/accessibility' },
   ],
 };
 
@@ -55,14 +57,14 @@ export default function Footer() {
             </p>
 
             <div className="mt-6 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" strokeWidth={2} />
-                <span>support@learnafrica.com</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4" strokeWidth={2} />
-                <span>+233 256 411 155</span>
-              </div>
+              <a href="mailto:kingsfordquainoo48@gmail.com" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Mail className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="break-all">kingsfordquainoo48@gmail.com</span>
+              </a>
+              <a href="tel:+233256411155" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Phone className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>+233 25 641 1155</span>
+              </a>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" strokeWidth={2} />
                 <span>Western Region, Ghana</span>

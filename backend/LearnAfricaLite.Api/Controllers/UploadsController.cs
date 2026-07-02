@@ -17,14 +17,17 @@ public class UploadsController(IFileStorageService fileStorage) : ControllerBase
 
     [HttpPost]
     [RequestSizeLimit(MaxBytes)]
-    public async Task<ActionResult<object>> Upload(IFormFile file)
+    public async Task<ActionResult<object>> Upload(IFormFile? file)
     {
-        if (file.Length == 0) return BadRequest(new { message = "File is empty." });
+        if (file is null || file.Length == 0) return BadRequest(new { message = "File is empty." });
         if (file.Length > MaxBytes) return BadRequest(new { message = "File exceeds the 25MB limit." });
         if (!AllowedContentTypes.Contains(file.ContentType))
             return BadRequest(new { message = "Unsupported file type." });
 
         await using var stream = file.OpenReadStream();
+        if (!await FileSignatureValidator.MatchesSignatureAsync(stream, file.ContentType))
+            return BadRequest(new { message = "File content does not match its declared type." });
+
         var url = await fileStorage.SaveAsync(stream, file.FileName, file.ContentType);
 
         return new { url };

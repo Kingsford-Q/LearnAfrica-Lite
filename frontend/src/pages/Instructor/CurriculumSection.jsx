@@ -408,7 +408,7 @@ function PerkToggle({ icon: Icon, label, checked, onChange }) {
         <Icon className="h-4 w-4 text-primary" />
         <span className="text-[11px] font-bold uppercase tracking-tight text-foreground">{label}</span>
       </div>
-      <Switch checked={checked} onCheckedChange={(val) => onChange(val)} />
+      <Switch checked={checked} onChange={(val) => onChange(val)} />
     </div>
   )
 }

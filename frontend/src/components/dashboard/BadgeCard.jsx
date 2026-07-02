@@ -10,6 +10,11 @@ const colorMap = {
   blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
   amber: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
   emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+  teal: 'text-teal-500 bg-teal-500/10 border-teal-500/20',
+  violet: 'text-violet-500 bg-violet-500/10 border-violet-500/20',
+  cyan: 'text-cyan-500 bg-cyan-500/10 border-cyan-500/20',
+  indigo: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+  pink: 'text-pink-500 bg-pink-500/10 border-pink-500/20',
 };
 
 export default function BadgeCard({ badge }) {

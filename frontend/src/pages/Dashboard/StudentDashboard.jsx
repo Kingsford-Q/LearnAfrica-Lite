@@ -5,6 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Card, CardContent } from '@/components/common/Card';
 import { StatsCardSkeleton, CourseCardSkeleton } from '@/components/common/LoadingSkeleton';
 import { useAuth } from '@/context/AuthContext';
+import { fileUrl } from '@/lib/apiClient';
 
 // Lazy loaded components for code splitting
 const StatsCard = lazy(() => import('@/components/dashboard/StatsCard'));
@@ -104,6 +105,8 @@ export default function StudentDashboard() {
         'reviews_submitted': user.stats?.reviewsCount || 0,
         'fast_finish': user.stats?.fastFinishCount || 0,
         'profile_completed': user.stats?.isProfileComplete ? 1 : 0,
+        'courses_enrolled': user.stats?.enrolledCoursesCount || 0,
+        'forum_contributions': user.stats?.forumContributionsCount || 0,
       };
 
       const currentProgress = requirementMap[config.requirementType] || 0;
@@ -194,7 +197,8 @@ export default function StudentDashboard() {
         </Button>
       </div>
 
-      
+      {/* Reserves space for the fixed quick-nav strip above so it doesn't overlap the stats cards */}
+      <div className="sm:hidden h-14" />
 
       {/* Stats Cards Section */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -295,7 +299,7 @@ export default function StudentDashboard() {
           {recommendedCourses.map((course) => (
             <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <div className="aspect-video bg-muted relative">
-                <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" loading="lazy" />
+                <img src={fileUrl(course.thumbnail)} alt={course.title} className="h-full w-full object-cover" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-end p-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">

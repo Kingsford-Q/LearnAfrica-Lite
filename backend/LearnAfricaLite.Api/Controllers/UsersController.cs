@@ -1,7 +1,9 @@
 using LearnAfricaLite.Api.Data;
 using LearnAfricaLite.Api.DTOs;
+using LearnAfricaLite.Api.Models;
 using LearnAfricaLite.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +12,7 @@ namespace LearnAfricaLite.Api.Controllers;
 [ApiController]
 [Route("api/users/me")]
 [Authorize]
-public class UsersController(AppDbContext db) : ControllerBase
+public class UsersController(AppDbContext db, UserManager<ApplicationUser> userManager) : ControllerBase
 {
     [HttpPut("profile")]
     public async Task<ActionResult<UserDto>> UpdateProfile(UpdateProfileRequest request)
@@ -25,6 +27,7 @@ public class UsersController(AppDbContext db) : ControllerBase
         if (request.Avatar is not null) user.Avatar = request.Avatar;
 
         await db.SaveChangesAsync();
+        await BadgeService.EvaluateAndAwardAsync(db, user.Id);
 
         var roles = await db.UserRoles.Where(r => r.UserId == user.Id)
             .Join(db.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name!)
@@ -42,8 +45,9 @@ public class UsersController(AppDbContext db) : ControllerBase
         if (request.NotificationsEmail is not null) user.NotificationsEmail = request.NotificationsEmail.Value;
         if (request.NotificationsPush is not null) user.NotificationsPush = request.NotificationsPush.Value;
         if (request.NotificationsUpdates is not null) user.NotificationsUpdates = request.NotificationsUpdates.Value;
-        if (request.TwoFactorAppEnabled is not null) user.TwoFactorAppEnabled = request.TwoFactorAppEnabled.Value;
         if (request.Appearance is not null) user.Appearance = request.Appearance;
+        if (request.InstructorPayoutAlerts is not null) user.InstructorPayoutAlerts = request.InstructorPayoutAlerts.Value;
+        if (request.InstructorMessagesEnabled is not null) user.InstructorMessagesEnabled = request.InstructorMessagesEnabled.Value;
 
         await db.SaveChangesAsync();
 
@@ -54,6 +58,92 @@ public class UsersController(AppDbContext db) : ControllerBase
         return user.ToDto(roles);
     }
 
+    [HttpPut("password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+    {
+        var user = await userManager.FindByIdAsync(User.GetUserId().ToString());
+        if (user is null) return NotFound();
+
+        var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(new { message = string.Join(" ", result.Errors.Select(e => e.Description)) });
+
+        return Ok(new { message = "Password updated successfully." });
+    }
+
+    [HttpPost("2fa/setup")]
+    public async Task<ActionResult<TwoFactorSetupDto>> SetupTwoFactor()
+    {
+        var user = await userManager.FindByIdAsync(User.GetUserId().ToString());
+        if (user is null) return NotFound();
+
+        // Generates (or regenerates, if setup is retried) a pending secret.
+        // TwoFactorAppEnabled stays false until Verify confirms the user's
+        // authenticator app actually has it — otherwise a dropped setup flow
+        // could brick the account with no way to produce a valid code.
+        var secret = TotpService.GenerateSecret();
+        user.TwoFactorSecret = secret;
+        await userManager.UpdateAsync(user);
+
+        return new TwoFactorSetupDto(secret, TotpService.BuildOtpAuthUri(secret, user.Email ?? user.Name));
+    }
+
+    [HttpPost("2fa/verify")]
+    public async Task<IActionResult> VerifyTwoFactor(VerifyTwoFactorSetupRequest request)
+    {
+        var user = await userManager.FindByIdAsync(User.GetUserId().ToString());
+        if (user is null) return NotFound();
+        if (string.IsNullOrEmpty(user.TwoFactorSecret))
+            return BadRequest(new { message = "Start setup before verifying a code." });
+
+        if (!TotpService.ValidateCode(user.TwoFactorSecret, request.Code))
+            return BadRequest(new { message = "Invalid code. Please try again." });
+
+        user.TwoFactorAppEnabled = true;
+        await userManager.UpdateAsync(user);
+        return Ok(new { message = "Two-factor authentication is now enabled." });
+    }
+
+    [HttpPost("2fa/disable")]
+    public async Task<IActionResult> DisableTwoFactor(VerifyTwoFactorSetupRequest request)
+    {
+        var user = await userManager.FindByIdAsync(User.GetUserId().ToString());
+        if (user is null) return NotFound();
+        if (!user.TwoFactorAppEnabled || string.IsNullOrEmpty(user.TwoFactorSecret))
+            return BadRequest(new { message = "Two-factor authentication is not enabled." });
+
+        if (!TotpService.ValidateCode(user.TwoFactorSecret, request.Code))
+            return BadRequest(new { message = "Invalid code." });
+
+        user.TwoFactorAppEnabled = false;
+        user.TwoFactorSecret = null;
+        await userManager.UpdateAsync(user);
+        return Ok(new { message = "Two-factor authentication has been disabled." });
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = User.GetUserId();
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null) return NotFound();
+
+        var hasCourses = await db.Courses.AnyAsync(c => c.InstructorId == userId);
+        if (hasCourses)
+        {
+            return BadRequest(new
+            {
+                message = "You still have published courses. Delete or transfer them before deleting your account."
+            });
+        }
+
+        var result = await userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(new { message = string.Join(" ", result.Errors.Select(e => e.Description)) });
+
+        return NoContent();
+    }
+
     [HttpGet("stats")]
     public async Task<ActionResult<UserStatsDto>> Stats()
     {
@@ -62,9 +152,11 @@ public class UsersController(AppDbContext db) : ControllerBase
         if (user is null) return NotFound();
 
         var lessonsCompletedCount = await db.LessonProgresses.CountAsync(lp => lp.UserId == userId && lp.IsCompleted);
-        var perfectQuizzesCount = await db.LessonProgresses.CountAsync(lp => lp.UserId == userId && lp.QuizScore == 100);
+        var perfectQuizzesCount = await db.QuizAttempts.CountAsync(a => a.UserId == userId && a.Score == 100);
         var enrolledCoursesCount = await db.Enrollments.CountAsync(e => e.UserId == userId);
         var reviewsCount = await db.Reviews.CountAsync(r => r.UserId == userId);
+        var forumContributionsCount = await db.ForumThreads.CountAsync(t => t.UserId == userId)
+            + await db.ForumReplies.CountAsync(r => r.UserId == userId);
 
         var completedEnrollments = await db.Enrollments.AsNoTracking()
             .Where(e => e.UserId == userId && e.CompletedAt != null)
@@ -77,7 +169,8 @@ public class UsersController(AppDbContext db) : ControllerBase
 
         return new UserStatsDto(
             lessonsCompletedCount, coursesCompletedCount, enrolledCoursesCount,
-            perfectQuizzesCount, fastFinishCount, reviewsCount, isProfileComplete
+            perfectQuizzesCount, fastFinishCount, reviewsCount, isProfileComplete,
+            forumContributionsCount
         );
     }
 }

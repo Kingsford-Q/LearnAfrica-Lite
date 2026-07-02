@@ -13,7 +13,7 @@ namespace LearnAfricaLite.Api.Controllers;
 public class NotificationsController(AppDbContext db) : ControllerBase
 {
     private static NotificationDto ToDto(Models.Notification n) =>
-        new(n.Id, n.Type.ToString().ToLowerInvariant(), n.Title, n.Message, n.IsRead, n.CreatedAt);
+        new(n.Id, n.Type.ToString().ToLowerInvariant(), n.Title, n.Message, n.IsRead, n.CreatedAt, n.ActionUrl);
 
     [HttpGet]
     public async Task<ActionResult<List<NotificationDto>>> List()

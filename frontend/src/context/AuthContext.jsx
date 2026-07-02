@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { badgeConfig, testimonials, categories, difficulties } from '@/data/mockData';
 import { api, setAccessToken } from '@/lib/apiClient';
+import { useTheme } from './ThemeContext';
 
 const AuthContext = createContext();
 
@@ -30,6 +31,7 @@ function mapApiUserToAppUser(apiUser) {
       reviewsCount: 0,
       isProfileComplete: apiUser.bio && apiUser.avatar ? 1 : 0,
       streak: apiUser.streak || 0,
+      forumContributionsCount: 0,
     },
     badges: [],
     settings: {
@@ -40,6 +42,10 @@ function mapApiUserToAppUser(apiUser) {
       },
       privacy: { twoFactor: apiUser.twoFactorAppEnabled },
       appearance: apiUser.appearance || 'system',
+      instructor: {
+        payout: apiUser.instructorPayoutAlerts,
+        messages: apiUser.instructorMessagesEnabled,
+      },
     },
   };
 }
@@ -55,6 +61,7 @@ function mapApiStats(s, streak) {
     reviewsCount: s.reviewsCount,
     isProfileComplete: s.isProfileComplete ? 1 : 0,
     streak,
+    forumContributionsCount: s.forumContributionsCount,
   };
 }
 
@@ -70,6 +77,7 @@ function mapApiNotification(n) {
     timestamp: n.createdAt,
     time: created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
     date: created.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }),
+    link: n.actionUrl || null,
   };
 }
 
@@ -83,6 +91,32 @@ export function AuthProvider({ children }) {
   const [enrollmentsState, setEnrollmentsState] = useState([]);
 
   const isLoggingOut = useRef(false);
+  const userRef = useRef(null);
+  userRef.current = user;
+  const { setTheme } = useTheme();
+
+  // A stale refresh-token cookie (expired session, revoked on another device,
+  // etc.) surfaces here instead of leaving the app stuck showing "logged in"
+  // UI forever with every background request silently failing. Only acts if
+  // we actually thought we had a session — anonymous visitors also trigger a
+  // failed refresh attempt on first load, and that's not a real "expiry".
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (userRef.current && !isLoggingOut.current) {
+        setUser(null);
+        setIsInstructorMode(false);
+      }
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, []);
+
+  // Adopts the account's saved appearance (set on another device via Settings)
+  // as this browser's theme. Guards against the backend's "system" default,
+  // which isn't a real theme value ThemeContext understands.
+  const syncThemeFromAccount = useCallback((appearance) => {
+    if (appearance === 'light' || appearance === 'dark') setTheme(appearance);
+  }, [setTheme]);
 
   const unreadCount = useMemo(() =>
     notifications.filter(n => !n.read).length,
@@ -117,6 +151,20 @@ export function AuthProvider({ children }) {
       setUser(prev => prev ? { ...prev, stats: mapApiStats(data, prev.stats?.streak || 0) } : prev);
     } catch {
       // Best-effort — keep the last known stats.
+    }
+  }, []);
+
+  // Re-syncs role/approval-status/profile fields from the backend without a full
+  // reload, so e.g. an instructor approval takes effect while the tab stays open.
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await api.get('/api/auth/me');
+      setUser(prev => {
+        const mapped = mapApiUserToAppUser(me);
+        return prev ? { ...mapped, stats: prev.stats, badges: prev.badges } : mapped;
+      });
+    } catch {
+      // Best-effort — keep the last known session state.
     }
   }, []);
 
@@ -179,9 +227,12 @@ export function AuthProvider({ children }) {
     }
 
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => {
+      fetchNotifications();
+      refreshUser();
+    }, 30000);
     return () => clearInterval(interval);
-  }, [user?.id, isLoading, fetchNotifications]);
+  }, [user?.id, isLoading, fetchNotifications, refreshUser]);
 
   // Initial Auth Hydration — restores the session via the refresh-token cookie,
   // so a reload stays logged in even with no access token cached in memory.
@@ -190,6 +241,7 @@ export function AuthProvider({ children }) {
       try {
         const me = await api.get('/api/auth/me');
         setUser(mapApiUserToAppUser(me));
+        syncThemeFromAccount(me.appearance);
       } catch {
         setUser(null);
       } finally {
@@ -206,9 +258,21 @@ export function AuthProvider({ children }) {
     isLoggingOut.current = false;
 
     const data = await api.post('/api/auth/login', { email, password });
+    if (data.requiresTwoFactor) {
+      return { requiresTwoFactor: true, twoFactorToken: data.twoFactorToken };
+    }
     setAccessToken(data.accessToken);
     setUser(mapApiUserToAppUser(data.user));
-  }, []);
+    syncThemeFromAccount(data.user.appearance);
+    return { requiresTwoFactor: false };
+  }, [syncThemeFromAccount]);
+
+  const verifyTwoFactorLogin = useCallback(async (twoFactorToken, code) => {
+    const data = await api.post('/api/auth/login/2fa', { twoFactorToken, code });
+    setAccessToken(data.accessToken);
+    setUser(mapApiUserToAppUser(data.user));
+    syncThemeFromAccount(data.user.appearance);
+  }, [syncThemeFromAccount]);
 
   const logout = useCallback(() => {
     isLoggingOut.current = true;
@@ -257,12 +321,15 @@ export function AuthProvider({ children }) {
 
     if (updates.settings) {
       const s = updates.settings;
+      // Two-factor is deliberately excluded here — it's only ever changed via
+      // the dedicated setup/verify/disable endpoints, never a blind toggle.
       const apiUser = await api.put('/api/users/me/settings', {
         notificationsEmail: s.notifications?.email,
         notificationsPush: s.notifications?.push,
         notificationsUpdates: s.notifications?.updates,
-        twoFactorAppEnabled: s.privacy?.twoFactor,
         appearance: s.appearance,
+        instructorPayoutAlerts: s.instructor?.payout,
+        instructorMessagesEnabled: s.instructor?.messages,
       });
       setUser(prev => ({
         ...prev,
@@ -270,6 +337,7 @@ export function AuthProvider({ children }) {
           notifications: { email: apiUser.notificationsEmail, push: apiUser.notificationsPush, updates: apiUser.notificationsUpdates },
           privacy: { twoFactor: apiUser.twoFactorAppEnabled },
           appearance: apiUser.appearance,
+          instructor: { payout: apiUser.instructorPayoutAlerts, messages: apiUser.instructorMessagesEnabled },
         },
       }));
       return;
@@ -323,6 +391,7 @@ export function AuthProvider({ children }) {
       refreshEnrollments: fetchEnrollments,
       refreshStats: fetchStats,
       login,
+      verifyTwoFactorLogin,
       signup,
       logout,
       updateUser,
@@ -350,6 +419,7 @@ export function AuthProvider({ children }) {
     fetchEnrollments,
     fetchStats,
     login,
+    verifyTwoFactorLogin,
     signup,
     logout,
     updateUser,

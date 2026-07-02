@@ -285,10 +285,7 @@ export function CourseDetailPage() {
                         {course.isFree ? (
                           <span className="text-xl md:text-2xl font-bold">Free</span>
                         ) : (
-                          <>
-                            <span className="text-xl md:text-2xl font-bold">${course.price}</span>
-                            <span className="text-lg text-muted-foreground line-through">${(course.price * 1.5).toFixed(2)}</span>
-                          </>
+                          <span className="text-xl md:text-2xl font-bold">${course.price}</span>
                         )}
                       </div>
 

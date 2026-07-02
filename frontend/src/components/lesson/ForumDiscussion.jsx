@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { MessageSquare, ChevronLeft, Send, Loader2, Plus } from 'lucide-react'
+import { MessageSquare, ChevronLeft, Send, Loader2, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { Input, Textarea } from '@/components/common/Input'
@@ -40,6 +40,12 @@ export function ForumDiscussion({ lessonId }) {
   const [replyBody, setReplyBody] = useState('')
   const [isReplying, setIsReplying] = useState(false)
   const [error, setError] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const canModerate = useCallback((ownerId) => {
+    if (!user) return false
+    return user.id === ownerId || user.role === 'admin' || user.role === 'superadmin'
+  }, [user])
 
   const loadThreads = useCallback(() => {
     setIsLoadingThreads(true)
@@ -102,6 +108,35 @@ export function ForumDiscussion({ lessonId }) {
     }
   }
 
+  const handleDeleteThread = async (threadId) => {
+    if (!window.confirm('Delete this discussion? This cannot be undone.')) return
+    setIsDeleting(true)
+    setError('')
+    try {
+      await api.delete(`/api/forum/threads/${threadId}`)
+      setSelectedThread(null)
+      loadThreads()
+    } catch {
+      setError('Could not delete this discussion. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteReply = async (replyId) => {
+    if (!window.confirm('Delete this reply? This cannot be undone.')) return
+    setIsDeleting(true)
+    setError('')
+    try {
+      await api.delete(`/api/forum/replies/${replyId}`)
+      setSelectedThread((prev) => ({ ...prev, replies: prev.replies.filter((r) => r.id !== replyId) }))
+    } catch {
+      setError('Could not delete this reply. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   // ===== Thread detail view =====
   if (selectedThread || isLoadingThread) {
     return (
@@ -123,7 +158,19 @@ export function ForumDiscussion({ lessonId }) {
             <div className="flex items-start gap-3">
               <Avatar name={selectedThread.userName} />
               <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-base leading-snug">{selectedThread.title}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-base leading-snug">{selectedThread.title}</h3>
+                  {canModerate(selectedThread.userId) && (
+                    <button
+                      onClick={() => handleDeleteThread(selectedThread.id)}
+                      disabled={isDeleting}
+                      className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                      aria-label="Delete discussion"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {selectedThread.userName} &middot; {timeAgo(selectedThread.createdAt)}
                 </p>
@@ -133,16 +180,28 @@ export function ForumDiscussion({ lessonId }) {
 
             <div className="space-y-4 pt-4 border-t border-border/60">
               {selectedThread.replies.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-2">No replies yet — be the first to respond.</p>
+                <p className="text-xs text-muted-foreground text-center py-2">No replies yet. Be the first to respond.</p>
               ) : (
                 selectedThread.replies.map((reply) => (
                   <div key={reply.id} className="flex items-start gap-3">
                     <Avatar name={reply.userName} />
                     <div className="min-w-0 flex-1 bg-muted/30 rounded-lg px-3.5 py-2.5">
-                      <p className="text-[11px] font-semibold text-foreground">
-                        {reply.userName}{' '}
-                        <span className="font-normal text-muted-foreground">&middot; {timeAgo(reply.createdAt)}</span>
-                      </p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[11px] font-semibold text-foreground">
+                          {reply.userName}{' '}
+                          <span className="font-normal text-muted-foreground">&middot; {timeAgo(reply.createdAt)}</span>
+                        </p>
+                        {canModerate(reply.userId) && (
+                          <button
+                            onClick={() => handleDeleteReply(reply.id)}
+                            disabled={isDeleting}
+                            className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                            aria-label="Delete reply"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
                       <p className="text-sm text-foreground/90 mt-1 whitespace-pre-wrap">{reply.body}</p>
                     </div>
                   </div>

@@ -17,7 +17,7 @@ import { Button } from '@/components/common/Button'
 import { Card } from '@/components/common/Card'
 import { Input } from '@/components/common/Input'
 import { useAuth } from '@/context/AuthContext'
-import { useMemo, useState, lazy, Suspense } from 'react'
+import { useMemo, useState, lazy, Suspense, useEffect } from 'react'
 import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
 
 // Lazy load the CourseCard component
@@ -78,8 +78,10 @@ const stats = [
 
 export function LandingPage() {
 const { user, courses = [], testimonials = [], isLoading } = useAuth()
-  const navigate = useNavigate()
-  const [verifyCode, setVerifyCode] = useState('')
+const navigate = useNavigate()
+const [verifyCode, setVerifyCode] = useState('')
+const fullPlaceholder = "e.g. LA-CERT-ABCD-1A2B";
+const [placeholder, setPlaceholder] = useState("");
 
   const handleVerifySubmit = (e) => {
     e.preventDefault()
@@ -104,6 +106,48 @@ const { user, courses = [], testimonials = [], isLoading } = useAuth()
   const displayTestimonials = useMemo(() => {
     return Array.isArray(testimonials) ? testimonials.slice(0, 3) : [];
   }, [testimonials]);
+
+
+  useEffect(() => {
+    let index = 0;
+    let currentText = "";
+    let isDeleting = false;
+    let timer;
+
+    const handleType = () => {
+      if (!isDeleting) {
+        // Typing mode
+        currentText = fullPlaceholder.substring(0, index + 1);
+        index++;
+        
+        // If fully typed, pause, then start deleting (or just reset)
+        if (index === fullPlaceholder.length) {
+          timer = setTimeout(() => { isDeleting = true; handleType(); }, 1500); // pause at end
+          return;
+        }
+      } else {
+        // Deleting mode (optional: if you just want it to loop)
+        currentText = fullPlaceholder.substring(0, index - 1);
+        index--;
+
+        if (index === 0) {
+          isDeleting = false;
+        }
+      }
+
+      setPlaceholder(currentText);
+      
+      // Speed: faster when deleting, normal when typing
+      const speed = isDeleting ? 50 : 120; 
+      timer = setTimeout(handleType, speed);
+    };
+
+    // Start the typing effect
+    handleType();
+
+    // Clean up timer on unmount
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="flex flex-col">
@@ -421,9 +465,6 @@ const { user, courses = [], testimonials = [], isLoading } = useAuth()
       <section className="py-20 lg:py-32">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-xl text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-              <ShieldCheck className="h-8 w-8 text-primary" />
-            </div>
             <h2 className="text-3xl font-bold sm:text-4xl mb-4">Verify a Credential</h2>
             <p className="text-muted-foreground text-lg mb-8">
               Enter an official certificate or badge ID below to verify its regulatory authenticity.
@@ -432,7 +473,7 @@ const { user, courses = [], testimonials = [], isLoading } = useAuth()
               <Input
                 value={verifyCode}
                 onChange={(e) => setVerifyCode(e.target.value)}
-                placeholder="e.g. LA-CERT-ABCD-1A2B"
+                placeholder={placeholder}
                 className="h-14 text-center text-base rounded-2xl shadow-sm"
               />
               <Button type="submit" size="lg" disabled={!verifyCode.trim()} className="w-full sm:w-auto gap-2 px-10 h-12 rounded-xl font-semibold">

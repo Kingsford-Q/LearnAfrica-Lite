@@ -64,7 +64,7 @@ public class CoursesController(AppDbContext db) : ControllerBase
             .ToListAsync();
 
         var enrollmentRows = courses
-            .SelectMany(c => c.Enrollments.Select(e => new { Enrollment = e, CourseTitle = c.Title }))
+            .SelectMany(c => c.Enrollments.Select(e => new { Enrollment = e, CourseTitle = c.Title, CoursePrice = c.Price }))
             .ToList();
 
         var totalStudents = enrollmentRows.Select(r => r.Enrollment.UserId).Distinct().Count();
@@ -83,6 +83,14 @@ public class CoursesController(AppDbContext db) : ControllerBase
                 enrollmentRows.Count(r => r.Enrollment.EnrolledAt.Year == date.Year && r.Enrollment.EnrolledAt.Month == date.Month)
             )).ToList();
 
+        var monthlyRevenue = Enumerable.Range(0, 6)
+            .Select(i => now.AddMonths(-5 + i))
+            .Select(date => new MonthlyRevenueDto(
+                date.ToString("MMM"),
+                enrollmentRows.Where(r => r.Enrollment.EnrolledAt.Year == date.Year && r.Enrollment.EnrolledAt.Month == date.Month)
+                    .Sum(r => r.CoursePrice)
+            )).ToList();
+
         var coursePerformance = courses
             .OrderByDescending(c => c.Enrollments.Count)
             .Take(5)
@@ -90,7 +98,9 @@ public class CoursesController(AppDbContext db) : ControllerBase
                 c.Title, c.Enrollments.Count,
                 c.Enrollments.Count > 0
                     ? (int)Math.Round(c.Enrollments.Count(e => e.ProgressPercent == 100) * 100.0 / c.Enrollments.Count)
-                    : 0
+                    : 0,
+                c.Reviews.Count > 0 ? Math.Round(c.Reviews.Average(r => r.Rating), 1) : 0,
+                c.Price * c.Enrollments.Count
             )).ToList();
 
         var recentStudents = enrollmentRows
@@ -101,9 +111,31 @@ public class CoursesController(AppDbContext db) : ControllerBase
                 r.Enrollment.EnrolledAt, r.Enrollment.ProgressPercent
             )).ToList();
 
+        var completionBreakdown = new CompletionBreakdownDto(
+            enrollmentRows.Count(r => r.Enrollment.ProgressPercent == 100),
+            enrollmentRows.Count(r => r.Enrollment.ProgressPercent is > 0 and < 100),
+            enrollmentRows.Count(r => r.Enrollment.ProgressPercent == 0)
+        );
+
+        var courseIds = courses.Select(c => c.Id).ToList();
+        var last7Days = Enumerable.Range(0, 7).Select(i => now.Date.AddDays(-6 + i)).ToList();
+        var recentLessonCompletions = await db.LessonProgresses.AsNoTracking()
+            .Where(lp => lp.IsCompleted && lp.CompletedAt != null
+                && courseIds.Contains(lp.Lesson!.CourseId)
+                && lp.CompletedAt >= last7Days[0])
+            .Select(lp => lp.CompletedAt!.Value.Date)
+            .ToListAsync();
+        var weeklyActivity = last7Days
+            .Select(day => new WeeklyActivityDto(
+                day.ToString("ddd"),
+                enrollmentRows.Count(r => r.Enrollment.EnrolledAt.Date == day),
+                recentLessonCompletions.Count(d => d == day)
+            )).ToList();
+
         return new InstructorStatsDto(
             courses.Count, totalStudents, totalEarnings, averageRating, completionRate,
-            monthlyEnrollments, coursePerformance, recentStudents
+            monthlyEnrollments, monthlyRevenue, coursePerformance, recentStudents,
+            completionBreakdown, weeklyActivity
         );
     }
 
@@ -135,12 +167,15 @@ public class CoursesController(AppDbContext db) : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = Roles.Instructor)]
+    [Authorize(Roles = $"{Roles.Instructor},{Roles.Admin},{Roles.SuperAdmin}")]
     public async Task<ActionResult<CourseDetailDto>> Create(CreateCourseRequest request)
     {
         var userId = User.GetUserId();
         var instructor = await db.Users.FindAsync(userId);
-        if (instructor is null || instructor.InstructorApprovalStatus != InstructorApprovalStatus.Approved)
+        if (instructor is null) return Forbid();
+
+        var isStaff = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.SuperAdmin);
+        if (!isStaff && instructor.InstructorApprovalStatus != InstructorApprovalStatus.Approved)
             return Forbid();
 
         var course = new Course
