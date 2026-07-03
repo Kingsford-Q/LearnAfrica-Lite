@@ -102,6 +102,7 @@ function quizDetailToItem(quiz) {
     id: quiz.id,
     type: 'quiz',
     title: quiz.title,
+    durationSeconds: quiz.durationSeconds || 300,
     questions: (quiz.questions || []).map((q) => ({
       id: q.id,
       text: q.text,
@@ -370,11 +371,11 @@ export function CreateCoursePage() {
 
           if (isNewItem) {
             await api.post(`/api/sections/${sectionId}/quizzes`, {
-              title: item.title || 'Quiz', durationSeconds: 180, order: iIndex, lessonId: null, questions,
+              title: item.title || 'Quiz', durationSeconds: item.durationSeconds || 300, order: iIndex, lessonId: null, questions,
             })
           } else {
             await api.put(`/api/quizzes/${item.id}`, {
-              title: item.title || 'Quiz', durationSeconds: 180, order: iIndex, questions,
+              title: item.title || 'Quiz', durationSeconds: item.durationSeconds || 300, order: iIndex, questions,
             })
           }
         } else if (isNewItem) {
@@ -472,7 +473,7 @@ export function CreateCoursePage() {
             if (questions.length > 0) {
               await api.post(`/api/sections/${createdSection.id}/quizzes`, {
                 title: item.title || 'Quiz',
-                durationSeconds: 180,
+                durationSeconds: item.durationSeconds || 300,
                 order: iIndex,
                 lessonId: null,
                 questions,

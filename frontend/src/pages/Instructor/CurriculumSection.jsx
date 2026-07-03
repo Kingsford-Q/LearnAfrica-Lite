@@ -264,8 +264,30 @@ function QuizEditor({ item, onUpdate }) {
     });
   };
 
+  const durationMinutes = Math.round((item.durationSeconds ?? 300) / 60);
+
   return (
     <div className="space-y-6">
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
+          <Clock className="h-3 w-3" /> Time Limit (minutes)
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="180"
+          value={durationMinutes}
+          onChange={(e) => {
+            const minutes = Math.max(1, Math.min(180, Number(e.target.value) || 1));
+            onUpdate({ durationSeconds: minutes * 60 });
+          }}
+          className="w-full sm:w-40 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+        />
+        <p className="text-[10px] text-muted-foreground">
+          Students must submit before this runs out. Applies to the whole quiz, not per question.
+        </p>
+      </div>
+
       {questions.map((q, qIndex) => (
         <div key={q.id} className="p-4 rounded-xl border border-border bg-background space-y-4 shadow-sm">
           <div className="flex justify-between items-center border-b border-border pb-2">

@@ -124,8 +124,12 @@ public class LessonsController(AppDbContext db) : ControllerBase
         // Standalone quizzes (not embedded in a lesson) are their own gradeable curriculum
         // items — the course builder creates all quizzes this way, so without counting
         // them here, progress (and certificate eligibility) would ignore quizzes entirely.
+        // A quiz with zero questions can never score high enough to "pass" (it always
+        // scores 0), so it's excluded here rather than permanently capping progress for
+        // every enrolled student — request validation now blocks creating one, but this
+        // guards against any that already exist.
         var standaloneQuizIds = await db.Quizzes
-            .Where(q => q.CourseId == courseId && q.LessonId == null)
+            .Where(q => q.CourseId == courseId && q.LessonId == null && q.Questions.Count > 0)
             .Select(q => q.Id)
             .ToListAsync();
 

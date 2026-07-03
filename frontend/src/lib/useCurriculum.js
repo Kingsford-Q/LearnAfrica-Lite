@@ -20,7 +20,7 @@ export function useCurriculum(initialData = []) {
     setSections(sections.map(section => {
       if (section.id !== sectionId) return section
       const item = type === 'quiz'
-        ? { id: uuidv4(), type: 'quiz', title: '', questions: [] }
+        ? { id: uuidv4(), type: 'quiz', title: '', questions: [], durationSeconds: 300 }
         : { id: uuidv4(), type: 'video', title: '', videoUrl: '', content: '' }
       return { ...section, lessons: [...section.lessons, item] }
     }))

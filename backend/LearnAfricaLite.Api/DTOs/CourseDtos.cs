@@ -155,7 +155,7 @@ public record CreateQuizRequest(
     int DurationSeconds,
     int Order,
     Guid? LessonId,
-    List<CreateQuizQuestionRequest> Questions
+    [MinLength(1, ErrorMessage = "A quiz needs at least one question.")] List<CreateQuizQuestionRequest> Questions
 );
 public record CreateQuizQuestionRequest(
     [Required] string Text,
@@ -169,7 +169,7 @@ public record UpdateQuizRequest(
     [Required] string Title,
     int DurationSeconds,
     int Order,
-    List<CreateQuizQuestionRequest> Questions
+    [MinLength(1, ErrorMessage = "A quiz needs at least one question.")] List<CreateQuizQuestionRequest> Questions
 );
 
 public record SubmitQuizAttemptRequest(List<QuizAnswerRequest> Answers);
