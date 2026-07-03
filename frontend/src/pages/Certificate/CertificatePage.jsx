@@ -5,6 +5,118 @@ import { useState, useEffect } from 'react';
 import { Card } from '../../components/common/Card';
 import { api } from '@/lib/apiClient';
 
+const GOLD = '#c9a44c';
+const GOLD_DARK = '#8a6a24';
+const NAVY = '#16223d';
+const INK = '#5c5344';
+
+function LaurelWreath({ className, style }) {
+  const leaves = Array.from({ length: 6 });
+  return (
+    <svg viewBox="0 0 100 100" className={className} style={style} fill="none">
+      <circle cx="50" cy="83" r="2.4" fill="currentColor" />
+      {[1, -1].map((dir) => (
+        <g key={dir} transform={dir === -1 ? 'translate(100,0) scale(-1,1)' : undefined}>
+          <path d="M48 82 C 26 80, 12 60, 17 34" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+          {leaves.map((_, i) => {
+            const t = i / (leaves.length - 1);
+            const x = 48 - t * 30 + Math.sin(t * 3) * 1.5;
+            const y = 80 - t * 46;
+            const angle = -30 - t * 60;
+            return (
+              <ellipse
+                key={i}
+                cx={x}
+                cy={y}
+                rx="7.5"
+                ry="3.1"
+                fill="currentColor"
+                transform={`rotate(${angle} ${x} ${y})`}
+              />
+            );
+          })}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function CornerOrnament({ className }) {
+  return (
+    <svg viewBox="0 0 40 40" className={className} fill="none">
+      <path d="M2 22 L2 6 Q2 2 6 2 L22 2" stroke={GOLD} strokeWidth="1.4" />
+      <path d="M2 30 L2 26" stroke={GOLD} strokeWidth="1.4" />
+      <path d="M26 2 L30 2" stroke={GOLD} strokeWidth="1.4" />
+      <rect x="14.5" y="14.5" width="9" height="9" transform="rotate(45 19 19)" fill="none" stroke={GOLD} strokeWidth="1.3" />
+      <circle cx="19" cy="19" r="1.6" fill={GOLD} />
+    </svg>
+  );
+}
+
+function RibbonSeal({ className }) {
+  return (
+    <svg viewBox="0 0 100 132" className={className}>
+      <polygon points="33,68 67,68 76,124 50,107 24,124" fill={GOLD} />
+      <polygon points="33,68 67,68 60,116 50,107 40,116" fill={GOLD_DARK} />
+      <circle cx="50" cy="42" r="39" fill={NAVY} stroke={GOLD} strokeWidth="3" />
+      <circle cx="50" cy="42" r="31" fill="none" stroke={GOLD} strokeWidth="1" strokeDasharray="2.5 3.5" />
+      <text x="50" y="39" textAnchor="middle" fontSize="12" fill={GOLD} fontFamily="'Playfair Display', serif" fontWeight="700">
+        LAF
+      </text>
+      <text x="50" y="52" textAnchor="middle" fontSize="5.5" fill="#e8d9b5" letterSpacing="1.5" fontFamily="Inter, sans-serif">
+        CERTIFIED
+      </text>
+    </svg>
+  );
+}
+
+function Guilloche({ className, style }) {
+  const rings = Array.from({ length: 7 });
+  return (
+    <svg viewBox="0 0 200 200" className={className} style={style} fill="none">
+      {rings.map((_, i) => (
+        <circle key={i} cx="100" cy="100" r={16 + i * 13} stroke="currentColor" strokeWidth="0.6" />
+      ))}
+    </svg>
+  );
+}
+
+function SignatureBlock({ name, title }) {
+  return (
+    <div className="text-center min-w-0 max-w-[92px] xs:max-w-[130px] sm:max-w-[160px]">
+      <div
+        className="text-sm xs:text-base sm:text-lg mb-1 truncate"
+        style={{ fontFamily: "'Great Vibes', cursive", color: NAVY }}
+      >
+        {name}
+      </div>
+      <div className="h-px w-full" style={{ backgroundColor: `${NAVY}4d` }} />
+      <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider mt-1" style={{ color: GOLD_DARK }}>
+        {title}
+      </p>
+    </div>
+  );
+}
+
+function StatPill({ label, value }) {
+  return (
+    <div
+      className="px-1.5 py-1.5 xs:px-3 xs:py-2 min-w-0"
+      style={{ border: `1px solid ${GOLD}4d`, backgroundColor: `${GOLD}0d` }}
+    >
+      <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider truncate" style={{ color: `${GOLD_DARK}b3` }}>
+        {label}
+      </p>
+      <p
+        className="text-[10px] xs:text-xs sm:text-sm font-bold mt-0.5 truncate"
+        style={{ fontFamily: "'Playfair Display', serif", color: NAVY }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
 /**
  * Single certificate design, used for both the on-screen preview and the
  * downloaded file. The download is a real generated PDF (html2canvas + jsPDF,
@@ -72,10 +184,14 @@ export default function CertificatePage() {
         import('jspdf'),
       ]);
 
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
       const canvas = await html2canvas(node, {
         scale: 3,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#fffdf7',
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -167,7 +283,7 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
       <div className="py-4 px-3 sm:py-8 sm:px-4">
         <div className="max-w-4xl mx-auto">
           {/* Top Actions Row */}
@@ -216,114 +332,101 @@ export default function CertificatePage() {
           {/* Certificate */}
           <div
             id="certificate-content"
-            className="relative bg-white rounded-2xl shadow-xl overflow-hidden mx-auto"
-            style={{ aspectRatio: '1.414 / 1' }}
+            className="relative mx-auto overflow-hidden shadow-2xl"
+            style={{ aspectRatio: '1.414 / 1', background: 'linear-gradient(135deg, #fffdf7 0%, #fffdf7 55%, #faf3e2 100%)' }}
           >
-            {/* Outer frame */}
-            <div className="absolute inset-2 xs:inset-3 sm:inset-4 border-2 border-primary/15 rounded-xl pointer-events-none" />
-            <div className="absolute inset-3 xs:inset-4 sm:inset-5 border border-primary/10 rounded-lg pointer-events-none" />
+            {/* Outer gold border + inner navy hairline */}
+            <div className="absolute inset-[8px] xs:inset-3 sm:inset-4 pointer-events-none" style={{ border: `3px solid ${GOLD}` }} />
+            <div className="absolute inset-[15px] xs:inset-5 sm:inset-7 pointer-events-none" style={{ border: `1px solid ${NAVY}33` }} />
 
-            {/* Corner accents */}
-            <div className="absolute top-0 left-0 w-16 h-16 xs:w-20 xs:h-20 sm:w-28 sm:h-28 overflow-hidden pointer-events-none">
-              <div className="absolute -top-10 -left-10 w-20 h-20 xs:w-24 xs:h-24 sm:w-36 sm:h-36 bg-primary rotate-45" />
-            </div>
-            <div className="absolute bottom-0 right-0 w-16 h-16 xs:w-20 xs:h-20 sm:w-28 sm:h-28 overflow-hidden pointer-events-none">
-              <div className="absolute -bottom-10 -right-10 w-20 h-20 xs:w-24 xs:h-24 sm:w-36 sm:h-36 bg-accent rotate-45" />
-            </div>
+            {/* Corner ornaments */}
+            <CornerOrnament className="absolute top-1.5 left-1.5 w-7 h-7 xs:w-9 xs:h-9 sm:w-12 sm:h-12" />
+            <CornerOrnament className="absolute top-1.5 right-1.5 w-7 h-7 xs:w-9 xs:h-9 sm:w-12 sm:h-12 -scale-x-100" />
+            <CornerOrnament className="absolute bottom-1.5 left-1.5 w-7 h-7 xs:w-9 xs:h-9 sm:w-12 sm:h-12 -scale-y-100" />
+            <CornerOrnament className="absolute bottom-1.5 right-1.5 w-7 h-7 xs:w-9 xs:h-9 sm:w-12 sm:h-12 -scale-x-100 -scale-y-100" />
 
-            <div className="relative h-full flex flex-col items-center justify-between text-center px-5 py-6 xs:px-8 xs:py-8 sm:px-14 sm:py-10">
-              {/* Header */}
-              <div className="w-full">
-                <div className="inline-flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary to-accent shadow-md mb-2 xs:mb-3">
-                  <Award className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 text-white" strokeWidth={1.75} />
+            {/* Watermark */}
+            <Guilloche className="absolute inset-0 m-auto w-[60%] h-[60%] opacity-[0.05] pointer-events-none" style={{ color: NAVY }} />
+
+            <div className="relative h-full flex flex-col items-center justify-between text-center px-6 py-6 xs:px-10 xs:py-7 sm:px-16 sm:py-9">
+              {/* Header / Crest */}
+              <div className="w-full flex flex-col items-center">
+                <div className="relative w-14 h-14 xs:w-16 xs:h-16 sm:w-[4.75rem] sm:h-[4.75rem] mb-1.5 xs:mb-2">
+                  <LaurelWreath className="absolute inset-0 w-full h-full" style={{ color: GOLD }} />
+                  <div
+                    className="absolute inset-[24%] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: NAVY, border: `2px solid ${GOLD}` }}
+                  >
+                    <Award className="w-[48%] h-[48%]" style={{ color: GOLD }} strokeWidth={1.5} />
+                  </div>
                 </div>
 
-                <p className="text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] text-primary/70 mb-1">
+                <p className="text-[9px] xs:text-[10px] sm:text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: GOLD_DARK }}>
                   LearnAfrica Lite
                 </p>
 
-                <h1 className="text-lg xs:text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-slate-900 tracking-wide">
-                  Certificate of Completion
+                <h1
+                  className="mt-1 text-2xl xs:text-3xl sm:text-4xl md:text-[2.75rem] uppercase tracking-[0.1em]"
+                  style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, color: NAVY }}
+                >
+                  Certificate
                 </h1>
+                <p className="text-[10px] xs:text-xs sm:text-sm tracking-[0.45em] uppercase -mt-0.5" style={{ color: GOLD_DARK }}>
+                  of Completion
+                </p>
 
-                <div className="flex items-center gap-2 xs:gap-3 justify-center mt-2 xs:mt-3">
-                  <div className="h-px w-8 xs:w-12 sm:w-16 bg-gradient-to-r from-transparent to-primary/50" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                  <div className="h-px w-8 xs:w-12 sm:w-16 bg-gradient-to-l from-transparent to-primary/50" />
+                <div className="flex items-center gap-2 xs:gap-3 justify-center mt-2 xs:mt-2.5">
+                  <div className="h-px w-10 xs:w-14 sm:w-20" style={{ backgroundColor: GOLD }} />
+                  <div className="w-1.5 h-1.5 rotate-45" style={{ backgroundColor: GOLD }} />
+                  <div className="h-px w-10 xs:w-14 sm:w-20" style={{ backgroundColor: GOLD }} />
                 </div>
               </div>
 
               {/* Recipient */}
-              <div className="w-full flex-1 flex flex-col items-center justify-center py-2 xs:py-3 min-h-0">
-                <p className="text-[10px] xs:text-xs sm:text-sm text-slate-500 mb-1 xs:mb-2">
+              <div className="w-full flex-1 flex flex-col items-center justify-center py-1.5 xs:py-2 min-h-0">
+                <p className="text-[11px] xs:text-xs sm:text-sm italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: INK }}>
                   This certifies that
                 </p>
 
-                <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-serif italic font-semibold text-primary mb-2 xs:mb-3 px-2 max-w-full truncate">
+                <h2
+                  className="mt-1 xs:mt-1.5 mb-1 xs:mb-1.5 px-2 max-w-full truncate text-4xl xs:text-5xl sm:text-6xl md:text-[4.25rem] leading-tight"
+                  style={{ fontFamily: "'Great Vibes', cursive", color: NAVY }}
+                >
                   {certificate.userName}
                 </h2>
+                <div className="h-px w-40 xs:w-56 sm:w-72" style={{ background: `linear-gradient(to right, transparent, ${GOLD}, transparent)` }} />
 
-                <p className="text-[10px] xs:text-xs sm:text-sm text-slate-500 mb-1">
+                <p className="mt-2 xs:mt-3 text-[11px] xs:text-xs sm:text-sm" style={{ fontFamily: "'Cormorant Garamond', serif", color: INK }}>
                   has successfully completed the course
                 </p>
-
-                <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-semibold text-slate-800 px-2 max-w-full truncate">
+                <h3
+                  className="mt-1 text-sm xs:text-base sm:text-lg md:text-xl px-2 max-w-full truncate font-semibold"
+                  style={{ fontFamily: "'Playfair Display', serif", color: NAVY }}
+                >
                   {certificate.courseTitle}
                 </h3>
 
                 <div className={`grid ${courseDuration ? 'grid-cols-3' : 'grid-cols-2'} gap-2 xs:gap-3 max-w-xs xs:max-w-sm sm:max-w-md mx-auto mt-3 xs:mt-5 w-full`}>
-                  <div className="px-1 py-1.5 xs:px-3 xs:py-2 bg-primary/5 rounded-lg border border-primary/10 min-w-0">
-                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 truncate">Grade</p>
-                    <p className="text-[10px] xs:text-xs sm:text-sm font-bold text-primary mt-0.5 truncate">{certificate.grade}</p>
-                  </div>
-
-                  {courseDuration && (
-                    <div className="px-1 py-1.5 xs:px-3 xs:py-2 bg-primary/5 rounded-lg border border-primary/10 min-w-0">
-                      <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 truncate">Duration</p>
-                      <p className="text-[10px] xs:text-xs sm:text-sm font-bold text-primary mt-0.5 truncate">{courseDuration}</p>
-                    </div>
-                  )}
-
-                  <div className="px-1 py-1.5 xs:px-3 xs:py-2 bg-primary/5 rounded-lg border border-primary/10 min-w-0">
-                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 truncate">Completed</p>
-                    <p className="text-[10px] xs:text-xs sm:text-sm font-bold text-primary mt-0.5 truncate">{formattedDate}</p>
-                  </div>
+                  <StatPill label="Grade" value={certificate.grade} />
+                  {courseDuration && <StatPill label="Duration" value={courseDuration} />}
+                  <StatPill label="Completed" value={formattedDate} />
                 </div>
               </div>
 
-              {/* Signatures + footer */}
+              {/* Signatures + Seal */}
               <div className="w-full">
-                <div className="flex flex-row items-end justify-center gap-4 xs:gap-10 sm:gap-16 pt-3 xs:pt-4 border-t border-slate-200">
-                  <div className="text-center flex-1 xs:flex-initial min-w-0 max-w-[110px] xs:max-w-[150px]">
-                    <div className="font-serif text-xs xs:text-sm sm:text-base italic text-slate-700 mb-0.5 truncate">
-                      {certificate.instructorName}
-                    </div>
-                    <div className="h-px w-full bg-slate-300 mb-1" />
-                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-tight">Instructor</p>
-                  </div>
-
-                  <div className="shrink-0 flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full border-2 border-accent/40 bg-gradient-to-br from-accent/10 to-primary/10">
-                    <div className="text-center">
-                      <div className="text-[9px] xs:text-[10px] sm:text-xs font-black text-primary leading-none">LAF</div>
-                      <div className="text-[5px] xs:text-[6px] uppercase font-bold tracking-wide text-slate-400 mt-0.5">Seal</div>
-                    </div>
-                  </div>
-
-                  <div className="text-center flex-1 xs:flex-initial min-w-0 max-w-[110px] xs:max-w-[150px]">
-                    <div className="font-serif text-xs xs:text-sm sm:text-base italic text-slate-700 mb-0.5 truncate">
-                      LearnAfrica Team
-                    </div>
-                    <div className="h-px w-full bg-slate-300 mb-1" />
-                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-tight">Director</p>
-                  </div>
+                <div className="flex flex-row items-end justify-center gap-5 xs:gap-10 sm:gap-16 pt-1">
+                  <SignatureBlock name={certificate.instructorName} title="Instructor" />
+                  <RibbonSeal className="w-11 h-14 xs:w-12 xs:h-[4.1rem] sm:w-14 sm:h-[4.6rem] shrink-0" />
+                  <SignatureBlock name="LearnAfrica Team" title="Director" />
                 </div>
 
-                <div className="mt-2 xs:mt-3 text-center">
-                  <p className="text-[7px] xs:text-[9px] sm:text-[10px] text-slate-400 truncate">
-                    Certificate ID: <span className="font-mono font-medium text-slate-600">{certificate.verificationCode}</span>
+                <div className="mt-2.5 xs:mt-3 pt-2 xs:pt-2.5 text-center" style={{ borderTop: `1px solid ${NAVY}26` }}>
+                  <p className="text-[8px] xs:text-[9px] sm:text-[10px] truncate" style={{ color: `${INK}cc` }}>
+                    Certificate ID: <span className="font-mono font-semibold" style={{ color: NAVY }}>{certificate.verificationCode}</span>
                   </p>
-                  <p className="text-[6px] xs:text-[8px] sm:text-[9px] text-slate-400/80 hidden xs:block mt-0.5">
-                    Verify at {window.location.host}/verify/{certificate.verificationCode}
+                  <p className="text-[7px] xs:text-[8px] sm:text-[9px] mt-0.5 truncate" style={{ color: `${INK}99` }}>
+                    Verify authenticity at {window.location.host}/verify/{certificate.verificationCode}
                   </p>
                 </div>
               </div>
