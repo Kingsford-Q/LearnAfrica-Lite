@@ -39,10 +39,13 @@ export default function ProfilePage() {
     });
   }, [user]);
 
-  // Sync form data whenever the global user object changes
+  // Sync form data whenever the global user object changes — but not while
+  // actively editing. AuthContext's 30s notification poll refreshes `user`
+  // in the background, and without this guard that overwrites in-progress
+  // field edits (e.g. bio) with the stale, not-yet-saved server value.
   useEffect(() => {
-    syncFormFromUser();
-  }, [syncFormFromUser]);
+    if (!isEditing) syncFormFromUser();
+  }, [syncFormFromUser, isEditing]);
 
   // Local object URL preview must be released once it's no longer shown.
   useEffect(() => {
