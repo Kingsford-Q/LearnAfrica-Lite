@@ -23,8 +23,13 @@ public class CertificatesController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<List<CertificateDto>>> Mine()
     {
         var userId = User.GetUserId();
-        var certs = await Project(db.Certificates.AsNoTracking().Where(c => c.UserId == userId))
-            .OrderByDescending(c => c.IssuedAt)
+        // Order on the raw entity before projecting -- ordering on a column of the
+        // already-projected DTO caused query translation to blow up in production
+        // (500 with no response body) even though the equivalent single-row queries
+        // below using the same Project() helper worked fine.
+        var certs = await Project(db.Certificates.AsNoTracking()
+                .Where(c => c.UserId == userId)
+                .OrderByDescending(c => c.IssuedAt))
             .ToListAsync();
         return certs;
     }

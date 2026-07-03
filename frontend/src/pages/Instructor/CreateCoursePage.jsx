@@ -29,12 +29,6 @@ const defaultFormData = {
   thumbnailUrl: null
 }
 
-const defaultCoursePerks = {
-  hasCertificate: false,
-  lifetimeAccess: true,
-  hasResources: false
-}
-
 function loadDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY)
@@ -133,8 +127,6 @@ export function CreateCoursePage() {
   })
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState(null)
 
-  const [coursePerks, setCoursePerks] = useState(draft?.coursePerks || defaultCoursePerks)
-
   const [tags, setTags] = useState(draft?.tags || [])
   const [tagInput, setTagInput] = useState('')
   const [learningOutcomes, setLearningOutcomes] = useState(draft?.learningOutcomes || [])
@@ -181,11 +173,6 @@ export function CreateCoursePage() {
           paymentLink: course.paymentLink || '',
         })
         setExistingThumbnailUrl(course.thumbnail || null)
-        setCoursePerks({
-          hasCertificate: !!course.hasCertificate,
-          lifetimeAccess: !!course.hasLifetimeAccess,
-          hasResources: !!course.hasResources,
-        })
         setTags(course.tags || [])
         setLearningOutcomes(course.learningOutcomes || [])
 
@@ -235,18 +222,17 @@ export function CreateCoursePage() {
     try {
       const { thumbnail, thumbnailUrl, ...persistableFormData } = formData
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        activeTab, formData: persistableFormData, coursePerks, tags, learningOutcomes, sections,
+        activeTab, formData: persistableFormData, tags, learningOutcomes, sections,
         savedAt: new Date().toISOString(),
       }))
     } catch {
       // ignore storage errors (e.g. private browsing / quota exceeded)
     }
-  }, [isEditMode, activeTab, formData, coursePerks, tags, learningOutcomes, sections])
+  }, [isEditMode, activeTab, formData, tags, learningOutcomes, sections])
 
   const handleResetForm = () => {
     if (!window.confirm('Reset the form? This clears everything you\'ve entered so far.')) return
     setFormData(defaultFormData)
-    setCoursePerks(defaultCoursePerks)
     setTags([])
     setTagInput('')
     setLearningOutcomes([])
@@ -336,9 +322,6 @@ export function CreateCoursePage() {
       paymentLink: Number(formData.price) > 0 ? (formData.paymentLink || null) : null,
       tags,
       learningOutcomes,
-      hasCertificate: coursePerks.hasCertificate,
-      hasLifetimeAccess: coursePerks.lifetimeAccess,
-      hasResources: coursePerks.hasResources,
       thumbnail: thumbnailUrl,
     })
 
@@ -450,9 +433,6 @@ export function CreateCoursePage() {
         paymentLink: Number(formData.price) > 0 ? (formData.paymentLink || null) : null,
         tags,
         learningOutcomes,
-        hasCertificate: coursePerks.hasCertificate,
-        hasLifetimeAccess: coursePerks.lifetimeAccess,
-        hasResources: coursePerks.hasResources,
         thumbnail: thumbnailUrl,
       })
 
@@ -723,8 +703,6 @@ export function CreateCoursePage() {
         {activeTab === 'curriculum' && (
           <CurriculumSection
             sections={sections}
-            coursePerks={coursePerks} // Passed from local state
-            updateCoursePerks={setCoursePerks} // Passed setter
             addSection={addSection}
             addLesson={addLesson}
             removeSection={removeSection}

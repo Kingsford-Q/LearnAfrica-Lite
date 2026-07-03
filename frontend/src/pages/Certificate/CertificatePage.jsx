@@ -192,11 +192,19 @@ export default function CertificatePage() {
         scale: 3,
         useCORS: true,
         backgroundColor: '#fffdf7',
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: node.scrollWidth,
+        windowHeight: node.scrollHeight,
       });
+
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Certificate captured at zero size');
+      }
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: canvas.width >= canvas.height ? 'landscape' : 'portrait',
         unit: 'px',
         format: [canvas.width, canvas.height],
       });
@@ -287,7 +295,7 @@ export default function CertificatePage() {
       <div className="py-4 px-3 sm:py-8 sm:px-4">
         <div className="max-w-4xl mx-auto">
           {/* Top Actions Row */}
-          <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
+          <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6 print:hidden">
             <Button
               onClick={() => navigate(-1)}
               variant="outline"
@@ -326,14 +334,23 @@ export default function CertificatePage() {
           </div>
 
           {downloadError && (
-            <p className="text-xs text-amber-600 dark:text-amber-500 text-center mb-4 px-2">{downloadError}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-500 text-center mb-4 px-2 print:hidden">{downloadError}</p>
           )}
 
-          {/* Certificate */}
+          {/* Certificate -- height is intentionally content-driven (no aspect-ratio
+              lock). html2canvas and browser print engines don't reliably honor
+              CSS aspect-ratio, which used to collapse this box's height on
+              mobile/print and make every line of text overlap. Letting it size
+              naturally guarantees the on-screen view, the downloaded PDF and a
+              native print all render identically, on every viewport. */}
           <div
             id="certificate-content"
-            className="relative mx-auto overflow-hidden shadow-2xl"
-            style={{ aspectRatio: '1.414 / 1', background: 'linear-gradient(135deg, #fffdf7 0%, #fffdf7 55%, #faf3e2 100%)' }}
+            className="relative mx-auto shadow-2xl print:shadow-none"
+            style={{
+              background: 'linear-gradient(135deg, #fffdf7 0%, #fffdf7 55%, #faf3e2 100%)',
+              WebkitPrintColorAdjust: 'exact',
+              printColorAdjust: 'exact',
+            }}
           >
             {/* Outer gold border + inner navy hairline */}
             <div className="absolute inset-[8px] xs:inset-3 sm:inset-4 pointer-events-none" style={{ border: `3px solid ${GOLD}` }} />
@@ -348,10 +365,10 @@ export default function CertificatePage() {
             {/* Watermark */}
             <Guilloche className="absolute inset-0 m-auto w-[60%] h-[60%] opacity-[0.05] pointer-events-none" style={{ color: NAVY }} />
 
-            <div className="relative h-full flex flex-col items-center justify-between text-center px-6 py-6 xs:px-10 xs:py-7 sm:px-16 sm:py-9">
+            <div className="relative flex flex-col items-center text-center px-5 py-7 xs:px-10 xs:py-8 sm:px-16 sm:py-10">
               {/* Header / Crest */}
               <div className="w-full flex flex-col items-center">
-                <div className="relative w-14 h-14 xs:w-16 xs:h-16 sm:w-[4.75rem] sm:h-[4.75rem] mb-1.5 xs:mb-2">
+                <div className="relative w-12 h-12 xs:w-16 xs:h-16 sm:w-[4.75rem] sm:h-[4.75rem] mb-1.5 xs:mb-2">
                   <LaurelWreath className="absolute inset-0 w-full h-full" style={{ color: GOLD }} />
                   <div
                     className="absolute inset-[24%] rounded-full flex items-center justify-center"
@@ -366,12 +383,12 @@ export default function CertificatePage() {
                 </p>
 
                 <h1
-                  className="mt-1 text-2xl xs:text-3xl sm:text-4xl md:text-[2.75rem] uppercase tracking-[0.1em]"
+                  className="mt-1 text-xl xs:text-3xl sm:text-4xl md:text-[2.75rem] uppercase tracking-[0.1em]"
                   style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, color: NAVY }}
                 >
                   Certificate
                 </h1>
-                <p className="text-[10px] xs:text-xs sm:text-sm tracking-[0.45em] uppercase -mt-0.5" style={{ color: GOLD_DARK }}>
+                <p className="text-[9px] xs:text-xs sm:text-sm tracking-[0.4em] uppercase -mt-0.5" style={{ color: GOLD_DARK }}>
                   of Completion
                 </p>
 
@@ -383,30 +400,30 @@ export default function CertificatePage() {
               </div>
 
               {/* Recipient */}
-              <div className="w-full flex-1 flex flex-col items-center justify-center py-1.5 xs:py-2 min-h-0">
+              <div className="w-full flex flex-col items-center py-4 xs:py-5 sm:py-6">
                 <p className="text-[11px] xs:text-xs sm:text-sm italic" style={{ fontFamily: "'Cormorant Garamond', serif", color: INK }}>
                   This certifies that
                 </p>
 
                 <h2
-                  className="mt-1 xs:mt-1.5 mb-1 xs:mb-1.5 px-2 max-w-full truncate text-4xl xs:text-5xl sm:text-6xl md:text-[4.25rem] leading-tight"
+                  className="mt-2 xs:mt-2.5 mb-1.5 xs:mb-2 px-2 max-w-full break-words text-3xl xs:text-5xl sm:text-6xl md:text-[4.25rem] leading-[1.15]"
                   style={{ fontFamily: "'Great Vibes', cursive", color: NAVY }}
                 >
                   {certificate.userName}
                 </h2>
                 <div className="h-px w-40 xs:w-56 sm:w-72" style={{ background: `linear-gradient(to right, transparent, ${GOLD}, transparent)` }} />
 
-                <p className="mt-2 xs:mt-3 text-[11px] xs:text-xs sm:text-sm" style={{ fontFamily: "'Cormorant Garamond', serif", color: INK }}>
+                <p className="mt-3 xs:mt-3 text-[11px] xs:text-xs sm:text-sm" style={{ fontFamily: "'Cormorant Garamond', serif", color: INK }}>
                   has successfully completed the course
                 </p>
                 <h3
-                  className="mt-1 text-sm xs:text-base sm:text-lg md:text-xl px-2 max-w-full truncate font-semibold"
+                  className="mt-1.5 text-base xs:text-base sm:text-lg md:text-xl px-2 max-w-full break-words font-semibold"
                   style={{ fontFamily: "'Playfair Display', serif", color: NAVY }}
                 >
                   {certificate.courseTitle}
                 </h3>
 
-                <div className={`grid ${courseDuration ? 'grid-cols-3' : 'grid-cols-2'} gap-2 xs:gap-3 max-w-xs xs:max-w-sm sm:max-w-md mx-auto mt-3 xs:mt-5 w-full`}>
+                <div className={`grid ${courseDuration ? 'grid-cols-3' : 'grid-cols-2'} gap-2 xs:gap-3 max-w-xs xs:max-w-sm sm:max-w-md mx-auto mt-4 xs:mt-5 w-full`}>
                   <StatPill label="Grade" value={certificate.grade} />
                   {courseDuration && <StatPill label="Duration" value={courseDuration} />}
                   <StatPill label="Completed" value={formattedDate} />
@@ -421,7 +438,7 @@ export default function CertificatePage() {
                   <SignatureBlock name="LearnAfrica Team" title="Director" />
                 </div>
 
-                <div className="mt-2.5 xs:mt-3 pt-2 xs:pt-2.5 text-center" style={{ borderTop: `1px solid ${NAVY}26` }}>
+                <div className="mt-3 xs:mt-4 pt-2.5 xs:pt-3 text-center" style={{ borderTop: `1px solid ${NAVY}26` }}>
                   <p className="text-[8px] xs:text-[9px] sm:text-[10px] truncate" style={{ color: `${INK}cc` }}>
                     Certificate ID: <span className="font-mono font-semibold" style={{ color: NAVY }}>{certificate.verificationCode}</span>
                   </p>
@@ -434,7 +451,7 @@ export default function CertificatePage() {
           </div>
 
           {/* Social Share Group */}
-          <div className="mt-5 sm:mt-6 text-center">
+          <div className="mt-5 sm:mt-6 text-center print:hidden">
             <p className="text-muted-foreground mb-2 sm:mb-3 text-xs">
               Share your achievement
             </p>

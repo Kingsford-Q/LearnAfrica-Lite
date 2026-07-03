@@ -1,31 +1,27 @@
 import { useState, useEffect, useMemo } from 'react'
-import { 
+import {
   BookOpen, Layout, X, ChevronRight, Plus, Minus,
   GripVertical, Video, HelpCircle, Clock,
   Link as LinkIcon, Trash2, ChevronDown, ChevronUp,
-  Award, Infinity as LifetimeIcon, Download, Image as ImageIcon,
+  Download, Image as ImageIcon,
   CheckCircle2, Circle
 } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { Card, CardHeader, CardContent } from '@/components/common/Card'
-import { Switch } from '@/components/common/Switch'
 import { fileUrl } from '@/lib/apiClient'
 
-export function CurriculumSection({ 
-  sections = [], 
-  coursePerks = { hasCertificate: false, lifetimeAccess: true, hasResources: false }, 
-  updateCoursePerks = () => {}, 
-  addSection = () => {}, 
-  addLesson = () => {}, 
-  removeSection = () => {}, 
-  updateSectionTitle = () => {}, 
-  updateLesson = () => {}, 
-  removeLesson = () => {}, 
-  onBack = () => {}, 
-  onNext = () => {} 
+export function CurriculumSection({
+  sections = [],
+  addSection = () => {},
+  addLesson = () => {},
+  removeSection = () => {},
+  updateSectionTitle = () => {},
+  updateLesson = () => {},
+  removeLesson = () => {},
+  onBack = () => {},
+  onNext = () => {}
 }) {
   const safeSections = sections || [];
-  const perks = coursePerks || { hasCertificate: false, lifetimeAccess: false, hasResources: false };
 
   const totalLessons = safeSections.reduce((acc, sec) => acc + (sec.lessons?.length || 0), 0)
   const videoCount = safeSections.reduce((acc, sec) => 
@@ -101,31 +97,6 @@ export function CurriculumSection({
           </Card>
         ))}
 
-        {/* Course Perks - Fixed [object Object] by ensuring boolean toggle */}
-        <Card className="p-6 border-primary/20 bg-primary/5 space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">Course Perks</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <PerkToggle 
-              icon={Award} 
-              label="Certificate" 
-              checked={perks.hasCertificate}
-              onChange={(val) => updateCoursePerks({ ...perks, hasCertificate: val })}
-            />
-            <PerkToggle 
-              icon={LifetimeIcon} 
-              label="Lifetime Access" 
-              checked={perks.lifetimeAccess}
-              onChange={(val) => updateCoursePerks({ ...perks, lifetimeAccess: val })}
-            />
-            <PerkToggle 
-              icon={Download} 
-              label="Resources" 
-              checked={perks.hasResources}
-              onChange={(val) => updateCoursePerks({ ...perks, hasResources: val })}
-            />
-          </div>
-        </Card>
-        
         {/* Global Navigation */}
         <div className="flex flex-col gap-4 pt-6 border-t border-border">
           <Button
@@ -519,14 +490,3 @@ function StatCard({ icon: Icon, label, value }) {
   )
 }
 
-function PerkToggle({ icon: Icon, label, checked, onChange }) {
-  return (
-    <div className="flex items-center justify-between p-3.5 rounded-xl bg-background border border-border hover:border-primary/20 transition-colors">
-      <div className="flex items-center gap-3">
-        <Icon className="h-4 w-4 text-primary" />
-        <span className="text-[11px] font-bold uppercase tracking-tight text-foreground">{label}</span>
-      </div>
-      <Switch checked={checked} onChange={(val) => onChange(val)} />
-    </div>
-  )
-}

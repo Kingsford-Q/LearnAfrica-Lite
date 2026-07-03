@@ -5,6 +5,15 @@ namespace LearnAfricaLite.Api.Services;
 
 public static class CourseMappings
 {
+    // Every completed course now earns a certificate and lifetime access is
+    // always granted -- these used to be per-course instructor toggles, but in
+    // practice they were never meaningfully "off", so they're just constants now.
+    // Resources, on the other hand, really do vary per course, so that one is
+    // derived from whether any lesson actually has a resource attached instead
+    // of trusting a manually-set flag that could drift from reality.
+    private static bool HasAnyResources(Course c) =>
+        c.Sections.Any(s => s.Lessons.Any(l => l.Resources.Count > 0));
+
     public static CourseSummaryDto ToSummaryDto(this Course c)
     {
         var reviewCount = c.Reviews.Count;
@@ -14,7 +23,7 @@ public static class CourseMappings
             c.Id, c.Title, c.Description, c.InstructorId,
             c.Instructor?.Name ?? string.Empty, c.Instructor?.Avatar,
             c.Thumbnail, c.Category, c.Difficulty, c.Duration, c.Language,
-            c.Price, c.IsFree, c.Tags, c.HasCertificate, c.HasLifetimeAccess, c.HasResources,
+            c.Price, c.IsFree, c.Tags, true, true, HasAnyResources(c),
             c.Status.ToString(), c.Enrollments.Count, rating, reviewCount, c.CreatedAt
         );
     }
@@ -29,7 +38,7 @@ public static class CourseMappings
             c.Instructor?.Name ?? string.Empty, c.Instructor?.Avatar,
             c.Thumbnail, c.Category, c.Difficulty, c.Duration, c.Language,
             c.Price, c.IsFree, c.PaymentLink, c.Tags, c.LearningOutcomes,
-            c.HasCertificate, c.HasLifetimeAccess, c.HasResources,
+            true, true, HasAnyResources(c),
             c.Status.ToString(), c.Enrollments.Count, rating, reviewCount, c.CreatedAt,
             c.Sections.OrderBy(s => s.Order).Select(s => s.ToDto(completedLessonIds)).ToList()
         );

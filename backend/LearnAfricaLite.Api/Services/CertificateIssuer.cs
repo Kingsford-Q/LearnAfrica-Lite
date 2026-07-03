@@ -10,7 +10,7 @@ public static class CertificateIssuer
     public static async Task IssueIfEligibleAsync(AppDbContext db, Guid userId, Guid courseId)
     {
         var course = await db.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
-        if (course is null || !course.HasCertificate) return;
+        if (course is null) return;
 
         var alreadyIssued = await db.Certificates.AnyAsync(c => c.UserId == userId && c.CourseId == courseId);
         if (alreadyIssued) return;

@@ -119,22 +119,22 @@ export function QuizResultsPage() {
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             {passed && hasCertificate ? (
-              <Link to={`/certificate/${courseId}`}>
-                <Button className="bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
+              <Link to={`/certificate/${courseId}`} className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 shadow-sm shadow-primary/20">
                   <FileCheck className="h-4 w-4 mr-2" />
                   View Certificate
                 </Button>
               </Link>
             ) : (
-              <Link to={`/learn/course/${courseId}/quiz/${quizId}`}>
-                <Button variant="outline">
+              <Link to={`/learn/course/${courseId}/quiz/${quizId}`} className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Retry Quiz
                 </Button>
               </Link>
             )}
-            <Link to="/dashboard">
-              <Button variant="outline">
+            <Link to="/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
