@@ -19,8 +19,9 @@ public class NotificationsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<List<NotificationDto>>> List()
     {
         var userId = User.GetUserId();
+        var now = DateTime.UtcNow;
         var notifications = await db.Notifications.AsNoTracking()
-            .Where(n => n.UserId == userId)
+            .Where(n => n.UserId == userId && (n.ExpiresAt == null || n.ExpiresAt > now))
             .OrderByDescending(n => n.CreatedAt)
             .Take(100)
             .ToListAsync();
@@ -32,7 +33,8 @@ public class NotificationsController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<int>> UnreadCount()
     {
         var userId = User.GetUserId();
-        return await db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead);
+        var now = DateTime.UtcNow;
+        return await db.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead && (n.ExpiresAt == null || n.ExpiresAt > now));
     }
 
     [HttpPost("{id:guid}/read")]

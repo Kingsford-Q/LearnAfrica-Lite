@@ -26,6 +26,7 @@ public class AnnouncementsController(AppDbContext db) : ControllerBase
             .ToListAsync();
 
         var now = DateTime.UtcNow;
+        var expiresAt = request.DurationDays is > 0 ? now.AddDays(request.DurationDays.Value) : (DateTime?)null;
         var notifications = recipientIds.Select(userId => new Notification
         {
             UserId = userId,
@@ -33,6 +34,7 @@ public class AnnouncementsController(AppDbContext db) : ControllerBase
             Title = request.Title.Trim(),
             Message = request.Message.Trim(),
             CreatedAt = now,
+            ExpiresAt = expiresAt,
         });
 
         db.Notifications.AddRange(notifications);
