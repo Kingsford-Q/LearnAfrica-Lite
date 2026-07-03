@@ -44,7 +44,7 @@ export function CourseDetailPage() {
   const [loadError, setLoadError] = useState(false)
 
   // --- AUTH-DRIVEN DATA CONTEXT ---
-  const { user, courses, refreshCourses, refreshEnrollments } = useAuth()
+  const { user, courses, refreshCourses, refreshEnrollments, refreshStats, refreshBadges } = useAuth()
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -172,7 +172,7 @@ export function CourseDetailPage() {
       })
       setReviewText('')
       setSelectedRating(0)
-      await Promise.all([fetchReviews(), refreshCourses()])
+      await Promise.all([fetchReviews(), refreshCourses(), refreshStats(), refreshBadges()])
     } catch (err) {
       console.error("Failed to post review", err)
       alert("Something went wrong. Please try again.")
@@ -191,7 +191,7 @@ export function CourseDetailPage() {
     try {
       if (course.isFree) {
         await api.post(`/api/courses/${course.id}/enroll`)
-        await Promise.all([refreshCourses(), refreshEnrollments()])
+        await Promise.all([refreshCourses(), refreshEnrollments(), refreshStats(), refreshBadges()])
       } else if (course.paymentLink) {
         window.location.href = course.paymentLink
       }

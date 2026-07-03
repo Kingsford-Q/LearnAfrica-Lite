@@ -17,7 +17,7 @@ const colorMap = {
   pink: 'text-pink-500 bg-pink-500/10 border-pink-500/20',
 };
 
-export default function BadgeCard({ badge }) {
+export default function BadgeCard({ badge, onClick }) {
   const IconComponent = Icons[badge.iconName] || Icons.Award;
 
   const progressPercent = Math.min(
@@ -25,14 +25,16 @@ export default function BadgeCard({ badge }) {
     100
   );
 
-  const colorStyles = badge.earned 
-    ? colorMap[badge.color] || 'text-primary bg-primary/10' 
+  const colorStyles = badge.earned
+    ? colorMap[badge.color] || 'text-primary bg-primary/10'
     : 'bg-muted/30 text-muted-foreground grayscale opacity-60';
 
   return (
     <Card
+      onClick={onClick}
       className={cn(
         'p-6 text-center transition-all duration-300 border hover:shadow-lg group flex flex-col justify-between min-h-[220px]',
+        onClick && 'cursor-pointer',
         badge.earned ? 'bg-card border-white/5' : 'bg-muted/20 border-transparent'
       )}
     >

@@ -21,8 +21,11 @@ public class ApplicationUser : IdentityUser<Guid>
     public Guid? InstructorReviewedByUserId { get; set; }
     public string? InstructorRejectionReason { get; set; }
 
-    // Gamification
+    // Gamification. Streak counts consecutive UTC calendar days with at least one
+    // qualifying learning activity (lesson completion or quiz submission) — see
+    // StreakService.RecordActivityAsync, the only place either field is written.
     public int Streak { get; set; }
+    public DateOnly? LastActivityDate { get; set; }
     public bool NotificationsEmail { get; set; } = true;
     public bool NotificationsPush { get; set; } = false;
     public bool NotificationsUpdates { get; set; } = true;

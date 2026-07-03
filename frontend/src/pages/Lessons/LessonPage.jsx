@@ -119,7 +119,7 @@ const ResourceItem = ({ resource }) => {
 }
 
 export function LessonPage() {
-  const { user, refreshEnrollments } = useAuth()
+  const { user, refreshEnrollments, refreshStats, refreshBadges } = useAuth()
   const { courseId, lessonId } = useParams()
   const navigate = useNavigate()
 
@@ -224,6 +224,8 @@ export function LessonPage() {
       // Refresh course so sidebar isCompleted flags are updated
       await fetchCourseDetail()
       refreshEnrollments()
+      refreshStats()
+      refreshBadges()
     } catch {
       // best effort
     } finally {

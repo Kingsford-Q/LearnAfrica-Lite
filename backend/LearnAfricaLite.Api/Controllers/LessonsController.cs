@@ -105,6 +105,10 @@ public class LessonsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync(); // persist before recomputing progress, which re-queries the DB
 
         await UpdateCourseProgressAsync(db, userId, lesson.CourseId);
+
+        var user = await db.Users.FindAsync(userId);
+        if (user is not null) StreakService.RecordActivity(user);
+
         await db.SaveChangesAsync();
         await BadgeService.EvaluateAndAwardAsync(db, userId);
 

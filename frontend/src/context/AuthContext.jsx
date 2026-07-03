@@ -196,7 +196,18 @@ export function AuthProvider({ children }) {
   const fetchNotifications = useCallback(async () => {
     try {
       const data = await api.get('/api/notifications');
-      setNotifications(data.map(mapApiNotification));
+      const fetched = data.map(mapApiNotification);
+      // A read notification never goes back to unread server-side, so treat
+      // "read" as a one-way ratchet when merging. Without this, the 30s
+      // background poll can race an in-flight mark-as-read request: if the
+      // GET was already in flight before the POST resolved, it carries a
+      // stale "unread" snapshot that would otherwise stomp the optimistic
+      // update the instant it lands, making the notification flip back to
+      // unread right after the user opened it.
+      setNotifications(prev => {
+        const previouslyRead = new Set(prev.filter(n => n.read).map(n => n.id));
+        return fetched.map(n => previouslyRead.has(n.id) ? { ...n, read: true } : n);
+      });
     } catch {
       // Best-effort — keep the last known list, next poll will retry.
     }

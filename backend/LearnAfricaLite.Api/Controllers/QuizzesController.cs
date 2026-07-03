@@ -152,6 +152,10 @@ public class QuizzesController(AppDbContext db) : ControllerBase
         }
 
         await LessonsController.UpdateCourseProgressAsync(db, userId, quiz.CourseId);
+
+        var user = await db.Users.FindAsync(userId);
+        if (user is not null) StreakService.RecordActivity(user);
+
         await db.SaveChangesAsync();
         await BadgeService.EvaluateAndAwardAsync(db, userId);
 

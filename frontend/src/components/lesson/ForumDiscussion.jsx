@@ -28,7 +28,7 @@ function Avatar({ name }) {
 }
 
 export function ForumDiscussion({ lessonId }) {
-  const { user } = useAuth()
+  const { user, refreshBadges } = useAuth()
   const [threads, setThreads] = useState([])
   const [isLoadingThreads, setIsLoadingThreads] = useState(true)
   const [selectedThread, setSelectedThread] = useState(null)
@@ -83,6 +83,7 @@ export function ForumDiscussion({ lessonId }) {
       setShowNewThread(false)
       loadThreads()
       setSelectedThread(thread)
+      refreshBadges()
     } catch {
       setError('Could not post your question. Please try again.')
     } finally {
@@ -101,6 +102,7 @@ export function ForumDiscussion({ lessonId }) {
       })
       setSelectedThread((prev) => ({ ...prev, replies: [...prev.replies, reply] }))
       setReplyBody('')
+      refreshBadges()
     } catch {
       setError('Could not post your reply. Please try again.')
     } finally {

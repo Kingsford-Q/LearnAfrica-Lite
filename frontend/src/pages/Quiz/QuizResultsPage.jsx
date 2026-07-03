@@ -14,13 +14,14 @@ import { cn } from '@/lib/utils'
 export function QuizResultsPage() {
   const { courseId, quizId } = useParams()
   const location = useLocation()
-  const { courses, refreshStats } = useAuth()
+  const { courses, refreshStats, refreshBadges, refreshEnrollments } = useAuth()
 
   const { quizResult, questions = [], quizTitle } = location.state ?? {}
 
-  // Refresh user stats once so "Perfect Quiz" badge progress updates
+  // Refresh stats/badges/enrollments once so badge unlocks and course
+  // progress reflect immediately instead of waiting on the 30s background poll.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { refreshStats() }, [])
+  useEffect(() => { refreshStats(); refreshBadges(); refreshEnrollments() }, [])
 
   if (!quizResult) {
     return (

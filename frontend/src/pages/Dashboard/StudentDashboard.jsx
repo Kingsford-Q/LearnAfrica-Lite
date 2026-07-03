@@ -11,11 +11,13 @@ import { fileUrl } from '@/lib/apiClient';
 const StatsCard = lazy(() => import('@/components/dashboard/StatsCard'));
 const ProgressCard = lazy(() => import('@/components/dashboard/ProgressCard'));
 const BadgeCard = lazy(() => import('@/components/dashboard/BadgeCard'));
+const BadgeDetailModal = lazy(() => import('@/components/dashboard/BadgeDetailModal'));
 
 export default function StudentDashboard() {
   const { user, courses: coursesState, badgeConfig } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [viewAllActive, setViewAllActive] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -284,9 +286,10 @@ export default function StudentDashboard() {
         >
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6">
             {liveBadges.map((badge) => (
-              <BadgeCard key={badge.id} badge={badge} />
+              <BadgeCard key={badge.id} badge={badge} onClick={() => setSelectedBadge(badge)} />
             ))}
           </div>
+          <BadgeDetailModal badge={selectedBadge} onClose={() => setSelectedBadge(null)} />
         </Suspense>
       </div>
 

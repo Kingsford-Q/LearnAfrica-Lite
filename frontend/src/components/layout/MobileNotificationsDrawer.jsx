@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2, BookOpen, Trophy, Settings, UserPlus, MessageSquare, ShieldCheck, Info, Megaphone } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,15 @@ export default function MobileNotificationsDrawer({
   const [isMarkingLoading, setIsMarkingLoading] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
   const navigate = useNavigate();
+  const scrollRef = useRef(null);
+
+  // Swapping between the list and detail view reuses the same scrollable
+  // container. Without resetting scrollTop, a list scrolled halfway down
+  // carries that offset into the (usually shorter) detail view, and the
+  // browser snapping it back into bounds mid-animation reads as a shake.
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [selectedNotification]);
 
   if (!isOpen) return null;
 
@@ -129,7 +138,7 @@ export default function MobileNotificationsDrawer({
         </div>
 
         {/* --- DYNAMIC CONTENT AREA --- */}
-        <div className="flex-1 overflow-y-auto bg-background custom-scrollbar">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto bg-background custom-scrollbar">
           {!selectedNotification ? (
             <div className="px-5 py-6 animate-in fade-in duration-300">
               <div className="space-y-2">

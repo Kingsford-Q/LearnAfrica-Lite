@@ -167,11 +167,18 @@ function CurriculumItemEditor({ item, index, onUpdate, onRemove }) {
           <p className="text-sm font-semibold text-foreground truncate">
             {item.title || (item.type === 'quiz' ? 'New Quiz' : 'New Lesson')}
           </p>
-          <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
-            item.type === 'quiz' ? 'bg-orange-500/10 text-orange-500' : 'bg-primary/10 text-primary'
-          }`}>
-            {item.type}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+              item.type === 'quiz' ? 'bg-orange-500/10 text-orange-500' : 'bg-primary/10 text-primary'
+            }`}>
+              {item.type}
+            </span>
+            {item.type === 'quiz' && (
+              <span className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground">
+                <Clock className="h-2.5 w-2.5" /> {Math.round((item.durationSeconds ?? 300) / 60)} min
+              </span>
+            )}
+          </div>
         </div>
         {isOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
       </div>
