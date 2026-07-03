@@ -1,14 +1,17 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
-import { Share2, Download, ArrowLeft, Linkedin, Twitter, Facebook, AlertCircle } from 'lucide-react';
+import { Share2, Download, ArrowLeft, Linkedin, Twitter, Facebook, AlertCircle, Loader2, Award } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Card } from '../../components/common/Card';
 import { api } from '@/lib/apiClient';
 
 /**
  * Single certificate design, used for both the on-screen preview and the
- * printed/PDF output. Print isolation is handled purely with CSS (visibility +
- * fixed positioning of #certificate-content) so the two never drift apart.
+ * downloaded file. The download is a real generated PDF (html2canvas + jsPDF,
+ * lazy-loaded only when the button is clicked) rather than window.print() --
+ * print-to-PDF support is inconsistent across mobile browsers and often
+ * unavailable at all inside in-app webviews, whereas a generated file download
+ * works the same way everywhere a real browser tab is open.
  */
 export default function CertificatePage() {
   const { courseId } = useParams();
@@ -18,6 +21,8 @@ export default function CertificatePage() {
   const [courseDuration, setCourseDuration] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -53,11 +58,42 @@ export default function CertificatePage() {
       })
     : '';
 
-  const handleDownload = () => window.print();
-
   const verifyUrl = certificate
     ? `${window.location.origin}/verify/${certificate.verificationCode}`
     : '';
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setDownloadError('');
+    try {
+      const node = document.getElementById('certificate-content');
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+
+      const canvas = await html2canvas(node, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`LearnAfrica-Certificate-${certificate.verificationCode}.pdf`);
+    } catch (err) {
+      console.error('Certificate PDF generation failed, falling back to print:', err);
+      setDownloadError("Couldn't generate a PDF directly -- opening print instead, choose \"Save as PDF\" there.");
+      window.print();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -131,36 +167,11 @@ export default function CertificatePage() {
   }
 
   return (
-    <div className="min-h-screen print:min-h-0 print:bg-white print:h-auto">
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-            @media print {
-              @page { size: A4 landscape; margin: 0; }
-              body * { visibility: hidden; }
-              #certificate-content, #certificate-content * { visibility: visible; }
-              #certificate-content {
-                position: fixed;
-                inset: 0;
-                width: 100vw;
-                height: 100vh;
-                margin: 0;
-                border-radius: 0;
-                box-shadow: none;
-                border: none;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              }
-            }
-          `,
-        }}
-      />
-
-      <div className="bg-gradient-to-br from-primary/5 via-background to-accent/5 py-4 px-3 sm:py-6 sm:px-4 print:bg-white print:p-0">
-        <div className="max-w-3xl mx-auto print:max-w-none">
+    <div className="min-h-screen bg-muted/20">
+      <div className="py-4 px-3 sm:py-8 sm:px-4">
+        <div className="max-w-4xl mx-auto">
           {/* Top Actions Row */}
-          <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5 print:hidden">
+          <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
             <Button
               onClick={() => navigate(-1)}
               variant="outline"
@@ -185,156 +196,142 @@ export default function CertificatePage() {
               <Button
                 size="sm"
                 onClick={handleDownload}
+                disabled={isDownloading}
                 className="rounded-lg shadow-sm text-xs h-8 px-2.5 sm:px-3"
               >
-                <Download className="w-3.5 h-3.5 md:mr-1" />
-                <span className="hidden md:block"> Print / Save PDF</span>
+                {isDownloading ? (
+                  <Loader2 className="w-3.5 h-3.5 md:mr-1 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 md:mr-1" />
+                )}
+                <span className="hidden md:block">{isDownloading ? 'Generating...' : 'Download PDF'}</span>
               </Button>
             </div>
           </div>
 
-          {/* Certificate — identical markup renders on screen and on print */}
+          {downloadError && (
+            <p className="text-xs text-amber-600 dark:text-amber-500 text-center mb-4 px-2">{downloadError}</p>
+          )}
+
+          {/* Certificate */}
           <div
             id="certificate-content"
-            className="bg-card border border-border/80 rounded-xl shadow-md overflow-hidden print:w-[95%] print:h-[92%] print:border-10 print:border-double print:border-slate-900"
+            className="relative bg-white rounded-2xl shadow-xl overflow-hidden mx-auto"
+            style={{ aspectRatio: '1.414 / 1' }}
           >
-            <div className="h-2 bg-gradient-to-r from-primary via-accent to-primary print:hidden" />
+            {/* Outer frame */}
+            <div className="absolute inset-2 xs:inset-3 sm:inset-4 border-2 border-primary/15 rounded-xl pointer-events-none" />
+            <div className="absolute inset-3 xs:inset-4 sm:inset-5 border border-primary/10 rounded-lg pointer-events-none" />
 
-            <div className="p-4 xs:p-6 md:p-10 text-center">
-              <div className="mb-4 sm:mb-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary to-accent shadow-md shadow-primary/10 mb-2 sm:mb-3">
-                  <svg
-                    className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"
-                    />
-                  </svg>
+            {/* Corner accents */}
+            <div className="absolute top-0 left-0 w-16 h-16 xs:w-20 xs:h-20 sm:w-28 sm:h-28 overflow-hidden pointer-events-none">
+              <div className="absolute -top-10 -left-10 w-20 h-20 xs:w-24 xs:h-24 sm:w-36 sm:h-36 bg-primary rotate-45" />
+            </div>
+            <div className="absolute bottom-0 right-0 w-16 h-16 xs:w-20 xs:h-20 sm:w-28 sm:h-28 overflow-hidden pointer-events-none">
+              <div className="absolute -bottom-10 -right-10 w-20 h-20 xs:w-24 xs:h-24 sm:w-36 sm:h-36 bg-accent rotate-45" />
+            </div>
+
+            <div className="relative h-full flex flex-col items-center justify-between text-center px-5 py-6 xs:px-8 xs:py-8 sm:px-14 sm:py-10">
+              {/* Header */}
+              <div className="w-full">
+                <div className="inline-flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-primary to-accent shadow-md mb-2 xs:mb-3">
+                  <Award className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 text-white" strokeWidth={1.75} />
                 </div>
 
-                <h1 className="text-xl xs:text-2xl md:text-3xl font-serif font-semibold text-foreground tracking-wide">
-                  Certificate of Completion
-                </h1>
-
-                <p className="text-muted-foreground mt-0.5 text-xs sm:text-sm">
+                <p className="text-[9px] xs:text-[10px] sm:text-xs font-bold uppercase tracking-[0.25em] text-primary/70 mb-1">
                   LearnAfrica Lite
                 </p>
 
-                <div className="flex items-center gap-3 justify-center mt-3 sm:mt-4">
-                  <div className="h-px w-12 sm:w-16 bg-gradient-to-r from-transparent to-primary/40" />
-                  <svg
-                    className="w-3.5 h-3.5 text-primary/80"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  <div className="h-px w-12 sm:w-16 bg-gradient-to-l from-transparent to-primary/40" />
+                <h1 className="text-lg xs:text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-slate-900 tracking-wide">
+                  Certificate of Completion
+                </h1>
+
+                <div className="flex items-center gap-2 xs:gap-3 justify-center mt-2 xs:mt-3">
+                  <div className="h-px w-8 xs:w-12 sm:w-16 bg-gradient-to-r from-transparent to-primary/50" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                  <div className="h-px w-8 xs:w-12 sm:w-16 bg-gradient-to-l from-transparent to-primary/50" />
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                This certifies that
-              </p>
+              {/* Recipient */}
+              <div className="w-full flex-1 flex flex-col items-center justify-center py-2 xs:py-3 min-h-0">
+                <p className="text-[10px] xs:text-xs sm:text-sm text-slate-500 mb-1 xs:mb-2">
+                  This certifies that
+                </p>
 
-              <h2 className="text-lg xs:text-xl md:text-2xl font-serif font-semibold text-primary mb-4 sm:mb-5 border-b border-primary/20 pb-1.5 inline-block px-4 sm:px-6">
-                {certificate.userName}
-              </h2>
+                <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-serif italic font-semibold text-primary mb-2 xs:mb-3 px-2 max-w-full truncate">
+                  {certificate.userName}
+                </h2>
 
-              <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                has successfully completed the course
-              </p>
+                <p className="text-[10px] xs:text-xs sm:text-sm text-slate-500 mb-1">
+                  has successfully completed the course
+                </p>
 
-              <h3 className="text-sm xs:text-base sm:text-sm md:text-lg font-semibold text-foreground mb-5 sm:mb-6 px-2">
-                {certificate.courseTitle}
-              </h3>
+                <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-semibold text-slate-800 px-2 max-w-full truncate">
+                  {certificate.courseTitle}
+                </h3>
 
-              <div className={`grid ${courseDuration ? 'grid-cols-3' : 'grid-cols-2'} gap-2 max-w-xl mx-auto mb-6`}>
-                <div className="px-1 py-1.5 xs:px-4 xs:py-2 bg-muted/40 rounded-lg border border-border/40 min-w-0">
-                  <p className="text-[9px] xs:text-[11px] uppercase tracking-wider text-muted-foreground truncate">
-                    Grade
-                  </p>
-                  <p className="text-xs xs:text-sm font-semibold text-primary mt-0.5 truncate">
-                    {certificate.grade}
-                  </p>
-                </div>
-
-                {courseDuration && (
-                  <div className="px-1 py-1.5 xs:px-4 xs:py-2 bg-muted/40 rounded-lg border border-border/40 min-w-0">
-                    <p className="text-[9px] xs:text-[11px] uppercase tracking-wider text-muted-foreground truncate">
-                      Duration
-                    </p>
-                    <p className="text-xs xs:text-sm font-semibold text-primary mt-0.5 truncate">
-                      {courseDuration}
-                    </p>
+                <div className={`grid ${courseDuration ? 'grid-cols-3' : 'grid-cols-2'} gap-2 xs:gap-3 max-w-xs xs:max-w-sm sm:max-w-md mx-auto mt-3 xs:mt-5 w-full`}>
+                  <div className="px-1 py-1.5 xs:px-3 xs:py-2 bg-primary/5 rounded-lg border border-primary/10 min-w-0">
+                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 truncate">Grade</p>
+                    <p className="text-[10px] xs:text-xs sm:text-sm font-bold text-primary mt-0.5 truncate">{certificate.grade}</p>
                   </div>
-                )}
 
-                <div className="px-1 py-1.5 xs:px-4 xs:py-2 bg-muted/40 rounded-lg border border-border/40 min-w-0">
-                  <p className="text-[9px] xs:text-[11px] uppercase tracking-wider text-muted-foreground truncate">
-                    Completed
-                  </p>
-                  <p className="text-xs xs:text-sm font-medium text-primary mt-0.5 truncate">
-                    {formattedDate}
-                  </p>
+                  {courseDuration && (
+                    <div className="px-1 py-1.5 xs:px-3 xs:py-2 bg-primary/5 rounded-lg border border-primary/10 min-w-0">
+                      <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 truncate">Duration</p>
+                      <p className="text-[10px] xs:text-xs sm:text-sm font-bold text-primary mt-0.5 truncate">{courseDuration}</p>
+                    </div>
+                  )}
+
+                  <div className="px-1 py-1.5 xs:px-3 xs:py-2 bg-primary/5 rounded-lg border border-primary/10 min-w-0">
+                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] uppercase tracking-wider text-slate-400 truncate">Completed</p>
+                    <p className="text-[10px] xs:text-xs sm:text-sm font-bold text-primary mt-0.5 truncate">{formattedDate}</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-row items-center justify-between xs:justify-center gap-2 xs:gap-8 sm:gap-12 pt-5 sm:pt-6 border-t border-border/60">
-                <div className="text-center flex-1 xs:flex-initial min-w-0">
-                  <div className="font-serif text-xs xs:text-sm sm:text-base md:text-lg italic text-primary/90 mb-0.5 w-full truncate">
-                    {certificate.instructorName}
+              {/* Signatures + footer */}
+              <div className="w-full">
+                <div className="flex flex-row items-end justify-center gap-4 xs:gap-10 sm:gap-16 pt-3 xs:pt-4 border-t border-slate-200">
+                  <div className="text-center flex-1 xs:flex-initial min-w-0 max-w-[110px] xs:max-w-[150px]">
+                    <div className="font-serif text-xs xs:text-sm sm:text-base italic text-slate-700 mb-0.5 truncate">
+                      {certificate.instructorName}
+                    </div>
+                    <div className="h-px w-full bg-slate-300 mb-1" />
+                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-tight">Instructor</p>
                   </div>
-                  <div className="h-px w-16 xs:w-24 sm:w-32 bg-border mx-auto mb-1" />
-                  <p className="text-[9px] xs:text-[11px] text-muted-foreground uppercase tracking-tight">
-                    Instructor
-                  </p>
-                </div>
 
-                <div className="flex shrink-0 items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-                  <div className="text-center">
-                    <div className="text-[10px] sm:text-xs font-semibold text-primary leading-none">LAF</div>
-                    <div className="text-[6px] xs:text-[7px] uppercase font-medium tracking-wide text-muted-foreground scale-90 mt-0.5">
-                      Seal
+                  <div className="shrink-0 flex items-center justify-center w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 rounded-full border-2 border-accent/40 bg-gradient-to-br from-accent/10 to-primary/10">
+                    <div className="text-center">
+                      <div className="text-[9px] xs:text-[10px] sm:text-xs font-black text-primary leading-none">LAF</div>
+                      <div className="text-[5px] xs:text-[6px] uppercase font-bold tracking-wide text-slate-400 mt-0.5">Seal</div>
                     </div>
                   </div>
+
+                  <div className="text-center flex-1 xs:flex-initial min-w-0 max-w-[110px] xs:max-w-[150px]">
+                    <div className="font-serif text-xs xs:text-sm sm:text-base italic text-slate-700 mb-0.5 truncate">
+                      LearnAfrica Team
+                    </div>
+                    <div className="h-px w-full bg-slate-300 mb-1" />
+                    <p className="text-[7px] xs:text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-tight">Director</p>
+                  </div>
                 </div>
 
-                <div className="text-center flex-1 xs:flex-initial min-w-0">
-                  <div className="font-serif text-xs xs:text-sm sm:text-base md:text-lg italic text-primary/90 mb-0.5 w-full truncate">
-                    LearnAfrica Team
-                  </div>
-                  <div className="h-px w-16 xs:w-24 sm:w-32 bg-border mx-auto mb-1" />
-                  <p className="text-[9px] xs:text-[11px] text-muted-foreground uppercase tracking-tight">
-                    Director
+                <div className="mt-2 xs:mt-3 text-center">
+                  <p className="text-[7px] xs:text-[9px] sm:text-[10px] text-slate-400 truncate">
+                    Certificate ID: <span className="font-mono font-medium text-slate-600">{certificate.verificationCode}</span>
+                  </p>
+                  <p className="text-[6px] xs:text-[8px] sm:text-[9px] text-slate-400/80 hidden xs:block mt-0.5">
+                    Verify at {window.location.host}/verify/{certificate.verificationCode}
                   </p>
                 </div>
               </div>
-
-              <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-border/60 text-center space-y-0.5">
-                <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
-                  Certificate ID:{' '}
-                  <span className="font-mono font-medium text-foreground/90">
-                    {certificate.verificationCode}
-                  </span>
-                </p>
-                <p className="text-[9px] sm:text-[10px] text-muted-foreground/80 hidden xs:block">
-                  Verify credential at: {window.location.host}/verify/{certificate.verificationCode}
-                </p>
-              </div>
             </div>
-
-            <div className="h-2 bg-gradient-to-r from-primary via-accent to-primary print:hidden" />
           </div>
 
           {/* Social Share Group */}
-          <div className="mt-5 sm:mt-6 text-center print:hidden">
+          <div className="mt-5 sm:mt-6 text-center">
             <p className="text-muted-foreground mb-2 sm:mb-3 text-xs">
               Share your achievement
             </p>
