@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { Book, Award, Trophy, ArrowRight, ChevronDown, ChevronUp, Compass } from 'lucide-react';
+import { Book, Award, Trophy, ArrowRight, ChevronDown, ChevronUp, Compass, GraduationCap, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Card, CardContent } from '@/components/common/Card';
 import { StatsCardSkeleton, CourseCardSkeleton } from '@/components/common/LoadingSkeleton';
 import { useAuth } from '@/context/AuthContext';
-import { fileUrl } from '@/lib/apiClient';
+import { api, fileUrl } from '@/lib/apiClient';
 
 // Lazy loaded components for code splitting
 const StatsCard = lazy(() => import('@/components/dashboard/StatsCard'));
@@ -13,15 +13,27 @@ const ProgressCard = lazy(() => import('@/components/dashboard/ProgressCard'));
 const BadgeCard = lazy(() => import('@/components/dashboard/BadgeCard'));
 const BadgeDetailModal = lazy(() => import('@/components/dashboard/BadgeDetailModal'));
 
+const MOBILE_BADGE_PAGE_SIZE = 6;
+
 export default function StudentDashboard() {
   const { user, courses: coursesState, badgeConfig } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [viewAllActive, setViewAllActive] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState(null);
+  const [certificates, setCertificates] = useState([]);
+  const [isLoadingCertificates, setIsLoadingCertificates] = useState(true);
+  const [viewAllBadges, setViewAllBadges] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    api.get('/api/certificates/mine')
+      .then(setCertificates)
+      .catch(() => setCertificates([]))
+      .finally(() => setIsLoadingCertificates(false));
   }, []);
 
   // Optimized Logic for Backend Readiness
@@ -195,6 +207,9 @@ export default function StudentDashboard() {
         <Button variant="secondary" size="sm" onClick={() => scrollToSection('badges-section')} className="shrink-0 rounded-full text-xs h-8">
           <Trophy className="w-3.5 h-3.5 mr-1" /> Badges
         </Button>
+        <Button variant="secondary" size="sm" onClick={() => scrollToSection('certificates-section')} className="shrink-0 rounded-full text-xs h-8">
+          <GraduationCap className="w-3.5 h-3.5 mr-1" /> Certificates
+        </Button>
         <Button variant="secondary" size="sm" onClick={() => scrollToSection('recommendations')} className="shrink-0 rounded-full text-xs h-8">
           <Compass className="w-3.5 h-3.5 mr-1" /> For You
         </Button>
@@ -279,18 +294,86 @@ export default function StudentDashboard() {
             {earnedCount} of {badgeConfig?.length || 0} badges earned
           </span>
         </div>
-        <Suspense 
+        <Suspense
         fallback={
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
           }
         >
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6">
-            {liveBadges.map((badge) => (
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+            {(viewAllBadges ? liveBadges : liveBadges.slice(0, MOBILE_BADGE_PAGE_SIZE)).map((badge) => (
               <BadgeCard key={badge.id} badge={badge} onClick={() => setSelectedBadge(badge)} />
             ))}
           </div>
+
+          {liveBadges.length > MOBILE_BADGE_PAGE_SIZE && (
+            <div className="flex justify-center pt-1 md:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setViewAllBadges(!viewAllBadges)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {viewAllBadges ? (
+                  <>Show Less <ChevronUp className="w-4 h-4 ml-1" /></>
+                ) : (
+                  <>Show All ({liveBadges.length - MOBILE_BADGE_PAGE_SIZE} more) <ChevronDown className="w-4 h-4 ml-1" /></>
+                )}
+              </Button>
+            </div>
+          )}
+
           <BadgeDetailModal badge={selectedBadge} onClose={() => setSelectedBadge(null)} />
         </Suspense>
+      </div>
+
+      {/* Certificates Section */}
+      <div id="certificates-section" className="space-y-4 scroll-mt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">My Certificates</h2>
+          {certificates.length > 0 && (
+            <span className="text-sm text-primary">{certificates.length} earned</span>
+          )}
+        </div>
+
+        {isLoadingCertificates ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="h-32 bg-muted animate-pulse rounded-lg" />
+            <div className="h-32 bg-muted animate-pulse rounded-lg hidden sm:block" />
+          </div>
+        ) : certificates.length > 0 ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {certificates.map((cert) => (
+              <Link key={cert.courseId} to={`/certificate/${cert.courseId}`}>
+                <Card className="h-full overflow-hidden border-border/60 hover:border-primary/50 hover:shadow-lg transition-all group">
+                  <CardContent className="p-5 flex items-start gap-4">
+                    <div className="h-11 w-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                      <GraduationCap className="h-5.5 w-5.5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-foreground text-sm line-clamp-2">{cert.courseTitle}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Grade {cert.grade}% &middot; {new Date(cert.issuedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-xs text-primary mt-2 font-medium">
+                        View certificate <ExternalLink className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <GraduationCap className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">No certificates yet</h3>
+              <p className="text-sm text-muted-foreground">Finish a course to earn your first certificate.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Recommended Courses Section */}
