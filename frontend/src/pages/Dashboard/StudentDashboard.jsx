@@ -95,7 +95,8 @@ export default function StudentDashboard() {
     if (!user || !badgeConfig) return []; // Defensive check for mockData
 
     return badgeConfig.map((config) => {
-      const hasBadgeRecord = user.badges?.some((b) => b.badgeId === config.id);
+      const badgeRecord = user.badges?.find((b) => b.badgeKey === config.key);
+      const hasBadgeRecord = !!badgeRecord;
 
       const requirementMap = {
         'lessons_completed': user.stats?.lessonsCompletedCount || 0,
@@ -116,7 +117,7 @@ export default function StudentDashboard() {
         ...config,
         earned: isEarned,
         currentProgress,
-        earnedDate: isEarned ? (hasBadgeRecord ? 'Verified' : 'Recently') : null,
+        earnedDate: badgeRecord ? new Date(badgeRecord.earnedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : (isEarned ? 'Recently' : null),
       };
     }).sort((a, b) => {
       if (a.earned !== b.earned) return a.earned ? -1 : 1;

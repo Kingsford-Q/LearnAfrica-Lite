@@ -47,7 +47,7 @@ export default function SettingsPage() {
   const [status, setStatus] = useState({ type: null, message: '' });
 
   const [settings, setSettings] = useState({
-    notifications: { email: true, push: false, updates: true },
+    notifications: { email: true, updates: true },
     instructor: { payout: true, messages: true }
   });
 
@@ -72,7 +72,7 @@ export default function SettingsPage() {
     // silently overwrite in-progress toggle changes before the user saves them.
     if (user?.settings && !hasChanges) {
       setSettings({
-        notifications: user.settings.notifications || { email: true, push: false, updates: true },
+        notifications: user.settings.notifications || { email: true, updates: true },
         instructor: user.settings.instructor || { payout: true, messages: true }
       });
     }
@@ -202,10 +202,7 @@ export default function SettingsPage() {
             <SettingRow label="Email Communications" desc={user?.email || "Updates to your primary inbox"} >
               <Switch checked={settings.notifications.email} onChange={() => handleToggle('notifications', 'email')} />
             </SettingRow>
-            <SettingRow label="Push Notifications" desc="Real-time alerts via browser" >
-              <Switch checked={settings.notifications.push} onChange={() => handleToggle('notifications', 'push')} />
-            </SettingRow>
-            <SettingRow label="Product Updates" desc="New features and announcements" >
+            <SettingRow label="Product Updates" desc="New features and announcements from the LearnAfrica team" >
               <Switch checked={settings.notifications.updates} onChange={() => handleToggle('notifications', 'updates')} />
             </SettingRow>
           </CardContent>

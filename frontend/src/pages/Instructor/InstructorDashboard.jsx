@@ -11,8 +11,10 @@ import {
 import { Button } from '@/components/common/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/common/Card';
 import StatsCard from '@/components/dashboard/StatsCard';
+import { EmptyState } from '@/components/common/EmptyState';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/lib/apiClient';
+import { api, ApiError } from '@/lib/apiClient';
+import { AlertCircle } from 'lucide-react';
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 const ITEMS_PER_PAGE = 5;
@@ -21,15 +23,17 @@ export function InstructorDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [loadError, setLoadError] = useState('');
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setIsLoading(true);
+    setLoadError('');
     api.get('/api/courses/mine/stats')
       .then((data) => setStats(data))
-      .catch(() => setStats(null))
+      .catch((err) => setLoadError(err instanceof ApiError ? err.message : 'Failed to load your dashboard.'))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -46,8 +50,22 @@ export function InstructorDashboard() {
     );
   }
 
+  if (loadError || !stats) {
+    return (
+      <div className="container mx-auto px-4 py-6 lg:py-10">
+        <EmptyState
+          icon={AlertCircle}
+          title="Couldn't load your dashboard"
+          description={loadError || 'Something went wrong. Please try again.'}
+          action={() => window.location.reload()}
+          actionLabel="Retry"
+        />
+      </div>
+    );
+  }
+
   // Pagination Logic (Sort by timestamp if available, otherwise use mock array)
-  const totalPages = Math.ceil(stats.recentStudents.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(stats.recentStudents.length / ITEMS_PER_PAGE));
   const paginatedStudents = stats.recentStudents.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -73,9 +91,9 @@ export function InstructorDashboard() {
 
       {/* Primary Stats */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Courses" value={stats.totalCourses} icon={BookOpen} trend="up" trendValue="2" />
-        <StatsCard title="Total Students" value={stats.totalStudents.toLocaleString()} icon={Users} trend="up" trendValue="12%" />
-        <StatsCard title="Total Earnings" value={`$${stats.totalEarnings.toLocaleString()}`} icon={DollarSign} trend="up" trendValue="8%" />
+        <StatsCard title="Total Courses" value={stats.totalCourses} icon={BookOpen} />
+        <StatsCard title="Total Students" value={stats.totalStudents.toLocaleString()} icon={Users} />
+        <StatsCard title="Total Earnings" value={`$${stats.totalEarnings.toLocaleString()}`} icon={DollarSign} />
         <StatsCard title="Average Rating" value={stats.averageRating} icon={Star} />
       </div>
 
@@ -134,92 +152,106 @@ export function InstructorDashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium tracking-tight">Recent Students</h2>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="h-8 w-8 rounded-full"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => prev - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-xs font-medium tabular-nums text-muted-foreground">
-              {currentPage} / {totalPages}
-            </span>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="h-8 w-8 rounded-full"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => prev + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Desktop Table View (Hidden on mobile) */}
-        <Card className="hidden md:block overflow-hidden border-border/50 shadow-sm">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-muted/40 border-b border-border/50">
-              <tr>
-                <th className="p-4 font-medium text-muted-foreground text-xs uppercase tracking-tight">Student Name</th>
-                <th className="p-4 font-medium text-muted-foreground text-xs uppercase tracking-tight">Enrolled Course</th>
-                <th className="p-4 font-medium text-muted-foreground text-xs uppercase tracking-tight text-right">Completion</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {paginatedStudents.map((s) => (
-                <tr key={s.userId} className="hover:bg-muted/20 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-semibold text-secondary-foreground">
-                        {getInitials(s.name)}
-                      </div>
-                      <span className="font-medium">{s.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-muted-foreground">{s.course}</td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end gap-3">
-                      <div className="h-1.5 w-20 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full bg-primary/70 transition-all duration-700" style={{ width: `${s.progress}%` }} />
-                      </div>
-                      <span className="text-xs font-medium tabular-nums text-muted-foreground w-8 text-right">{s.progress}%</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-
-        {/* Mobile List View (Hidden on Desktop/Tablet) */}
-        <div className="md:hidden space-y-3">
-          {paginatedStudents.map((s) => (
-            <Card key={s.userId} className="p-4 border-border/50 shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
-                  {getInitials(s.name)}
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.course}</p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
-                  <span>Course Progress</span>
-                  <span>{s.progress}%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-primary/70" style={{ width: `${s.progress}%` }} />
-                </div>
-              </div>
+        {stats.recentStudents.length === 0 ? (
+          <Card className="border-border/50 shadow-sm">
+            <EmptyState
+              icon={Users}
+              title="No students yet"
+              description="Once learners enroll in your courses, they'll show up here."
+            />
+          </Card>
+        ) : (
+          <>
+            {/* Desktop Table View (Hidden on mobile) */}
+            <Card className="hidden md:block overflow-hidden border-border/50 shadow-sm">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-muted/40 border-b border-border/50">
+                  <tr>
+                    <th className="p-4 font-medium text-muted-foreground text-xs uppercase tracking-tight">Student Name</th>
+                    <th className="p-4 font-medium text-muted-foreground text-xs uppercase tracking-tight">Enrolled Course</th>
+                    <th className="p-4 font-medium text-muted-foreground text-xs uppercase tracking-tight text-right">Completion</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {paginatedStudents.map((s) => (
+                    <tr key={s.userId} className="hover:bg-muted/20 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-[10px] font-semibold text-secondary-foreground">
+                            {getInitials(s.name)}
+                          </div>
+                          <span className="font-medium">{s.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-muted-foreground">{s.course}</td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-3">
+                          <div className="h-1.5 w-20 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full bg-primary/70 transition-all duration-700" style={{ width: `${s.progress}%` }} />
+                          </div>
+                          <span className="text-xs font-medium tabular-nums text-muted-foreground w-8 text-right">{s.progress}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </Card>
-          ))}
-        </div>
+
+            {/* Mobile List View (Hidden on Desktop/Tablet) */}
+            <div className="md:hidden space-y-3">
+              {paginatedStudents.map((s) => (
+                <Card key={s.userId} className="p-4 border-border/50 shadow-sm space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-secondary-foreground">
+                      {getInitials(s.name)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">{s.name}</p>
+                      <p className="text-xs text-muted-foreground">{s.course}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
+                      <span>Course Progress</span>
+                      <span>{s.progress}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-primary/70" style={{ width: `${s.progress}%` }} />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

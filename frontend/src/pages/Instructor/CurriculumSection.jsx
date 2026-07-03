@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { 
   BookOpen, Layout, X, ChevronRight, Plus, 
   GripVertical, Video, HelpCircle, Clock, 
@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/common/Button'
 import { Card, CardHeader, CardContent } from '@/components/common/Card'
 import { Switch } from '@/components/common/Switch'
+import { fileUrl } from '@/lib/apiClient'
 
 export function CurriculumSection({ 
   sections = [], 
@@ -232,6 +233,17 @@ function CurriculumItemEditor({ item, index, onUpdate, onRemove }) {
   )
 }
 
+// Object URLs must be created exactly once per File and revoked on cleanup —
+// creating one inline in JSX re-runs (and leaks the previous one) on every
+// render, e.g. every keystroke while typing the question text.
+function QuestionImagePreview({ image, className }) {
+  const objectUrl = useMemo(() => (image instanceof File ? URL.createObjectURL(image) : null), [image]);
+  useEffect(() => () => { if (objectUrl) URL.revokeObjectURL(objectUrl); }, [objectUrl]);
+
+  const src = objectUrl || fileUrl(image);
+  return <img src={src} alt="Question" className={className} />;
+}
+
 function QuizEditor({ item, onUpdate }) {
   const questions = item.questions || [];
 
@@ -281,11 +293,32 @@ function QuizEditor({ item, onUpdate }) {
           {/* Image Upload for Quiz */}
           <div className="space-y-1.5">
             <label className="text-[9px] font-bold uppercase text-muted-foreground">Question Image (Optional)</label>
-            <div className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center bg-muted/5 hover:bg-muted/10 transition-colors cursor-pointer relative">
-              <ImageIcon className="h-5 w-5 text-muted-foreground/40 mb-1" />
-              <span className="text-[10px] font-bold text-muted-foreground">Click to upload image</span>
-              <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-            </div>
+            {q.image ? (
+              <div className="relative rounded-lg overflow-hidden border border-border w-fit">
+                <QuestionImagePreview image={q.image} className="h-24 w-auto object-cover" />
+                <button
+                  type="button"
+                  onClick={() => updateQuestion(q.id, { image: null })}
+                  className="absolute top-1 right-1 h-5 w-5 rounded-full bg-background/90 border border-border flex items-center justify-center text-muted-foreground hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center bg-muted/5 hover:bg-muted/10 transition-colors cursor-pointer relative">
+                <ImageIcon className="h-5 w-5 text-muted-foreground/40 mb-1" />
+                <span className="text-[10px] font-bold text-muted-foreground">Click to upload image</span>
+                <input
+                  type="file"
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) updateQuestion(q.id, { image: file })
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

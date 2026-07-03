@@ -45,7 +45,24 @@ Required environment variables on Render:
 | `Cors__AllowedOrigins__0` | Your deployed Vercel frontend URL, e.g. `https://learnafrica-lite.vercel.app` |
 | `SeedSuperAdmin__Email` | The real SuperAdmin email to bootstrap — set this **before** the first deploy/boot, since the seeder only runs once (when no SuperAdmin exists yet). |
 | `SeedSuperAdmin__Password` | The real SuperAdmin password to bootstrap. Change it from inside the app immediately after first login. |
+| `Supabase__Url` | Your Supabase project URL, e.g. `https://<project-ref>.supabase.co`. Setting this switches file uploads from local disk to Supabase Storage — see below. |
+| `Supabase__ServiceRoleKey` | Project Settings → API → `service_role` secret key (not the `anon` key — uploads need write access). |
+| `Supabase__StorageBucket` | Optional, defaults to `uploads`. |
+
+Email (optional — if unset, the app logs password-reset links instead of emailing them, which still works fine for testing):
+
+| Variable | Value |
+|---|---|
+| `Email__SmtpHost` | e.g. `smtp.sendgrid.net` |
+| `Email__SmtpPort` | e.g. `587` |
+| `Email__SmtpUser` / `Email__SmtpPassword` | Your SMTP provider's credentials |
+| `Email__FromAddress` / `Email__FromName` | The From address/name on outgoing mail |
 
 **Frontend — Vercel.** Set `VITE_API_URL` in the Vercel project's environment variables to the Render backend's public URL (e.g. `https://learnafrica-lite-api.onrender.com`). The existing `frontend/vercel.json` already handles SPA routing rewrites.
 
-**Known limitation — file uploads.** `IFileStorageService`'s default implementation (`LocalFileStorageService`) writes thumbnails/resources to local disk (`wwwroot/uploads`), which is **not persistent** on Render's free/standard web services — files are lost on every redeploy or restart. The service is built behind an interface specifically so it can be swapped for Supabase Storage or S3-compatible blob storage later without touching any controller code; do this before relying on uploads in production.
+**File uploads — Supabase Storage.** Render's filesystem is ephemeral (uploads saved to local disk are lost on every redeploy/restart), so production needs `Supabase__Url` + `Supabase__ServiceRoleKey` set — `IFileStorageService` automatically switches from `LocalFileStorageService` to `SupabaseStorageService` when they're present (see `Program.cs`). One-time setup in the Supabase dashboard before first deploy:
+
+1. Storage → New bucket → name it `uploads` (or match `Supabase__StorageBucket`) → **Public bucket** on.
+2. That's it — no RLS policies needed for reads since the bucket is public, and writes go through the service-role key which bypasses RLS.
+
+Local development needs none of this — with no `Supabase__Url` configured, uploads fall back to local disk automatically.

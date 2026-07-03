@@ -19,6 +19,8 @@ import { Input } from '@/components/common/Input'
 import { useAuth } from '@/context/AuthContext'
 import { useMemo, useState, lazy, Suspense, useEffect } from 'react'
 import { CourseCardSkeleton } from '@/components/common/LoadingSkeleton'
+import { api } from '@/lib/apiClient'
+import { formatStatCount } from '@/lib/utils'
 
 // Lazy load the CourseCard component
 const CourseCard = lazy(() => import('@/components/course/CourseCard'))
@@ -69,19 +71,24 @@ const steps = [
   }
 ]
 
-const stats = [
-  { value: '50,000+', label: 'Active Learners' },
-  { value: '200+', label: 'Expert Courses' },
-  { value: '100+', label: 'Instructors' },
-  { value: '95%', label: 'Success Rate' }
-]
-
 export function LandingPage() {
 const { user, courses = [], testimonials = [], isLoading } = useAuth()
 const navigate = useNavigate()
 const [verifyCode, setVerifyCode] = useState('')
 const fullPlaceholder = "e.g. LA-CERT-ABCD-1A2B";
 const [placeholder, setPlaceholder] = useState("");
+const [platformStats, setPlatformStats] = useState(null)
+
+useEffect(() => {
+  api.get('/api/platform/stats').then(setPlatformStats).catch(() => {})
+}, [])
+
+const stats = useMemo(() => ([
+  { value: platformStats ? formatStatCount(platformStats.totalStudents) : '···', label: 'Active Learners' },
+  { value: platformStats ? formatStatCount(platformStats.totalCourses) : '···', label: 'Expert Courses' },
+  { value: platformStats ? formatStatCount(platformStats.totalInstructors) : '···', label: 'Instructors' },
+  { value: platformStats ? `${platformStats.completionRatePercent}%` : '···', label: 'Completion Rate' },
+]), [platformStats])
 
   const handleVerifySubmit = (e) => {
     e.preventDefault()
@@ -212,7 +219,9 @@ const [placeholder, setPlaceholder] = useState("");
                       <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                     ))}
                   </div>
-                  <p className="text-sm text-muted-foreground">Trusted by 50,000+ learners</p>
+                  <p className="text-sm text-muted-foreground">
+                    Trusted by {platformStats ? formatStatCount(platformStats.totalStudents) : '···'} learners
+                  </p>
                 </div>
               </div>
             </div>
@@ -225,8 +234,10 @@ const [placeholder, setPlaceholder] = useState("");
                       <TrendingUp className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <p className="font-bold text-3xl text-foreground">85%</p>
-                      <p className="text-sm font-medium text-muted-foreground">Career Growth</p>
+                      <p className="font-bold text-3xl text-foreground">
+                        {platformStats ? `${platformStats.completionRatePercent}%` : '···'}
+                      </p>
+                      <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
                     </div>
                   </Card>
 
@@ -235,7 +246,9 @@ const [placeholder, setPlaceholder] = useState("");
                       <Users className="h-6 w-6 text-accent" />
                     </div>
                     <div>
-                      <p className="font-bold text-3xl text-foreground">50K+</p>
+                      <p className="font-bold text-3xl text-foreground">
+                        {platformStats ? formatStatCount(platformStats.totalStudents) : '···'}
+                      </p>
                       <p className="text-sm font-medium text-muted-foreground">Active Students</p>
                     </div>
                   </Card>
@@ -245,7 +258,9 @@ const [placeholder, setPlaceholder] = useState("");
                       <Award className="h-6 w-6 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="font-bold text-3xl text-foreground">200+</p>
+                      <p className="font-bold text-3xl text-foreground">
+                        {platformStats ? formatStatCount(platformStats.totalCertificates) : '···'}
+                      </p>
                       <p className="text-sm font-medium text-muted-foreground">Certificates</p>
                     </div>
                   </Card>
@@ -255,7 +270,9 @@ const [placeholder, setPlaceholder] = useState("");
                       <BookOpen className="h-6 w-6 text-orange-600" />
                     </div>
                     <div>
-                      <p className="font-bold text-3xl text-foreground">500+</p>
+                      <p className="font-bold text-3xl text-foreground">
+                        {platformStats ? formatStatCount(platformStats.totalLessons) : '···'}
+                      </p>
                       <p className="text-sm font-medium text-muted-foreground">Lessons</p>
                     </div>
                   </Card>

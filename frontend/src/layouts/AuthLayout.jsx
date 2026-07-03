@@ -1,7 +1,15 @@
 import { Link, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { BookOpen } from 'lucide-react'
+import { api } from '@/lib/apiClient'
+import { formatStatCount } from '@/lib/utils'
 
 export function AuthLayout() {
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    api.get('/api/platform/stats').then(setStats).catch(() => {})
+  }, [])
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Form */}
@@ -35,16 +43,22 @@ export function AuthLayout() {
 
           <div className="mt-12 grid grid-cols-3 gap-6">
             <div>
-              <p className="text-3xl font-bold">50K+</p>
+              <p className="text-3xl font-bold">
+                {stats ? formatStatCount(stats.totalStudents) : <span className="inline-block h-8 w-12 rounded bg-primary-foreground/20 animate-pulse" />}
+              </p>
               <p className="text-sm text-primary-foreground/70">Active Learners</p>
             </div>
             <div>
-              <p className="text-3xl font-bold">200+</p>
+              <p className="text-3xl font-bold">
+                {stats ? formatStatCount(stats.totalCourses) : <span className="inline-block h-8 w-12 rounded bg-primary-foreground/20 animate-pulse" />}
+              </p>
               <p className="text-sm text-primary-foreground/70">Expert Courses</p>
             </div>
             <div>
-              <p className="text-3xl font-bold">95%</p>
-              <p className="text-sm text-primary-foreground/70">Success Rate</p>
+              <p className="text-3xl font-bold">
+                {stats ? `${stats.completionRatePercent}%` : <span className="inline-block h-8 w-12 rounded bg-primary-foreground/20 animate-pulse" />}
+              </p>
+              <p className="text-sm text-primary-foreground/70">Completion Rate</p>
             </div>
           </div>
         </div>

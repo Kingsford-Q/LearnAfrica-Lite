@@ -9,6 +9,7 @@ import { Badge } from '@/components/common/Badge'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Modal } from '@/components/common/Modal'
 import { api, fileUrl } from '@/lib/apiClient'
+import { useAuth } from '@/context/AuthContext'
 
 export function MyCoursesPage() {
   const [courses, setCourses] = useState([])
@@ -17,6 +18,7 @@ export function MyCoursesPage() {
   const [busyId, setBusyId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [menuOpenId, setMenuOpenId] = useState(null)
+  const { refreshCourses } = useAuth()
 
   const load = useCallback(async () => {
     setIsLoading(true)
@@ -39,6 +41,10 @@ export function MyCoursesPage() {
       const action = course.status === 'Published' ? 'unpublish' : 'publish'
       const updated = await api.post(`/api/courses/${course.id}/${action}`)
       setCourses((prev) => prev.map((c) => (c.id === course.id ? { ...c, status: updated.status } : c)))
+      // The public catalog (course browser + landing page) is fetched once
+      // into shared context state — without this, a freshly published course
+      // wouldn't appear there until a full page reload.
+      refreshCourses()
     } catch (err) {
       setError(err.message || 'Failed to update course')
     } finally {
@@ -53,6 +59,7 @@ export function MyCoursesPage() {
       await api.delete(`/api/courses/${deleteTarget.id}`)
       setCourses((prev) => prev.filter((c) => c.id !== deleteTarget.id))
       setDeleteTarget(null)
+      refreshCourses()
     } catch (err) {
       setError(err.message || 'Failed to delete course')
     } finally {

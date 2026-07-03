@@ -99,9 +99,9 @@ export function CoursesPage() {
         const isDirectMatch = course.category === selectedCategory;
 
         // Deep Fuzzy Match (Title, Tags, and Description)
-        const isTitleMatch = course.title.toLowerCase().includes(categoryQuery);
-        const isDescriptionMatch = course.description.toLowerCase().includes(categoryQuery);
-        const isTagMatch = course.tags.some(tag => tag.toLowerCase().includes(categoryQuery));
+        const isTitleMatch = course.title?.toLowerCase().includes(categoryQuery) ?? false;
+        const isDescriptionMatch = course.description?.toLowerCase().includes(categoryQuery) ?? false;
+        const isTagMatch = Array.isArray(course.tags) && course.tags.some(tag => tag?.toLowerCase().includes(categoryQuery));
 
         // Others Safety Net
         if (selectedCategory === 'Others') {
@@ -187,13 +187,14 @@ export function CoursesPage() {
     </div>
   )
 
-  // Helper to render page numbers with ellipsis
+  // Helper to render page numbers with ellipsis. On narrow screens only the
+  // current page's immediate neighbors are shown to keep the row from wrapping.
   const renderPageNumbers = () => {
     const pages = []
-    const showMax = isNarrowScreen ? 3 : 5
+    const neighborRange = isNarrowScreen ? 0 : 1
 
     for (let i = 1; i <= totalPages; i++) {
-      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      if (i === 1 || i === totalPages || (i >= currentPage - neighborRange && i <= currentPage + neighborRange)) {
         pages.push(
           <button
             key={i}
@@ -208,7 +209,7 @@ export function CoursesPage() {
             {i}
           </button>
         )
-      } else if (i === currentPage - 2 || i === currentPage + 2) {
+      } else if (i === currentPage - neighborRange - 1 || i === currentPage + neighborRange + 1) {
         pages.push(<span key={`ellipsis-${i}`} className="text-muted-foreground px-1">...</span>)
       }
     }

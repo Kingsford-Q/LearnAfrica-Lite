@@ -49,11 +49,12 @@ public class QuizzesController(AppDbContext db) : ControllerBase
     [Authorize]
     public async Task<ActionResult<QuizDetailDto>> Get(Guid id)
     {
-        var quiz = await db.Quizzes.Include(q => q.Questions).ThenInclude(qq => qq.Options)
+        var quiz = await db.Quizzes.Include(q => q.Course).Include(q => q.Questions).ThenInclude(qq => qq.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
         if (quiz is null) return NotFound();
 
-        return quiz.ToDetailDto();
+        var includeAnswers = quiz.Course is not null && IsOwnerOrStaff(quiz.Course);
+        return quiz.ToDetailDto(includeAnswers);
     }
 
     [HttpPut("api/quizzes/{id:guid}")]
@@ -76,14 +77,18 @@ public class QuizzesController(AppDbContext db) : ControllerBase
         // entirely rather than diff — cascade delete cleans up the old
         // questions/options, and any past attempts/scores are untouched
         // since QuizAttempt only references the quiz, not its questions.
-        db.QuizQuestions.RemoveRange(quiz.Questions);
-        quiz.Questions = request.Questions.Select(q => new QuizQuestion
+        // Working through the DbSet directly (rather than reassigning the
+        // quiz.Questions navigation property) avoids EF's change tracker
+        // treating the swap as a conflicting delete+update on the same rows.
+        db.QuizQuestions.RemoveRange(quiz.Questions.ToList());
+        db.QuizQuestions.AddRange(request.Questions.Select(q => new QuizQuestion
         {
+            QuizId = quiz.Id,
             Text = q.Text,
             ImageUrl = q.ImageUrl,
             Order = q.Order,
             Options = q.Options.Select(o => new QuizOption { Text = o.Text, IsCorrect = o.IsCorrect, Order = o.Order }).ToList(),
-        }).ToList();
+        }));
 
         await db.SaveChangesAsync();
         return quiz.ToSummaryDto();

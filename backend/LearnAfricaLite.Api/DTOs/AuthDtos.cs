@@ -89,3 +89,5 @@ public record UserStatsDto(
     bool IsProfileComplete,
     int ForumContributionsCount
 );
+
+public record UserBadgeDto(string BadgeKey, DateTime EarnedAt);

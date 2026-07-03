@@ -1,3 +1,4 @@
+import { cloneElement, isValidElement } from 'react'
 import { cn } from '@/lib/utils'
 
 const variants = {
@@ -22,19 +23,28 @@ export function Button({
   size = 'md',
   className,
   disabled,
+  asChild = false,
   ...props
 }) {
+  const classes = cn(
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    variants[variant],
+    sizes[size],
+    className
+  )
+
+  // Merges button styling onto the single child element (e.g. a react-router
+  // <Link>) instead of nesting it inside a <button> — nesting an <a> inside a
+  // <button> is invalid HTML and breaks click/focus/accessibility behavior.
+  if (asChild && isValidElement(children)) {
+    return cloneElement(children, {
+      className: cn(classes, children.props.className),
+      ...props,
+    })
+  }
+
   return (
-    <button
-      className={cn(
-        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-        variants[variant],
-        sizes[size],
-        className
-      )}
-      disabled={disabled}
-      {...props}
-    >
+    <button className={classes} disabled={disabled} {...props}>
       {children}
     </button>
   )

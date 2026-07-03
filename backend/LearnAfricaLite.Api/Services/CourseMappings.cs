@@ -57,11 +57,14 @@ public static class CourseMappings
 
     public static QuizSummaryDto ToSummaryDto(this Quiz q) => new(q.Id, q.Title, q.DurationSeconds, q.Order, q.LessonId, q.Questions.Count);
 
-    public static QuizDetailDto ToDetailDto(this Quiz q) => new(
+    // includeAnswers must stay false for students taking the quiz — true is only
+    // for the instructor/staff editor view, which needs to see the correct answer.
+    public static QuizDetailDto ToDetailDto(this Quiz q, bool includeAnswers = false) => new(
         q.Id, q.CourseId, q.Title, q.DurationSeconds,
         q.Questions.OrderBy(qq => qq.Order).Select(qq => new QuizQuestionDto(
             qq.Id, qq.Text, qq.ImageUrl,
-            qq.Options.OrderBy(o => o.Order).Select(o => new QuizOptionDto(o.Id, o.Text)).ToList()
+            qq.Options.OrderBy(o => o.Order)
+                .Select(o => new QuizOptionDto(o.Id, o.Text, includeAnswers ? o.IsCorrect : null)).ToList()
         )).ToList()
     );
 }

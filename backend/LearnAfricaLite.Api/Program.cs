@@ -64,8 +64,18 @@ builder.Services.AddAuthorization();
 
 // --- App services ---
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+builder.Services.AddHttpClient();
+
+// Supabase Storage in production (files must survive Render restarts/redeploys,
+// and its filesystem is ephemeral); local disk when no Supabase config is
+// present, which is the normal case for local development.
+var useSupabaseStorage = !string.IsNullOrWhiteSpace(builder.Configuration["Supabase:Url"]);
+if (useSupabaseStorage)
+    builder.Services.AddScoped<IFileStorageService, SupabaseStorageService>();
+else
+    builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 builder.Services.AddCors(options =>
 {

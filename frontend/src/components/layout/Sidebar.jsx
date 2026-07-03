@@ -59,6 +59,16 @@ const sidebarLinks = [
   },
 ];
 
+// Picks the single most specific (longest href) sidebar link whose route the
+// given pathname falls under, so nested routes only highlight one nav item.
+function activeSidebarLink(pathname) {
+  const matches = sidebarLinks.filter(
+    (link) => pathname === link.href || pathname.startsWith(`${link.href}/`)
+  );
+  if (matches.length === 0) return null;
+  return matches.reduce((longest, link) => (link.href.length > longest.href.length ? link : longest)).href;
+}
+
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
 
@@ -97,9 +107,11 @@ export default function Sidebar({ isOpen, onClose }) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 p-4">
             {sidebarLinks.map((link) => {
-              const isActive = link.href === '/instructor'
-                ? location.pathname === link.href
-                : location.pathname.startsWith(link.href);
+              // Nested routes (e.g. "/instructor/courses/create" under
+              // "/instructor/courses") match more than one link's prefix —
+              // only the longest (most specific) match should highlight,
+              // otherwise "My Courses" and "Create Course" light up together.
+              const isActive = activeSidebarLink(location.pathname) === link.href;
 
               return (
                 <Link

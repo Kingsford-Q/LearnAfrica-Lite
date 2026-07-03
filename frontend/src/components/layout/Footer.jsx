@@ -7,7 +7,7 @@ const footerLinks = {
   platform: [
     { label: 'Courses', href: '/courses' },
     { label: 'Become an Instructor', href: '/signup' },
-    { label: 'Pricing', href: comingSoon('Pricing') },
+    { label: 'Pricing', href: '/pricing' },
     { label: 'Enterprise', href: comingSoon('Enterprise') },
   ],
   resources: [

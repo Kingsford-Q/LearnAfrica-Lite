@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -80,6 +81,7 @@ export default function ProfilePage() {
     setPreviewImage(null);
     setAvatarUrl(null);
     setAvatarError('');
+    setSaveError('');
     syncFormFromUser();
   };
 
@@ -105,17 +107,18 @@ export default function ProfilePage() {
         // Fallback for students who might just have a top-level bio
         ...( !isInstructor && {
           bio: formData.bio,
-          location: formData.location
+          location: formData.location,
+          website: formData.website,
         }),
-        updatedAt: new Date().toISOString()
       };
 
       await updateUser(payload);
       setIsEditing(false);
       setPreviewImage(null);
       setAvatarUrl(null);
+      setSaveError('');
     } catch (error) {
-      console.error("Submission error:", error);
+      setSaveError(error instanceof ApiError ? error.message : 'Failed to save your profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -328,15 +331,19 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
+                {isEditing && saveError && (
+                  <p className="text-sm text-destructive font-medium pt-4">{saveError}</p>
+                )}
+
                 {isEditing && (
                   <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4 pt-6 border-t border-border animate-in slide-in-from-bottom-2">
-                    <Button 
-                      type="submit" 
-                      isLoading={isSaving} 
+                    <Button
+                      type="submit"
+                      disabled={isSaving || isUploadingAvatar}
                       className="w-full sm:flex-1 bg-primary text-primary-foreground h-11 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
                     >
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Save Changes
+                      {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                      {isSaving ? 'Saving...' : 'Save Changes'}
                     </Button>
                     <Button
                       type="button"

@@ -9,6 +9,7 @@ import { Input, Textarea, Label } from '@/components/common/Input'
 import { categories, difficulties } from '@/data/mockData'
 import { cn } from '@/lib/utils'
 import { api, fileUrl } from '@/lib/apiClient'
+import { useAuth } from '@/context/AuthContext'
 
 // Hooks & Sub-components
 import { useCurriculum } from '@/lib/useCurriculum'
@@ -23,6 +24,7 @@ const defaultFormData = {
   difficulty: '',
   duration: '',
   price: '',
+  paymentLink: '',
   thumbnail: null,
   thumbnailUrl: null
 }
@@ -63,6 +65,38 @@ function lessonDetailToItem(lesson) {
   }
 }
 
+// Builds the API payload's question list, uploading any newly-picked image
+// Files first (q.image is a File for a fresh pick, a string URL when loaded
+// unchanged from an existing question, or null/removed).
+async function buildQuizQuestions(rawQuestions, setSubmitStep) {
+  const filtered = (rawQuestions || []).filter((q) => q.text?.trim())
+  const result = []
+  for (let qIndex = 0; qIndex < filtered.length; qIndex++) {
+    const q = filtered[qIndex]
+    let imageUrl = null
+    if (q.image instanceof File) {
+      setSubmitStep?.('Uploading question image...')
+      const uploadForm = new FormData()
+      uploadForm.append('file', q.image)
+      const { url } = await api.upload('/api/uploads', uploadForm)
+      imageUrl = url
+    } else if (typeof q.image === 'string') {
+      imageUrl = q.image
+    }
+    result.push({
+      text: q.text,
+      imageUrl,
+      order: qIndex,
+      options: (q.options || []).map((opt, oIndex) => ({
+        text: opt,
+        isCorrect: oIndex === q.correctAnswer,
+        order: oIndex,
+      })),
+    })
+  }
+  return result
+}
+
 function quizDetailToItem(quiz) {
   return {
     id: quiz.id,
@@ -73,7 +107,7 @@ function quizDetailToItem(quiz) {
       text: q.text,
       options: (q.options || []).map((o) => o.text),
       correctAnswer: (q.options || []).findIndex((o) => o.isCorrect),
-      image: null,
+      image: q.imageUrl || null,
     })),
   }
 }
@@ -82,6 +116,7 @@ export function CreateCoursePage() {
   const navigate = useNavigate()
   const { courseId } = useParams()
   const isEditMode = Boolean(courseId)
+  const { refreshCourses } = useAuth()
 
   const draftRef = useRef(isEditMode ? null : loadDraft())
   const draft = draftRef.current
@@ -142,6 +177,7 @@ export function CreateCoursePage() {
           difficulty: course.difficulty,
           duration: course.duration || '',
           price: course.isFree ? '' : String(course.price ?? ''),
+          paymentLink: course.paymentLink || '',
         })
         setExistingThumbnailUrl(course.thumbnail || null)
         setCoursePerks({
@@ -296,6 +332,7 @@ export function CreateCoursePage() {
       language: 'English',
       price: Number(formData.price) || 0,
       isFree: !Number(formData.price),
+      paymentLink: Number(formData.price) > 0 ? (formData.paymentLink || null) : null,
       tags,
       learningOutcomes,
       hasCertificate: coursePerks.hasCertificate,
@@ -328,18 +365,7 @@ export function CreateCoursePage() {
         const isNewItem = !originalItemIds.has(item.id)
 
         if (item.type === 'quiz') {
-          const questions = (item.questions || [])
-            .filter((q) => q.text?.trim())
-            .map((q, qIndex) => ({
-              text: q.text,
-              imageUrl: null,
-              order: qIndex,
-              options: (q.options || []).map((opt, oIndex) => ({
-                text: opt,
-                isCorrect: oIndex === q.correctAnswer,
-                order: oIndex,
-              })),
-            }))
+          const questions = await buildQuizQuestions(item.questions, setSubmitStep)
           if (questions.length === 0) continue
 
           if (isNewItem) {
@@ -364,7 +390,7 @@ export function CreateCoursePage() {
         } else {
           await api.put(`/api/lessons/${item.id}`, {
             title: item.title || 'Untitled Lesson', description: null, duration: null,
-            videoUrl: item.videoUrl || null, videoFile: null, content: item.content || '', order: iIndex,
+            videoUrl: item.videoUrl || null, content: item.content || '', order: iIndex,
           })
           // Resources have no update endpoint — replace them wholesale to
           // keep this in sync with whatever the instructor edited.
@@ -396,6 +422,7 @@ export function CreateCoursePage() {
       }
     }
 
+    refreshCourses()
     navigate('/instructor/courses')
   }
 
@@ -419,6 +446,7 @@ export function CreateCoursePage() {
         language: 'English',
         price: Number(formData.price) || 0,
         isFree: !Number(formData.price),
+        paymentLink: Number(formData.price) > 0 ? (formData.paymentLink || null) : null,
         tags,
         learningOutcomes,
         hasCertificate: coursePerks.hasCertificate,
@@ -439,18 +467,7 @@ export function CreateCoursePage() {
           const item = section.lessons[iIndex]
 
           if (item.type === 'quiz') {
-            const questions = (item.questions || [])
-              .filter(q => q.text?.trim())
-              .map((q, qIndex) => ({
-                text: q.text,
-                imageUrl: null,
-                order: qIndex,
-                options: (q.options || []).map((opt, oIndex) => ({
-                  text: opt,
-                  isCorrect: oIndex === q.correctAnswer,
-                  order: oIndex,
-                })),
-              }))
+            const questions = await buildQuizQuestions(item.questions, setSubmitStep)
 
             if (questions.length > 0) {
               await api.post(`/api/sections/${createdSection.id}/quizzes`, {
@@ -488,6 +505,7 @@ export function CreateCoursePage() {
     await api.post(`/api/courses/${course.id}/publish`)
 
     clearDraft()
+    refreshCourses()
     navigate('/instructor/courses')
   }
 
@@ -740,6 +758,26 @@ export function CreateCoursePage() {
                 </div>
                 <p className="text-[11px] text-muted-foreground">Leave at 0 for a free course.</p>
               </div>
+
+              {Number(formData.price) > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="paymentLink" className="text-xs font-bold uppercase text-muted-foreground/80">Payment Link</Label>
+                  <Input
+                    id="paymentLink"
+                    name="paymentLink"
+                    value={formData.paymentLink}
+                    onChange={handleChange}
+                    placeholder="https://gumroad.com/l/your-course"
+                    className="h-11 text-sm"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    LearnAfrica Lite doesn't process payments directly. Paste a checkout link from Gumroad,
+                    Paystack, Stripe, or similar — students are sent there to pay before enrolling. Without
+                    this, students won't be able to enroll in a paid course.
+                  </p>
+                </div>
+              )}
+
               <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-xs font-bold uppercase tracking-widest">
                 {isSubmitting ? (submitStep || "Finalizing...") : (isEditMode ? "Save Changes" : "Publish Course")}
               </Button>

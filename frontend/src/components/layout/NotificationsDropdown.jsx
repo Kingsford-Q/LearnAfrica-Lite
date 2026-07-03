@@ -117,9 +117,10 @@ export default function NotificationsDropdown({ hideChevron = false, closeMainMe
         )}
       </div>
 
-      {/* 1. DESKTOP POPOVER (Uses the Drawer UI) */}
-      <MobileNotificationsDrawer 
-        isOpen={isOpen} 
+      {/* Single instance — fullscreen on mobile, anchored popover on desktop
+          (md+), both handled by responsive classes inside the drawer itself. */}
+      <MobileNotificationsDrawer
+        isOpen={isOpen}
         onClose={handleCloseEverything}
         notifications={notifications}
         unreadCount={unreadCount}
@@ -128,21 +129,6 @@ export default function NotificationsDropdown({ hideChevron = false, closeMainMe
         onDelete={deleteNotification}
         NotificationIcon={NotificationIconHelper}
         isLoading={isLoading}
-        isDesktopPopover={true} // Triggers floating mode
-      />
-
-      {/* 2. MOBILE SLIDE-IN (Uses the Drawer UI) */}
-      <MobileNotificationsDrawer 
-        isOpen={isOpen} 
-        onClose={handleCloseEverything}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        markAllAsRead={markAllAsRead}
-        markAsRead={markAsRead}
-        onDelete={deleteNotification}
-        NotificationIcon={NotificationIconHelper}
-        isLoading={isLoading}
-        isDesktopPopover={false} // Triggers fullscreen mode
       />
     </div>
   );

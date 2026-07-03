@@ -66,22 +66,16 @@ export function AnalyticsPage() {
           title="Total Revenue"
           value={stats ? `$${stats.totalEarnings.toLocaleString()}` : 'N/A'}
           icon={DollarSign}
-          trend="up"
-          trendValue="12%"
         />
         <StatsCard
           title="Total Students"
           value={stats ? stats.totalStudents.toLocaleString() : 'N/A'}
           icon={Users}
-          trend="up"
-          trendValue="8%"
         />
         <StatsCard
           title="Completion Rate"
           value={stats ? `${stats.completionRate}%` : 'N/A'}
           icon={Target}
-          trend="up"
-          trendValue="5%"
         />
         <StatsCard
           title="Average Rating"

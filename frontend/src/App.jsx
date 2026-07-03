@@ -30,12 +30,14 @@ import { InstructorReviewsPage } from './pages/Instructor/InstructorReviewsPage'
 import { AnalyticsPage } from './pages/Instructor/AnalyticsPage';
 import InstructorApprovalsPage from './pages/Admin/InstructorApprovalsPage';
 import AnnouncementsPage from './pages/Admin/AnnouncementsPage';
+import AdminUsersPage from './pages/Admin/AdminUsersPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SettingsPage from './pages/Settings/SettingsPage';
 import CertificatePage from './pages/Certificate/CertificatePage';
 import VerifyCredentialPage from './pages/Verify/VerifyCredentialPage';
 import ComingSoonPage from './pages/ComingSoon/ComingSoonPage';
 import AboutUsPage from './pages/Company/AboutUsPage';
+import PricingPage from './pages/Company/PricingPage';
 import ContactPage from './pages/Company/ContactPage';
 import HelpCenterPage from './pages/Support/HelpCenterPage';
 import TermsOfServicePage from './pages/Legal/TermsOfServicePage';
@@ -98,6 +100,7 @@ function AppRoutes() {
         <Route path="verify/:code" element={<VerifyCredentialPage />} />
         <Route path="coming-soon" element={<ComingSoonPage />} />
         <Route path="about" element={<AboutUsPage />} />
+        <Route path="pricing" element={<PricingPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="help-center" element={<HelpCenterPage />} />
         <Route path="terms" element={<TermsOfServicePage />} />
@@ -219,6 +222,7 @@ function AppRoutes() {
       >
         <Route index element={<Navigate to="instructors" replace />} />
         <Route path="instructors" element={<InstructorApprovalsPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
       </Route>
 

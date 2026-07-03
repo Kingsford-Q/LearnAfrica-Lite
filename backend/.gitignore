@@ -3,5 +3,5 @@ obj/
 *.user
 appsettings.Development.local.json
 .vs/
-wwwroot/uploads/*
-!wwwroot/uploads/.gitkeep
+**/wwwroot/uploads/*
+!**/wwwroot/uploads/.gitkeep

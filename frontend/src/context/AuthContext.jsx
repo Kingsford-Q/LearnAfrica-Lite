@@ -154,6 +154,15 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const fetchBadges = useCallback(async () => {
+    try {
+      const data = await api.get('/api/users/me/badges');
+      setUser(prev => prev ? { ...prev, badges: data.map(b => ({ badgeKey: b.badgeKey, earnedAt: b.earnedAt })) } : prev);
+    } catch {
+      // Best-effort — keep the last known badges.
+    }
+  }, []);
+
   // Re-syncs role/approval-status/profile fields from the backend without a full
   // reload, so e.g. an instructor approval takes effect while the tab stays open.
   const refreshUser = useCallback(async () => {
@@ -179,7 +188,8 @@ export function AuthProvider({ children }) {
     }
     fetchEnrollments();
     fetchStats();
-  }, [user?.id, fetchEnrollments, fetchStats]);
+    fetchBadges();
+  }, [user?.id, fetchEnrollments, fetchStats, fetchBadges]);
 
   // --- NOTIFICATION ACTIONS (backend-driven) ---
 
@@ -390,6 +400,7 @@ export function AuthProvider({ children }) {
       refreshCourses: fetchCourses,
       refreshEnrollments: fetchEnrollments,
       refreshStats: fetchStats,
+      refreshBadges: fetchBadges,
       login,
       verifyTwoFactorLogin,
       signup,
@@ -418,6 +429,7 @@ export function AuthProvider({ children }) {
     fetchCourses,
     fetchEnrollments,
     fetchStats,
+    fetchBadges,
     login,
     verifyTwoFactorLogin,
     signup,

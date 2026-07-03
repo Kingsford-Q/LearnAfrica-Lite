@@ -85,7 +85,9 @@ public record QuizDetailDto(Guid Id, Guid CourseId, string Title, int DurationSe
 public record QuizQuestionDto(Guid Id, string Text, string? ImageUrl, List<QuizOptionDto> Options);
 
 // For taking a quiz — correctness withheld until submission.
-public record QuizOptionDto(Guid Id, string Text);
+// IsCorrect is only populated for the instructor/staff editor view — null for
+// students taking the quiz, so the answer can't be read out of the API response.
+public record QuizOptionDto(Guid Id, string Text, bool? IsCorrect = null);
 
 public record CreateCourseRequest(
     [Required] string Title,

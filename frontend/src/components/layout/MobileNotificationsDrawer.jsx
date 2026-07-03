@@ -30,17 +30,16 @@ const notificationColors = {
   announcement: 'bg-purple-500/10 text-purple-600',
 };
 
-export default function MobileNotificationsDrawer({ 
-  isOpen, 
-  onClose, 
-  notifications, 
-  unreadCount, 
-  markAllAsRead, 
-  markAsRead, 
+export default function MobileNotificationsDrawer({
+  isOpen,
+  onClose,
+  notifications,
+  unreadCount,
+  markAllAsRead,
+  markAsRead,
   NotificationIcon, // The helper component passed as a prop
   isLoading,
   onDelete,
-  isDesktopPopover = false // New flow prop for md and lg screens
 }) {
   const [isMarkingLoading, setIsMarkingLoading] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
@@ -87,11 +86,14 @@ export default function MobileNotificationsDrawer({
 
   return (
     <div className={cn(
-      "z-[200] bg-background animate-in duration-300 ease-in-out border border-border/40",
-      // New Flow: Desktop Popover vs Mobile Slide-in
-      isDesktopPopover 
-        ? "absolute top-full right-0 mt-2 w-[400px] h-[600px] rounded-3xl shadow-2xl slide-in-from-top-2 overflow-hidden hidden md:flex flex-col" 
-        : "fixed inset-0 h-[100dvh] slide-in-from-right md:hidden flex flex-col"
+      "z-[200] bg-background border border-border/40 flex flex-col animate-in duration-300 ease-in-out",
+      // Mobile: fullscreen slide-in. Desktop (md+): anchored popover under the
+      // bell icon. This is a single instance handling both via responsive
+      // classes — previously two separate instances were mounted at once
+      // (one hidden via CSS per breakpoint), which duplicated all state
+      // (selectedNotification, isMarkingLoading) and could desync between them.
+      "fixed inset-0 h-[100dvh] slide-in-from-right",
+      "md:absolute md:inset-auto md:top-full md:right-0 md:mt-2 md:w-[400px] md:h-[600px] md:rounded-3xl md:shadow-2xl md:overflow-hidden md:slide-in-from-top-2"
     )}>
       <div className="flex h-full flex-col overflow-hidden">
         
@@ -237,10 +239,7 @@ export default function MobileNotificationsDrawer({
         </div>
 
         {/* --- CLEANED ACTION FOOTER --- */}
-        <div className={cn(
-          "p-5 border-t border-border bg-card/40 backdrop-blur-md",
-          !isDesktopPopover && "pb-10" // Extra padding only for mobile fullscreen
-        )}>
+        <div className="p-5 pb-10 md:pb-5 border-t border-border bg-card/40 backdrop-blur-md">
           {!selectedNotification ? (
             <button
               disabled={unreadCount === 0 || isMarkingLoading}
@@ -267,8 +266,8 @@ export default function MobileNotificationsDrawer({
               onClick={handleOpenActivity}
               className={cn(
                 "group w-full h-12 rounded-xl flex items-center justify-center gap-3 px-6 font-black transition-all active:scale-[0.98]",
-                hasLink 
-                  ? "bg-foreground text-background shadow-sm border border-foreground/10" 
+                hasLink
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/10"
                   : "bg-muted/40 text-muted-foreground/30 cursor-not-allowed border border-border/20"
               )}
             >

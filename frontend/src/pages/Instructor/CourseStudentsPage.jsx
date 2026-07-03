@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Loader2, Users } from 'lucide-react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Loader2, Users, FileQuestion } from 'lucide-react'
 import { Card } from '@/components/common/Card'
 import { EmptyState } from '@/components/common/EmptyState'
-import { api, fileUrl } from '@/lib/apiClient'
+import { api, fileUrl, ApiError } from '@/lib/apiClient'
 
 export function CourseStudentsPage() {
   const { courseId } = useParams()
+  const navigate = useNavigate()
   const [students, setStudents] = useState([])
   const [course, setCourse] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     (async () => {
       setIsLoading(true)
+      setNotFound(false)
+      setError('')
       try {
         const [studentsData, courseData] = await Promise.all([
           api.get(`/api/courses/${courseId}/students`),
@@ -23,7 +27,14 @@ export function CourseStudentsPage() {
         setStudents(studentsData)
         setCourse(courseData)
       } catch (err) {
-        setError(err.message || 'Failed to load students')
+        // A course referenced by an older link (e.g. a notification) can
+        // legitimately no longer exist if it was since deleted — that's a
+        // normal state to handle gracefully, not just an error banner.
+        if (err instanceof ApiError && err.status === 404) {
+          setNotFound(true)
+        } else {
+          setError(err.message || 'Failed to load students')
+        }
       } finally {
         setIsLoading(false)
       }
@@ -31,6 +42,23 @@ export function CourseStudentsPage() {
   }, [courseId])
 
   const getInitials = (name) => name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '??'
+
+  if (!isLoading && notFound) {
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <Link to="/instructor/courses" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to My Courses
+        </Link>
+        <EmptyState
+          icon={FileQuestion}
+          title="This course no longer exists"
+          description="It may have been deleted since this link was created."
+          action={() => navigate('/instructor/courses')}
+          actionLabel="Back to My Courses"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

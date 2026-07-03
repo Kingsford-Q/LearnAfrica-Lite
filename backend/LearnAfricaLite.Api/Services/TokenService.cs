@@ -97,7 +97,9 @@ public class TokenService(IOptions<JwtOptions> options) : ITokenService
     public Guid? ValidateTwoFactorPendingToken(string token)
     {
         var key = new SymmetricSecurityKey(Convert.FromBase64String(_options.Secret));
-        var handler = new JwtSecurityTokenHandler();
+        // Without this, ValidateToken remaps short claim names like "sub" to
+        // long legacy URIs on the way out, silently breaking FindFirstValue lookups.
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
 
         try
         {

@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShieldCheck, Megaphone } from 'lucide-react';
+import { ShieldCheck, Megaphone, Users } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const sidebarLinks = [
   { href: '/admin/instructors', label: 'Instructor Approvals', icon: <ShieldCheck className="h-5 w-5" /> },
+  { href: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
   { href: '/admin/announcements', label: 'Announcements', icon: <Megaphone className="h-5 w-5" /> },
 ];
 

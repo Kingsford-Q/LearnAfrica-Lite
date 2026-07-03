@@ -18,6 +18,7 @@ export function QuizPage() {
   // answers: { [questionIndex]: optionId (string) }
   const [answers, setAnswers] = useState({})
   const [timeLeft, setTimeLeft] = useState(null)
+  const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     setIsLoading(true)
@@ -35,6 +36,7 @@ export function QuizPage() {
   const handleSubmit = useCallback(async () => {
     if (!quiz || isSubmitting) return
     setIsSubmitting(true)
+    setSubmitError('')
     try {
       const requestBody = {
         // Unanswered questions (e.g. the timer ran out before every question was
@@ -55,7 +57,8 @@ export function QuizPage() {
           quizId,
         },
       })
-    } catch {
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to submit the quiz. Please try again.')
       setIsSubmitting(false)
     }
   }, [quiz, answers, courseId, quizId, navigate, isSubmitting])
@@ -238,6 +241,13 @@ export function QuizPage() {
             </div>
           </div>
         </Card>
+
+        {submitError && (
+          <div className="mt-6 flex items-start gap-3 rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive animate-in fade-in slide-in-from-bottom-2">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="font-medium leading-tight">{submitError}</p>
+          </div>
+        )}
 
         {!canSubmit && questions.length > 0 && currentQuestion === questions.length - 1 && (
           <div className="mt-6 flex items-start gap-3 rounded-xl bg-warning/10 border border-warning/20 p-4 text-sm text-warning-foreground animate-in fade-in slide-in-from-bottom-2">

@@ -144,6 +144,19 @@ public class UsersController(AppDbContext db, UserManager<ApplicationUser> userM
         return NoContent();
     }
 
+    [HttpGet("badges")]
+    public async Task<ActionResult<List<UserBadgeDto>>> Badges()
+    {
+        var userId = User.GetUserId();
+        var badges = await db.UserBadges.AsNoTracking()
+            .Where(ub => ub.UserId == userId)
+            .Include(ub => ub.BadgeDefinition)
+            .Select(ub => new UserBadgeDto(ub.BadgeDefinition!.Key, ub.EarnedAt))
+            .ToListAsync();
+
+        return badges;
+    }
+
     [HttpGet("stats")]
     public async Task<ActionResult<UserStatsDto>> Stats()
     {

@@ -124,8 +124,12 @@ export function CourseDetailPage() {
 
   if (loadError || !courseDetail) {
     return (
-      <div className="container py-20 text-center font-bold">
-        Course not found
+      <div className="container mx-auto px-4 py-20 text-center space-y-4">
+        <h1 className="text-xl font-bold">Course not found</h1>
+        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+          This course may have been removed or the link is incorrect.
+        </p>
+        <Button onClick={() => navigate('/courses')} className="mt-2">Browse Courses</Button>
       </div>
     )
   }

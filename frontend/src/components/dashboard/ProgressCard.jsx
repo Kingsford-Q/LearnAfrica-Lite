@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export default function ProgressCard({ course }) {
+export default function ProgressCard({ course, buttonVariant = 'primary' }) {
   const isCompleted = course.progress === 100;
 
   return (
@@ -98,10 +98,8 @@ export default function ProgressCard({ course }) {
           <Link to={`/courses/${course.id}`} className="block w-full">
             <Button
               size="sm"
-              className={cn(
-                'h-10 w-full rounded-xl px-4 text-xs font-semibold shadow-sm transition-all sm:h-9 sm:w-auto',
-                'bg-primary text-primary-foreground hover:bg-primary/90'
-              )}
+              variant={buttonVariant}
+              className="h-10 w-full rounded-xl px-4 text-xs font-semibold shadow-sm transition-all sm:h-9 sm:w-auto"
             >
               {isCompleted ? (
                 <>

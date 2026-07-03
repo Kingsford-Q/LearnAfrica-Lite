@@ -368,27 +368,15 @@ export function LessonPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 overflow-y-auto outline-none">
-          {(lessonDetail.videoUrl || lessonDetail.videoFile) && (
+          {lessonDetail.videoUrl && (
             <div className="aspect-video w-full bg-slate-950 relative shadow-inner">
-              {lessonDetail.videoUrl ? (
-                <iframe
-                  src={getEmbedUrl(lessonDetail.videoUrl)}
-                  className="w-full h-full"
-                  allowFullScreen
-                  title={lessonDetail.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                />
-              ) : (
-                <video
-                  key={lessonDetail.videoFile}
-                  controls
-                  className="w-full h-full object-cover"
-                  preload="metadata"
-                >
-                  <source src={lessonDetail.videoFile} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              )}
+              <iframe
+                src={getEmbedUrl(lessonDetail.videoUrl)}
+                className="w-full h-full"
+                allowFullScreen
+                title={lessonDetail.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              />
             </div>
           )}
 

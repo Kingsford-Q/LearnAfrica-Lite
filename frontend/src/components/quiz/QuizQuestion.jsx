@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { fileUrl } from '@/lib/apiClient'
 
 // question shape: { id, text, imageUrl, options: [{ id, text }] }
 // selectedAnswer: optionId string | undefined
@@ -34,7 +35,7 @@ export function QuizQuestion({
       <div className="space-y-4">
         {question.imageUrl && (
           <img
-            src={question.imageUrl}
+            src={fileUrl(question.imageUrl)}
             alt="Question illustration"
             className="rounded-lg max-h-64 object-contain mx-auto"
           />
