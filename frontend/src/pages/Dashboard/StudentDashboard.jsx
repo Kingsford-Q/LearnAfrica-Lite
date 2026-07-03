@@ -13,8 +13,6 @@ const ProgressCard = lazy(() => import('@/components/dashboard/ProgressCard'));
 const BadgeCard = lazy(() => import('@/components/dashboard/BadgeCard'));
 const BadgeDetailModal = lazy(() => import('@/components/dashboard/BadgeDetailModal'));
 
-const MOBILE_BADGE_PAGE_SIZE = 6;
-
 export default function StudentDashboard() {
   const { user, courses: coursesState, badgeConfig } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +20,6 @@ export default function StudentDashboard() {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [certificates, setCertificates] = useState([]);
   const [isLoadingCertificates, setIsLoadingCertificates] = useState(true);
-  const [viewAllBadges, setViewAllBadges] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
@@ -200,19 +197,21 @@ export default function StudentDashboard() {
       </div>
 
       {/* Fixed Quick-Nav Sub-Header Strip (Bypasses parent layout overflow restrictions) */}
-      <div className="sm:hidden fixed top-[64px] left-0 right-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border px-6 py-3 flex justify-center gap-2 shadow-sm">
-        <Button variant="secondary" size="sm" onClick={() => scrollToSection('continue-learning')} className="shrink-0 rounded-full text-xs h-8">
-          <Book className="w-3.5 h-3.5 mr-1" /> Progress
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => scrollToSection('badges-section')} className="shrink-0 rounded-full text-xs h-8">
-          <Trophy className="w-3.5 h-3.5 mr-1" /> Badges
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => scrollToSection('certificates-section')} className="shrink-0 rounded-full text-xs h-8">
-          <GraduationCap className="w-3.5 h-3.5 mr-1" /> Certificates
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => scrollToSection('recommendations')} className="shrink-0 rounded-full text-xs h-8">
-          <Compass className="w-3.5 h-3.5 mr-1" /> For You
-        </Button>
+      <div className="sm:hidden fixed top-[64px] left-0 right-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm">
+        <div className="flex gap-2 overflow-x-auto px-6 py-3 no-scrollbar">
+          <Button variant="secondary" size="sm" onClick={() => scrollToSection('continue-learning')} className="shrink-0 rounded-full text-xs h-8">
+            <Book className="w-3.5 h-3.5 mr-1" /> Progress
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => scrollToSection('badges-section')} className="shrink-0 rounded-full text-xs h-8">
+            <Trophy className="w-3.5 h-3.5 mr-1" /> Badges
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => scrollToSection('certificates-section')} className="shrink-0 rounded-full text-xs h-8">
+            <GraduationCap className="w-3.5 h-3.5 mr-1" /> Certificates
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => scrollToSection('recommendations')} className="shrink-0 rounded-full text-xs h-8">
+            <Compass className="w-3.5 h-3.5 mr-1" /> For You
+          </Button>
+        </div>
       </div>
 
       {/* Reserves space for the fixed quick-nav strip above so it doesn't overlap the stats cards */}
@@ -296,31 +295,24 @@ export default function StudentDashboard() {
         </div>
         <Suspense
         fallback={
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3 lg:grid-cols-6 h-24 bg-muted animate-pulse rounded-lg" />
           }
         >
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-            {(viewAllBadges ? liveBadges : liveBadges.slice(0, MOBILE_BADGE_PAGE_SIZE)).map((badge) => (
-              <BadgeCard key={badge.id} badge={badge} onClick={() => setSelectedBadge(badge)} />
+          {/* Mobile: one badge at a time, swipeable */}
+          <div className="md:hidden -mx-6 px-6 flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-1">
+            {liveBadges.map((badge) => (
+              <div key={badge.id} className="snap-center shrink-0 w-[82%] xs:w-[70%]">
+                <BadgeCard badge={badge} onClick={() => setSelectedBadge(badge)} />
+              </div>
             ))}
           </div>
 
-          {liveBadges.length > MOBILE_BADGE_PAGE_SIZE && (
-            <div className="flex justify-center pt-1 md:hidden">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setViewAllBadges(!viewAllBadges)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                {viewAllBadges ? (
-                  <>Show Less <ChevronUp className="w-4 h-4 ml-1" /></>
-                ) : (
-                  <>Show All ({liveBadges.length - MOBILE_BADGE_PAGE_SIZE} more) <ChevronDown className="w-4 h-4 ml-1" /></>
-                )}
-              </Button>
-            </div>
-          )}
+          {/* Tablet/Desktop: grid */}
+          <div className="hidden md:grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {liveBadges.map((badge) => (
+              <BadgeCard key={badge.id} badge={badge} onClick={() => setSelectedBadge(badge)} />
+            ))}
+          </div>
 
           <BadgeDetailModal badge={selectedBadge} onClose={() => setSelectedBadge(null)} />
         </Suspense>

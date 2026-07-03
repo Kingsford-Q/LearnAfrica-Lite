@@ -220,8 +220,8 @@ export function ForumDiscussion({ lessonId }) {
                   placeholder="Write a reply..."
                   className="min-h-[70px] text-sm"
                 />
-                <div className="flex justify-end">
-                  <Button type="submit" size="sm" disabled={isReplying || !replyBody.trim()} className="gap-1.5">
+                <div className="flex justify-center sm:justify-end">
+                  <Button type="submit" size="sm" disabled={isReplying || !replyBody.trim()} className="gap-1.5 w-full sm:w-auto">
                     {isReplying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                     Reply
                   </Button>
@@ -262,8 +262,8 @@ export function ForumDiscussion({ lessonId }) {
             className="min-h-[100px] text-sm"
           />
           {error && <p className="text-xs text-destructive">{error}</p>}
-          <div className="flex justify-end">
-            <Button type="submit" size="sm" disabled={isPosting || !newTitle.trim() || !newBody.trim()} className="gap-1.5">
+          <div className="flex justify-center sm:justify-end">
+            <Button type="submit" size="sm" disabled={isPosting || !newTitle.trim() || !newBody.trim()} className="gap-1.5 w-full sm:w-auto">
               {isPosting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               Post Question
             </Button>
@@ -277,13 +277,13 @@ export function ForumDiscussion({ lessonId }) {
   return (
     <Card className="p-5 sm:p-6 space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-bold text-base flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-primary" />
+        <h3 className="font-bold text-base flex items-center gap-2 whitespace-nowrap">
+          <MessageSquare className="h-4 w-4 text-primary shrink-0" />
           Community Discussion
         </h3>
-        <Button size="sm" onClick={() => setShowNewThread(true)} className="gap-1.5">
+        <Button size="sm" onClick={() => setShowNewThread(true)} className="gap-1.5 shrink-0 px-2.5 sm:px-3">
           <Plus className="h-3.5 w-3.5" />
-          New
+          <span className="hidden sm:inline">New</span>
         </Button>
       </div>
 

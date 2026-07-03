@@ -117,10 +117,16 @@ export default function AnnouncementsPage() {
                 After this, the notification stops showing up for anyone who received it (it isn't deleted, just hidden).
               </p>
             </div>
-            <Button type="submit" disabled={isSending || !title.trim() || !message.trim()} className="gap-2">
-              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {isSending ? 'Sending...' : 'Send to All Users'}
-            </Button>
+            <div className="flex justify-center sm:justify-start pt-1">
+              <Button
+                type="submit"
+                disabled={isSending || !title.trim() || !message.trim()}
+                className="gap-2 w-full sm:w-auto"
+              >
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {isSending ? 'Sending...' : 'Send to All Users'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

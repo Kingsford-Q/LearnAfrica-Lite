@@ -47,7 +47,7 @@ export default function InstructorLayout() {
       <div className="flex">
         {!isGated && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 
-        <main className={isGated ? 'flex-1' : 'flex-1 lg:ml-64'}>
+        <main className={isGated ? 'flex-1 min-w-0' : 'flex-1 min-w-0 lg:ml-64'}>
           {!isGated && (
             <div className="sticky top-16 z-30 flex items-center gap-4 border-b border-border bg-background px-4 py-3 lg:hidden">
               <button

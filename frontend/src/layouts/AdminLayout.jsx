@@ -12,7 +12,7 @@ export default function AdminLayout() {
       <div className="flex">
         <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        <main className="flex-1 lg:ml-64">
+        <main className="flex-1 min-w-0 lg:ml-64">
           <div className="sticky top-16 z-30 flex items-center gap-4 border-b border-border bg-background px-4 py-3 lg:hidden">
             <button
               onClick={() => setIsSidebarOpen(true)}

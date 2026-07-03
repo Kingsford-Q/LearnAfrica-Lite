@@ -205,11 +205,11 @@ export function CourseDetailPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-background py-12">
+      <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-background py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-6 md:gap-8 lg:grid-cols-3">
             {/* Course Info */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="order-2 lg:order-none lg:col-span-2 space-y-6">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="success">{course.category}</Badge>
                 <Badge variant={course.difficulty === 'Beginner' ? 'success' : course.difficulty === 'Intermediate' ? 'warning' : 'destructive'}>
@@ -255,8 +255,8 @@ export function CourseDetailPage() {
             </div>
 
             {/* Enrollment Card */}
-            <div className="lg:row-start-1">
-              <Card className="sticky top-24 overflow-hidden border-2">
+            <div className="order-1 lg:order-none lg:row-start-1">
+              <Card className="lg:sticky lg:top-24 overflow-hidden border-2">
                 <div className="aspect-video bg-muted relative">
                   <img src={fileUrl(course.thumbnail)} alt={course.title} loading="lazy" className="h-full w-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-background/50">
