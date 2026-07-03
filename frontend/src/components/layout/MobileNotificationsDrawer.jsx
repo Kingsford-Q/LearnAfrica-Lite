@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { X, ArrowLeft, CheckCheck, Bell, Calendar, Clock, ArrowRight, Trash2, BookOpen, Trophy, Settings, UserPlus, MessageSquare, ShieldCheck, Info, Megaphone } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import * as LucideIcons from "lucide-react";
 
 
 // Icons and Colors maps for the detail view
@@ -205,7 +204,7 @@ export default function MobileNotificationsDrawer({
               </div>
             </div>
           ) : (
-            <div className="px-6 py-10 animate-in slide-in-from-bottom-2 duration-500">
+            <div className="px-6 py-10">
               <div className="flex flex-col items-center text-center mb-10">
                 <div className={cn(
                   "p-6 rounded-[28px] mb-6 inline-flex items-center justify-center",

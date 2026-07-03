@@ -1,6 +1,6 @@
 import { Modal } from '../common/Modal';
 import { cn } from '../../lib/utils';
-import * as Icons from 'lucide-react';
+import { badgeIcons } from './badgeIcons';
 
 const colorMap = {
   orange: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
@@ -20,7 +20,7 @@ const colorMap = {
 export default function BadgeDetailModal({ badge, onClose }) {
   if (!badge) return null;
 
-  const IconComponent = Icons[badge.iconName] || Icons.Award;
+  const IconComponent = badgeIcons[badge.iconName] || badgeIcons.Award;
   const progressPercent = Math.min(((badge.currentProgress || 0) / badge.goal) * 100, 100);
   const colorStyles = badge.earned
     ? colorMap[badge.color] || 'text-primary bg-primary/10'

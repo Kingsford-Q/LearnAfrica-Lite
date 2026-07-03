@@ -4,6 +4,7 @@ using LearnAfricaLite.Api.Models;
 using LearnAfricaLite.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -88,6 +89,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Course/lesson detail responses carry a lot of nested JSON (sections, lessons,
+// quizzes) — compressing them cuts real transfer time, especially on slower
+// connections. Safe over HTTPS (the only way this API is ever served publicly).
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -128,6 +139,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseResponseCompression();
 app.UseStaticFiles(); // serves wwwroot/uploads at /uploads
 app.UseCors("Frontend");
 app.UseAuthentication();
