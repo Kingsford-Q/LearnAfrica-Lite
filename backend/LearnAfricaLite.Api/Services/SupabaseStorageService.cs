@@ -18,6 +18,11 @@ public class SupabaseStorageService(IHttpClientFactory httpClientFactory, IConfi
         var objectPath = $"{Guid.NewGuid():N}{ext}";
 
         var client = httpClientFactory.CreateClient();
+        // Supabase's gateway requires both headers: `apikey` to identify/route the
+        // project (mandatory for the newer opaque sb_secret_... key format, which
+        // isn't a self-describing JWT the gateway can decode from Authorization
+        // alone) and `Authorization: Bearer` for the actual auth check.
+        client.DefaultRequestHeaders.Add("apikey", ServiceRoleKey);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ServiceRoleKey);
 
         using var streamContent = new StreamContent(content);
@@ -44,6 +49,7 @@ public class SupabaseStorageService(IHttpClientFactory httpClientFactory, IConfi
         var objectPath = url[(index + marker.Length)..];
 
         var client = httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("apikey", ServiceRoleKey);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ServiceRoleKey);
         await client.DeleteAsync($"{SupabaseUrl}/storage/v1/object/{Bucket}/{objectPath}", ct);
     }
