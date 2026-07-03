@@ -54,10 +54,20 @@ public record UserDto(
     bool TwoFactorAppEnabled,
     string Appearance,
     bool InstructorPayoutAlerts,
-    bool InstructorMessagesEnabled
+    bool InstructorMessagesEnabled,
+    bool EmailConfirmed
 );
 
 public record AuthResponse(string AccessToken, DateTime ExpiresAt, UserDto User);
+
+public record VerifyEmailRequest(
+    [Required, EmailAddress] string Email,
+    [Required] string Token
+);
+
+public record ResendVerificationRequest(
+    [Required, EmailAddress] string Email
+);
 
 public record UpdateProfileRequest(
     string? Name,

@@ -3,6 +3,7 @@ import { Outlet, Link } from 'react-router-dom';
 import { Clock, ShieldX, ArrowLeft } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Sidebar from '../components/layout/Sidebar';
+import EmailVerificationBanner from '../components/layout/EmailVerificationBanner';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -44,6 +45,7 @@ export default function InstructorLayout() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <EmailVerificationBanner />
       <div className="flex">
         {!isGated && <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />}
 

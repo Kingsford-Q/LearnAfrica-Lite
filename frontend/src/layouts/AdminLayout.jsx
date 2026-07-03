@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import AdminSidebar from '../components/layout/AdminSidebar';
+import EmailVerificationBanner from '../components/layout/EmailVerificationBanner';
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -9,6 +10,7 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <EmailVerificationBanner />
       <div className="flex">
         <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 

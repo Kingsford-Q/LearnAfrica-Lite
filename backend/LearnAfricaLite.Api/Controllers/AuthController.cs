@@ -90,7 +90,61 @@ public class AuthController(
 
         logger.LogInformation("New user registered: {Email}", user.Email);
 
+        await SendVerificationEmailAsync(user);
+
+        // Login isn't blocked on verification -- email delivery in production
+        // depends on an SMTP/Resend provider actually being configured, and
+        // locking every new signup out until they click a link that might never
+        // arrive would be worse than a soft "please verify" reminder. The
+        // frontend shows a persistent banner for unconfirmed accounts instead.
         return await IssueTokensAsync(user);
+    }
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail(VerifyEmailRequest request)
+    {
+        var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+            return BadRequest(new { message = "Invalid or expired verification link." });
+
+        if (user.EmailConfirmed)
+            return Ok(new { message = "Email already verified." });
+
+        var result = await userManager.ConfirmEmailAsync(user, request.Token);
+        if (!result.Succeeded)
+            return BadRequest(new { message = "Invalid or expired verification link." });
+
+        return Ok(new { message = "Email verified." });
+    }
+
+    [HttpPost("resend-verification")]
+    [Authorize]
+    public async Task<IActionResult> ResendVerification()
+    {
+        var userId = User.GetUserId();
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null) return NotFound();
+
+        if (user.EmailConfirmed)
+            return Ok(new { message = "Email already verified." });
+
+        await SendVerificationEmailAsync(user);
+        return Ok(new { message = "Verification email sent." });
+    }
+
+    private async Task SendVerificationEmailAsync(ApplicationUser user)
+    {
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = Uri.EscapeDataString(token);
+        var encodedEmail = Uri.EscapeDataString(user.Email!);
+        var frontendOrigin = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()?.FirstOrDefault()
+            ?? "http://localhost:5173";
+        var verifyLink = $"{frontendOrigin}/verify-email?email={encodedEmail}&token={encodedToken}";
+
+        await emailService.SendAsync(
+            user.Email!,
+            "Verify your LearnAfrica Lite email",
+            $"<p>Welcome to LearnAfrica Lite! Click the link below to verify your email address.</p><p><a href=\"{verifyLink}\">{verifyLink}</a></p>");
     }
 
     [HttpPost("login")]

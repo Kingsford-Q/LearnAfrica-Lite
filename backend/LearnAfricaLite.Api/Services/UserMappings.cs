@@ -34,6 +34,7 @@ public static class UserMappings
         user.TwoFactorAppEnabled,
         user.Appearance,
         user.InstructorPayoutAlerts,
-        user.InstructorMessagesEnabled
+        user.InstructorMessagesEnabled,
+        user.EmailConfirmed
     );
 }

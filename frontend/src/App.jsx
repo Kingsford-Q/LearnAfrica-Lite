@@ -16,6 +16,7 @@ import { LoginPage } from './pages/Auth/LoginPage';
 import { SignupPage } from './pages/Auth/SignupPage';
 import { ForgotPasswordPage } from './pages/Auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/Auth/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/Auth/VerifyEmailPage';
 import { CoursesPage } from './pages/Courses/CoursesPage';
 import { CourseDetailPage } from './pages/Courses/CourseDetailPage';
 import { LessonPage } from './pages/Lessons/LessonPage';
@@ -143,6 +144,10 @@ function AppRoutes() {
             </PublicOnlyRoute>
           }
         />
+        {/* Not wrapped in PublicOnlyRoute -- a user who registers is signed in
+            immediately (see AuthController.Register), so the verification link
+            they click from their email needs to work while already logged in. */}
+        <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route
           path="signup/instructor-onboarding"
           element={

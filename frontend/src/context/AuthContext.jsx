@@ -17,6 +17,7 @@ function mapApiUserToAppUser(apiUser) {
     avatar: apiUser.avatar,
     joinedDate: apiUser.joinedDate,
     instructorApprovalStatus: apiUser.instructorApprovalStatus,
+    emailConfirmed: apiUser.emailConfirmed,
     profile: {
       bio: apiUser.bio || '',
       location: apiUser.location || '',
@@ -417,6 +418,7 @@ export function AuthProvider({ children }) {
       signup,
       logout,
       updateUser,
+      refreshUser,
       notifications,
       markAsRead,
       markAllAsRead,
@@ -446,6 +448,7 @@ export function AuthProvider({ children }) {
     signup,
     logout,
     updateUser,
+    refreshUser,
     notifications,
     markAsRead,
     markAllAsRead,
