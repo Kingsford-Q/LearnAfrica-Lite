@@ -80,19 +80,19 @@ export function CurriculumSection({
 
               {/* Add Buttons with variant="outline" */}
               <div className="grid grid-cols-2 gap-3 mt-6">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => addLesson(section.id, 'video')}
-                  className="border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 text-[10px] font-bold uppercase h-11"
+                  className="border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary text-[10px] font-bold uppercase h-11"
                 >
                   <Plus className="h-3.5 w-3.5 mr-2 text-primary" /> Add Lesson
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => addLesson(section.id, 'quiz')}
-                  className="border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 text-[10px] font-bold uppercase h-11"
+                  className="border-dashed border-primary/20 bg-primary/5 hover:bg-primary/10 hover:text-primary text-[10px] font-bold uppercase h-11"
                 >
                   <HelpCircle className="h-3.5 w-3.5 mr-2 text-primary" /> Add Quiz
                 </Button>
@@ -128,16 +128,16 @@ export function CurriculumSection({
         
         {/* Global Navigation */}
         <div className="flex flex-col gap-4 pt-6 border-t border-border">
-          <Button 
-            onClick={addSection} 
-            variant="outline" 
-            className="w-full h-14 border-2 border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 text-xs font-bold uppercase transition-all"
+          <Button
+            onClick={addSection}
+            variant="outline"
+            className="w-full h-14 border-2 border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 hover:text-primary text-xs font-bold uppercase transition-all"
           >
             <Layout className="h-4 w-4 mr-2" /> Add New Section
           </Button>
           
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="ghost" onClick={onBack} className="flex-1 h-12 text-xs font-bold uppercase hover:bg-muted">
+            <Button variant="ghost" onClick={onBack} className="flex-1 h-12 text-xs font-bold uppercase hover:bg-muted hover:text-foreground">
               Back to Fundamentals
             </Button>
             <Button onClick={onNext} className="flex-1 h-12 text-xs font-bold uppercase tracking-widest shadow-lg">
@@ -222,7 +222,7 @@ function CurriculumItemEditor({ item, index, onUpdate, onRemove }) {
               variant="ghost" 
               size="sm" 
               onClick={(e) => { e.stopPropagation(); onRemove(); }}
-              className="text-xs text-destructive hover:bg-destructive/10"
+              className="text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5 mr-2" /> Remove {item.type === 'quiz' ? 'Quiz' : 'Lesson'}
             </Button>
@@ -273,7 +273,7 @@ function QuizEditor({ item, onUpdate }) {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+              className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => onUpdate({ questions: questions.filter(item => item.id !== q.id) })}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -358,7 +358,7 @@ function QuizEditor({ item, onUpdate }) {
       <Button
         variant="outline"
         size="sm"
-        className="w-full h-10 border-dashed border-primary/30 text-primary hover:bg-primary/5 text-[10px] font-bold uppercase"
+        className="w-full h-10 border-dashed border-primary/30 text-primary hover:bg-primary/5 hover:text-primary text-[10px] font-bold uppercase"
         onClick={addQuestion}
       >
         <Plus className="h-3.5 w-3.5 mr-2" /> Add Question to Quiz
