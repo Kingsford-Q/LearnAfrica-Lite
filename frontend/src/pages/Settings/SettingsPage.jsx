@@ -266,7 +266,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <Button
-            variant={user?.settings?.privacy?.twoFactor ? 'outline' : 'default'}
+            variant={user?.settings?.privacy?.twoFactor ? 'outline' : 'primary'}
             size="sm"
             onClick={() => setShowTwoFactorForm(true)}
           >
