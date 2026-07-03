@@ -95,18 +95,24 @@ export default function AnnouncementsPage() {
                 maxLength={2000}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="duration">Active for</Label>
-              <select
-                id="duration"
-                value={durationDays}
-                onChange={(e) => setDurationDays(e.target.value)}
-                className="h-10 w-full sm:w-48 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
-              >
+            <div className="space-y-2.5">
+              <Label>Active for</Label>
+              <div className="flex flex-wrap gap-2">
                 {DURATION_OPTIONS.map((opt) => (
-                  <option key={opt.label} value={opt.value}>{opt.label}</option>
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setDurationDays(opt.value)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                      durationDays === opt.value
+                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                        : 'bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
                 ))}
-              </select>
+              </div>
               <p className="text-xs text-muted-foreground">
                 After this, the notification stops showing up for anyone who received it (it isn't deleted, just hidden).
               </p>

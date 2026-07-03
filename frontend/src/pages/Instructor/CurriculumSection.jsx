@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { 
-  BookOpen, Layout, X, ChevronRight, Plus, 
-  GripVertical, Video, HelpCircle, Clock, 
+  BookOpen, Layout, X, ChevronRight, Plus, Minus,
+  GripVertical, Video, HelpCircle, Clock,
   Link as LinkIcon, Trash2, ChevronDown, ChevronUp,
   Award, Infinity as LifetimeIcon, Download, Image as ImageIcon,
   CheckCircle2, Circle
@@ -274,68 +274,78 @@ function QuizEditor({ item, onUpdate }) {
   };
 
   const durationMinutes = Math.round((item.durationSeconds ?? 300) / 60);
-  const isPreset = QUIZ_DURATION_PRESETS.includes(durationMinutes);
-  const [showCustom, setShowCustom] = useState(!isPreset);
   // A local text buffer, only clamped/committed on blur — a controlled input
   // that re-clamps on every keystroke can never show an empty string, so
   // clearing it to type a new value snaps straight back to the old one
   // instead (e.g. "1" -> clear -> type "2" lands on "12").
-  const [customText, setCustomText] = useState(String(durationMinutes));
+  const [durationText, setDurationText] = useState(String(durationMinutes));
 
-  const commitCustom = () => {
-    const minutes = Math.max(1, Math.min(180, parseInt(customText, 10) || 1));
-    setCustomText(String(minutes));
-    onUpdate({ durationSeconds: minutes * 60 });
+  const setDuration = (minutes) => {
+    const clamped = Math.max(1, Math.min(180, minutes));
+    setDurationText(String(clamped));
+    onUpdate({ durationSeconds: clamped * 60 });
   };
+
+  const commitDurationText = () => setDuration(parseInt(durationText, 10) || durationMinutes);
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
           <Clock className="h-3 w-3" /> Time Limit
         </label>
-        <div className="flex flex-wrap gap-2">
-          {QUIZ_DURATION_PRESETS.map((minutes) => (
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center rounded-xl border border-border bg-background overflow-hidden shrink-0">
             <button
-              key={minutes}
               type="button"
-              onClick={() => { setShowCustom(false); onUpdate({ durationSeconds: minutes * 60 }); }}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
-                !showCustom && durationMinutes === minutes
-                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                  : 'bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-              }`}
+              onClick={() => setDuration(durationMinutes - 1)}
+              disabled={durationMinutes <= 1}
+              className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              aria-label="Decrease time limit"
             >
-              {minutes} min
+              <Minus className="h-3.5 w-3.5" />
             </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setShowCustom(true)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
-              showCustom
-                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                : 'bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-            }`}
-          >
-            Custom
-          </button>
-        </div>
-        {showCustom && (
-          <div className="flex items-center gap-2 pt-1">
             <input
               type="number"
               inputMode="numeric"
               min="1"
               max="180"
-              value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
-              onBlur={commitCustom}
-              className="w-24 bg-background border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+              value={durationText}
+              onChange={(e) => setDurationText(e.target.value)}
+              onBlur={commitDurationText}
+              className="w-12 h-10 text-center text-sm font-bold bg-transparent border-x border-border outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="text-xs text-muted-foreground">minutes (1–180)</span>
+            <button
+              type="button"
+              onClick={() => setDuration(durationMinutes + 1)}
+              disabled={durationMinutes >= 180}
+              className="h-10 w-10 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+              aria-label="Increase time limit"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
           </div>
-        )}
+          <span className="text-sm text-muted-foreground">minutes</span>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {QUIZ_DURATION_PRESETS.map((minutes) => (
+            <button
+              key={minutes}
+              type="button"
+              onClick={() => setDuration(minutes)}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors ${
+                durationMinutes === minutes
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              {minutes}m
+            </button>
+          ))}
+        </div>
+
         <p className="text-[10px] text-muted-foreground">
           Students must submit before this runs out. Applies to the whole quiz, not per question.
         </p>
