@@ -74,6 +74,18 @@ public class AuthController(
 
             await NotifyAsync(db, user.Id, NotificationType.System, "Instructor application submitted",
                 "Your instructor application is pending review by our team.", $"instructor_applied_{user.Id}");
+
+            // The applicant knowing their application was submitted is only half of
+            // it -- without this, nobody with the authority to act on it ever finds
+            // out one exists except by manually checking the approvals page.
+            var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
+            var superAdmins = await userManager.GetUsersInRoleAsync(Roles.SuperAdmin);
+            foreach (var reviewer in admins.Concat(superAdmins).DistinctBy(u => u.Id))
+            {
+                await NotifyAsync(db, reviewer.Id, NotificationType.System, "New instructor application",
+                    $"{user.Name} applied to become an instructor.", $"instructor_application_review_{user.Id}",
+                    "/admin/instructors");
+            }
         }
 
         logger.LogInformation("New user registered: {Email}", user.Email);

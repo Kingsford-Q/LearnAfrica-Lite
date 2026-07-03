@@ -17,6 +17,20 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // A stale chunk reference (a tab left open across a deploy, then
+    // navigating into a route that lazy-loads a now-renamed file) can throw
+    // here instead of through the `vite:preloadError` event main.jsx listens
+    // for, depending on how the rejection propagates. Recognize it by
+    // message and recover with a real reload instead of stranding the user
+    // on this page — a sessionStorage flag stops a genuine repeat failure
+    // from reload-looping forever.
+    const isStaleChunkError = /dynamically imported module|Importing a module script failed|Loading chunk/i.test(error?.message || '');
+    if (isStaleChunkError && !sessionStorage.getItem('chunkErrorReload')) {
+      sessionStorage.setItem('chunkErrorReload', '1');
+      window.location.reload();
+      return;
+    }
+
     this.setState({
       error,
       errorInfo

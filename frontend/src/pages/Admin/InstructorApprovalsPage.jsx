@@ -195,6 +195,19 @@ export default function InstructorApprovalsPage() {
                     </Button>
                   </div>
                 )}
+
+                {activeTab === 'Rejected' && (
+                  <div className="flex gap-2 pt-2 border-t border-border/60">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      disabled={busyId === app.userId}
+                      onClick={() => handleApprove(app.userId)}
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" /> Approve Anyway
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
